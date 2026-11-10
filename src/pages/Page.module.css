@@ -24,6 +24,13 @@
   height: calc(16 * var(--sprite-px-title));
 }
 
+/* Guide PNGs are 96x96, shown 1:1 so the pixels stay crisp. */
+.titleSprite[data-kind="image"] {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+
 .page[data-type="fire"] { --page-accent: var(--color-type-fire); }
 .page[data-type="grass"] { --page-accent: var(--color-type-grass); }
 .page[data-type="water"] { --page-accent: var(--color-type-water); }

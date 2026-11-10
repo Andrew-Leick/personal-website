@@ -1,98 +1,10 @@
-// Original pixel-art sprites for this site (SPEC-v3 section 5). Drawn for this
-// project; not copied or traced from any game asset. The grids are the source
+// Original pixel-art UI sprites (egg, menu cursor, "more" arrow). Drawn for this
+// project. The three guide Pokémon are PNG files in public/sprites/. The grids are the source
 // of truth: do not edit them without a spec change.
 
 const OUTLINE = 'var(--sprite-outline)'
-const EYE_WHITE = 'var(--sprite-eye-white)'
 
 const DEFS = {
-  charmander: {
-    grid: [
-      '................',
-      '....oooo........',
-      '...oaaaao.......',
-      '..oaaaaaao...r..',
-      '..oaaaaaao..rfr.',
-      '..oawaawao..rfr.',
-      '..oaeaaeao...r..',
-      '..oaaaaaao..oao.',
-      '...oaaaao...oao.',
-      '...oabbaoo.oao..',
-      '..oaobbaoaooao..',
-      '..oaobbbaoaao...',
-      '...oabbbaaoo....',
-      '...oaaaaao......',
-      '..oaaooaaao.....',
-      '..ooo..ooo......',
-    ],
-    palette: {
-      o: OUTLINE,
-      a: 'var(--sprite-char-body)',
-      b: 'var(--sprite-char-belly)',
-      w: EYE_WHITE,
-      e: OUTLINE,
-      f: 'var(--sprite-char-flame-inner)',
-      r: 'var(--sprite-char-flame-outer)',
-    },
-  },
-  bulbasaur: {
-    grid: [
-      '................',
-      '........oooo....',
-      '......oollllo...',
-      '.....olkllklo...',
-      '....olllkllllo..',
-      '..ooolkllllklo..',
-      '.ogggolllllloo..',
-      'oggdgggoooooggo.',
-      'oggggggggggdggo.',
-      'ogweggggwegggo..',
-      'ogeegggggeeggo..',
-      '.oggggggggggdo..',
-      '..ogggdgggggo...',
-      '..ogoooggooggo..',
-      '..oo...oo..ooo..',
-      '................',
-    ],
-    palette: {
-      o: OUTLINE,
-      g: 'var(--sprite-bulb-body)',
-      d: 'var(--sprite-bulb-spot)',
-      l: 'var(--sprite-bulb-bulb)',
-      k: 'var(--sprite-bulb-bulb-dark)',
-      w: EYE_WHITE,
-      e: 'var(--sprite-bulb-eye)',
-    },
-  },
-  squirtle: {
-    grid: [
-      '................',
-      '....oooooo......',
-      '...oaaaaaao.....',
-      '..oaaaaaaaao....',
-      '..oawaaaawao....',
-      '..oaeaaaaeao....',
-      '..oaaaaaaaao....',
-      '...oaaooaao.....',
-      '..ossoaaosso....',
-      '.oaosbbbbsoao...',
-      '.oaosbttbsoaoo..',
-      '..oosbbbbsoaao..',
-      '...osbttbsooao..',
-      '...ooaooaoo.oo..',
-      '...oaao.oaao....',
-      '...ooo...ooo....',
-    ],
-    palette: {
-      o: OUTLINE,
-      a: 'var(--sprite-squirt-body)',
-      s: 'var(--sprite-squirt-shell)',
-      t: 'var(--sprite-squirt-shell-light)',
-      b: 'var(--sprite-squirt-belly)',
-      w: EYE_WHITE,
-      e: 'var(--sprite-squirt-eye)',
-    },
-  },
   egg: {
     grid: [
       '................',
@@ -164,6 +76,9 @@ export const SPRITES = Object.fromEntries(
     { width: def.grid[0].length, height: def.grid.length, paths: toPaths(def) },
   ]),
 )
+
+/** Guide Pokémon rendered from PNG files in public/sprites/{id}.png (96x96, Black/White style). */
+export const IMAGE_SPRITES = ['charmander', 'bulbasaur', 'squirtle']
 
 /** Guide id (site.json pages[].guide) -> caption shown under the sprite. */
 export const GUIDE_NAMES = { charmander: 'Charmander', bulbasaur: 'Bulbasaur', squirtle: 'Squirtle' }

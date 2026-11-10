@@ -24,6 +24,13 @@
     var(--sprite-bob-iterations) both;
 }
 
+/* Official guide sprites are 96x96 PNGs shown 1:1 so the pixels stay crisp. */
+.sprite[data-kind="image"] {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+
 /* The bob stays first in the list so it is never restarted when hover or focus ends. */
 .guide:hover .sprite,
 .guide:focus-visible .sprite {
@@ -113,6 +120,14 @@
     position: absolute;
     inset-inline-end: 100%;
     margin-inline-end: var(--space-2);
+  }
+}
+
+/* 2x (192px) keeps the pixels crisp and fills the tile on wide screens. */
+@media (min-width: 768px) {
+  .sprite[data-kind="image"] {
+    width: 192px;
+    height: 192px;
   }
 }
 

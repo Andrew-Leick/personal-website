@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { GUIDE_IDS } from '../../../lib/content/index.js'
-import { GUIDE_NAMES, GUIDE_TYPES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
+import { GUIDE_NAMES, GUIDE_TYPES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
 
 // SPEC-v3 5.2 expected table.
 const EXPECTED = {
-  charmander: { w: 16, h: 16, cells: 134, keys: { a: 60, b: 10, e: 2, f: 2, o: 52, r: 6, w: 2 } },
-  bulbasaur: { w: 16, h: 16, cells: 155, keys: { d: 4, e: 6, g: 61, k: 5, l: 27, o: 50, w: 2 } },
-  squirtle: { w: 16, h: 16, cells: 144, keys: { a: 53, b: 12, e: 2, o: 59, s: 12, t: 4, w: 2 } },
   egg: { w: 16, h: 16, cells: 100, keys: { h: 56, o: 30, p: 14 } },
   cursor: { w: 4, h: 7, cells: 16, keys: { o: 16 } },
   more: { w: 7, h: 4, cells: 16, keys: { o: 16 } },
@@ -67,8 +64,8 @@ describe('sprites', () => {
     expect(Object.keys(GUIDE_TYPES)).toEqual(GUIDE_IDS)
   })
 
-  it('charmander is 16x16', () => {
-    expect(SPRITES.charmander.width).toBe(16)
-    expect(SPRITES.charmander.height).toBe(16)
+  it('guide Pokémon are PNG images, not SVG grids', () => {
+    expect(IMAGE_SPRITES).toEqual(GUIDE_IDS)
+    for (const id of GUIDE_IDS) expect(SPRITES[id]).toBeUndefined()
   })
 })

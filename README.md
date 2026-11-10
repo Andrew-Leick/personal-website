@@ -43,7 +43,7 @@ npm run dev        # http://localhost:5173
 
 ## Fonts and licenses
 
-`public/fonts/` holds Press Start 2P and Pixelify Sans, both under the SIL Open Font License 1.1. The license texts (`OFL-*.txt`) sit next to the fonts. The font files must not be modified: `check:routes` verifies their SHA-256 hashes.
+`public/fonts/` holds Press Start 2P and VT323, both under the SIL Open Font License 1.1. The license texts (`OFL-*.txt`) sit next to the fonts. The font files must not be modified: `check:routes` verifies their SHA-256 hashes.
 
 ## Deploy (GitHub Pages)
 

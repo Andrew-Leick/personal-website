@@ -7,7 +7,7 @@ import styles from './SiteFooter.module.css'
 const YEAR = new Date().getFullYear()
 
 const DISCLAIMER =
-  'Pokémon, Charmander, Bulbasaur and Squirtle are trademarks of Nintendo, Creatures Inc. and GAME FREAK inc. The pixel sprites here are original fan art made for this non-commercial site, which is not affiliated with or endorsed by them.'
+  'Pokémon, Charmander, Bulbasaur and Squirtle are trademarks of Nintendo, Creatures Inc. and GAME FREAK inc. The Pokémon sprites shown here are fan use of Nintendo, Creatures Inc. and GAME FREAK inc. artwork on this non-commercial site, which is not affiliated with or endorsed by them.'
 
 /**
  * Footer on every page (REQ-843): footer nav (Home + pages), contact links,
@@ -30,7 +30,7 @@ export default function SiteFooter({ name, navItems, currentId, links, resumeUrl
             Back to top
           </a>
         </div>
-        <p className={styles.fine}>Fonts: Press Start 2P and Pixelify Sans (SIL Open Font License).</p>
+        <p className={styles.fine}>Fonts: Press Start 2P and VT323 (SIL Open Font License).</p>
         {fanArt && <p className={styles.fine}>{DISCLAIMER}</p>}
       </div>
     </footer>

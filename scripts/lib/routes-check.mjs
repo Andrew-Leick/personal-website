@@ -101,15 +101,14 @@ export function checkRoutes(distDir, content, base) {
 /** Self-hosted fonts shipped in public/fonts (spec v3 6.4). Hashes are of the unmodified files. */
 export const FONT_FILES = {
   'press-start-2p-latin-400.woff2': 'afec86997fdaf54af1f59358fa2c1e2a0f1d04146edad18e5cd141d0384a7548',
-  'pixelify-sans-latin-400.woff2': 'd830612ac9131788ebae754b9268f83f7c1d3ffa9bc0f9a5514207a8283fe71e',
-  'pixelify-sans-latin-700.woff2': 'c836cfa5c0e9d62ea9b890e0418d52a6004149090a521cd198a8c09f5d5ab893',
+  'vt323-latin-400.woff2': '8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6',
   'OFL-press-start-2p.txt': null,
-  'OFL-pixelify-sans.txt': null,
+  'OFL-vt323.txt': null,
 }
 const FONT_PRELOAD_NEEDLE = 'fonts/press-start-2p-latin-400.woff2'
 
 /**
- * Check the built fonts (spec v3 8.5, REQ-1061): the five files exist, each .woff2 matches its
+ * Check the built fonts (spec v3 8.5, REQ-1061): the four files exist, each .woff2 matches its
  * SHA-256, dist/index.html references the display font exactly twice (preload + @font-face), and
  * no dist HTML file keeps a literal %BASE_URL%.
  * @param {string} distDir

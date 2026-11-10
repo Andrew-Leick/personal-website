@@ -1,8 +1,7 @@
 /*
  * Design tokens (SPEC-v3 section 6).
  * - Palette primitives (--pk-*): used ONLY by themes/*.css.
- * - Sprite art color tokens (--sprite-outline, --sprite-eye-*, --sprite-char-*,
- *   --sprite-bulb-*, --sprite-squirt-*, --sprite-egg-*): theme-independent
+ * - Sprite art color tokens (--sprite-outline, --sprite-egg-*): theme-independent
  *   pixel-art colors, used
  *   only by src/components/PixelSprite/sprites.js.
  * - Everything else: theme-independent semantic tokens.
@@ -43,21 +42,6 @@
 
   /* Sprite art (same in every theme) */
   --sprite-outline: #202028;
-  --sprite-eye-white: #FFFFFF;
-  --sprite-char-body: #F08030;
-  --sprite-char-belly: #F8D890;
-  --sprite-char-flame-outer: #E03018;
-  --sprite-char-flame-inner: #F8D030;
-  --sprite-bulb-body: #78C8A0;
-  --sprite-bulb-spot: #4A9078;
-  --sprite-bulb-bulb: #58B048;
-  --sprite-bulb-bulb-dark: #307830;
-  --sprite-bulb-eye: #C83030;
-  --sprite-squirt-body: #78B8E8;
-  --sprite-squirt-shell: #B87838;
-  --sprite-squirt-shell-light: #E8B868;
-  --sprite-squirt-belly: #F0D890;
-  --sprite-squirt-eye: #783018;
   --sprite-egg-shell: #F4F0DC;
   --sprite-egg-spot: #78C850;
 }
@@ -65,17 +49,17 @@
 :root {
   /* Typography: self-hosted, @font-face in index.html (SPEC-v3 6.4) */
   --font-display: "Press Start 2P", ui-monospace, "Courier New", monospace;
-  --font-body: "Pixelify Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-body: "VT323", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-sans: var(--font-body);
   --font-mono: var(--font-body);
 
-  /* Body sizes (Pixelify Sans) */
-  --text-xs:   0.875rem;  /* 14px: captions, tags, fine print */
-  --text-sm:   1rem;      /* 16px: meta lines, nav */
-  --text-base: 1.125rem;  /* 18px: body */
-  --text-lg:   1.25rem;   /* 20px: Home role line, lead */
-  --text-xl:   1.375rem;  /* 22px: entry titles */
-  --text-2xl:  1.5rem;    /* 24px */
+  /* Body sizes (VT323 runs small, so these are larger than a normal font) */
+  --text-xs:   1.125rem;  /* 18px: captions, tags, fine print */
+  --text-sm:   1.25rem;   /* 20px: meta lines, nav */
+  --text-base: 1.375rem;  /* 22px: body */
+  --text-lg:   1.5rem;    /* 24px: Home role line, lead */
+  --text-xl:   1.75rem;   /* 28px: entry titles */
+  --text-2xl:  2rem;      /* 32px */
   --text-3xl:  1.25rem;   /* 20px (legacy alias) */
   --text-4xl:  1.5rem;    /* 24px (legacy alias) */
 
@@ -86,7 +70,7 @@
   --leading-display:  1.5;
 
   --weight-regular: 400;
-  --weight-medium:  700;  /* Pixelify Sans ships 400 and 700 only */
+  --weight-medium:  700;  /* VT323 ships 400 only; faux bold is disabled in base.css */
   --weight-bold:    700;
 
   --leading-tight:  1.2;

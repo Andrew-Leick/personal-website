@@ -1,11 +1,28 @@
-import { SPRITES } from './sprites.js'
+import { BASE_URL } from '../../lib/content/paths.js'
+import { IMAGE_SPRITES, SPRITES } from './sprites.js'
 
 /**
- * One pixel sprite as inline SVG. Always decorative (aria-hidden): the
- * accessible name comes from the surrounding link text. Size is set by CSS
- * via the className (width/height = grid size x an integer --*-px token).
+ * One sprite. The three guide Pokémon are 96x96 PNGs served from
+ * public/sprites/; the egg, menu cursor and "more" arrow are inline SVG.
+ * Always decorative (aria-hidden / empty alt): the accessible name comes from
+ * the surrounding link text. Size is set by CSS via the className.
  */
 export default function PixelSprite({ name, className }) {
+  if (IMAGE_SPRITES.includes(name)) {
+    return (
+      <img
+        className={className}
+        src={`${BASE_URL}sprites/${name}.png`}
+        width={96}
+        height={96}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        data-sprite={name}
+        data-kind="image"
+      />
+    )
+  }
   const sprite = SPRITES[name]
   if (!sprite) return null
   return (
