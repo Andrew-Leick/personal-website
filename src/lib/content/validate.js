@@ -5,7 +5,7 @@ import { existsSync, statSync, readdirSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { isValidDate, parseDate, DATE_PLACEHOLDER } from './format.js'
 import { isPlaceholder, isPlaceholderId } from './placeholders.js'
-import { SECTION_IDS, GUIDE_IDS } from './normalize.js'
+import { SECTION_IDS, GUIDE_IDS, LAYOUTS } from './normalize.js'
 import { RESERVED_PAGE_IDS } from './routes.js'
 
 /** @typedef {{ file: string, path: string, message: string, hint: string|null }} Issue */
@@ -59,6 +59,7 @@ const SCHEMAS = {
     defaultTheme: req({ type: 'string', max: 40, pattern: THEME_RE, patternHint: 'use "system", "light", "dark" or a lowercase theme name like "navy"' }),
     themeToggle: req({ type: 'boolean' }),
     fanArt: { type: 'boolean', hint: 'use true to show the sprites or false to hide them' },
+    layout: { type: 'enum', values: LAYOUTS },
     pages: req({
       type: 'array',
       minItems: 1,

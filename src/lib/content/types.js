@@ -3,7 +3,7 @@
 
 /** @typedef {{ siteUrl: string, title: string, description: string, locale: string,
  *   ogImage: string|null, ogImageAlt: string|null, defaultTheme: string, themeToggle: boolean,
- *   fanArt: boolean }} Site  // fanArt: false hides all Pokémon sprites (default true)
+ *   fanArt: boolean, layout: 'journey'|'pages' }} Site  // fanArt: false hides all Pokémon sprites (default true); layout default 'journey'
  *   // ogImage is resolved with BASE_URL */
 
 /** @typedef {{ id: 'about'|'experience'|'projects'|'education'|'skills'|'contact',

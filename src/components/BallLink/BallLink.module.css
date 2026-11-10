@@ -1,0 +1,83 @@
+/* v4 hero slot. Same layout as the v3 GuideLink: row on phones, centered column >= 480px. */
+.link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-4);
+  min-height: var(--target-min);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration-line: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.link:hover,
+.link:focus-visible {
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text);
+}
+
+/* Empty: the rail's ball is drawn over it. 30px sprite x2 on phones, x3 from 768px. */
+.slot {
+  display: block;
+  width: var(--hero-ball-size);
+  height: var(--hero-ball-size);
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  min-width: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.cursor {
+  visibility: hidden;
+}
+
+.labelText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.link:hover .cursor,
+.link:focus-visible .cursor {
+  visibility: visible;
+}
+
+.link:hover .labelText,
+.link:focus-visible .labelText {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--border-width-pixel);
+  text-decoration-color: var(--link-accent);
+  text-underline-offset: 0.25em;
+}
+
+.link[data-type="fire"] { --link-accent: var(--color-type-fire); }
+.link[data-type="grass"] { --link-accent: var(--color-type-grass); }
+.link[data-type="water"] { --link-accent: var(--color-type-water); }
+.link[data-type="normal"] { --link-accent: var(--color-type-normal); }
+
+@media (min-width: 480px) {
+  .link {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    row-gap: var(--space-2);
+    text-align: center;
+  }
+
+  .label {
+    position: relative;
+  }
+
+  .cursor {
+    position: absolute;
+    inset-inline-end: 100%;
+    margin-inline-end: var(--space-2);
+  }
+}

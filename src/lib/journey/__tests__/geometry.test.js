@@ -1,0 +1,76 @@
+import { describe, expect, test } from 'vitest'
+import { ballTransform, clamp, easeInOut, heroProgress, lerp, pickActive, staggered } from '../geometry.js'
+
+describe('basics', () => {
+  test('clamp and lerp', () => {
+    expect(clamp(-1)).toBe(0)
+    expect(clamp(2)).toBe(1)
+    expect(clamp(0.4)).toBe(0.4)
+    expect(lerp(10, 20, 0.5)).toBe(15)
+  })
+  test('easeInOut keeps its ends and midpoint', () => {
+    expect(easeInOut(0)).toBe(0)
+    expect(easeInOut(0.5)).toBe(0.5)
+    expect(easeInOut(1)).toBe(1)
+    expect(easeInOut(0.25)).toBeLessThan(0.25)
+  })
+})
+
+describe('heroProgress', () => {
+  test('scales scroll by the travel distance', () => {
+    expect(heroProgress(0, 400)).toBe(0)
+    expect(heroProgress(200, 400)).toBe(0.5)
+    expect(heroProgress(900, 400)).toBe(1)
+  })
+  test('no travel means the hero is gone', () => {
+    expect(heroProgress(0, 0)).toBe(1)
+    expect(heroProgress(0, Number.NaN)).toBe(1)
+  })
+})
+
+describe('staggered', () => {
+  test('first ball leads, last ball trails, all finish together', () => {
+    expect(staggered(0.1, 0, 3)).toBeGreaterThan(staggered(0.1, 2, 3))
+    expect(staggered(0.1, 2, 3)).toBe(0)
+    for (const i of [0, 1, 2]) expect(staggered(1, i, 3)).toBe(1)
+    for (const i of [0, 1, 2]) expect(staggered(0, i, 3)).toBe(0)
+  })
+  test('a single ball is not staggered', () => {
+    expect(staggered(0.3, 0, 1)).toBe(0.3)
+  })
+})
+
+describe('ballTransform', () => {
+  const rail = { x: 900, y: 300, width: 60 }
+  const hero = { x: 100, y: 500, width: 90 }
+  test('t = 0 sits on the hero slot at hero size', () => {
+    expect(ballTransform(rail, hero, 0)).toEqual({ tx: -800, ty: 200, scale: 1.5 })
+  })
+  test('t = 1 is the rail slot, untransformed', () => {
+    expect(ballTransform(rail, hero, 1)).toEqual({ tx: 0, ty: 0, scale: 1 })
+  })
+  test('halfway is halfway', () => {
+    expect(ballTransform(rail, hero, 0.5)).toEqual({ tx: -400, ty: 100, scale: 1.25 })
+  })
+  test('missing rects leave the ball in place', () => {
+    expect(ballTransform(null, hero, 0)).toEqual({ tx: 0, ty: 0, scale: 1 })
+    expect(ballTransform({ x: 0, y: 0, width: 0 }, hero, 0)).toEqual({ tx: 0, ty: 0, scale: 1 })
+  })
+})
+
+describe('pickActive', () => {
+  const sections = [
+    { id: 'experience', top: 100 },
+    { id: 'projects', top: 900 },
+    { id: 'about', top: 1800 },
+  ]
+  test('last section above the line wins', () => {
+    expect(pickActive(sections, 400)).toBe('experience')
+    expect(pickActive(sections, 1000)).toBe('projects')
+    expect(pickActive(sections, 5000)).toBe('about')
+  })
+  test('nothing above the line is home', () => {
+    expect(pickActive(sections, 50)).toBe('home')
+    expect(pickActive([], 400)).toBe('home')
+  })
+})

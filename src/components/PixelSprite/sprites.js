@@ -78,7 +78,16 @@ export const SPRITES = Object.fromEntries(
 )
 
 /** Guide Pokémon rendered from PNG files in public/sprites/{id}.png (96x96, Black/White style). */
-export const IMAGE_SPRITES = ['charmander', 'bulbasaur', 'squirtle']
+export const GUIDE_SPRITES = ['charmander', 'bulbasaur', 'squirtle']
+
+/** Official item sprite (30x30) used for the v4 journey: hero slots, rail and section intros. */
+export const BALL_SPRITE = 'poke-ball'
+
+/** Every sprite served as a PNG from public/sprites/{id}.png. */
+export const IMAGE_SPRITES = [...GUIDE_SPRITES, BALL_SPRITE]
+
+/** Native pixel size of each PNG sprite. Show them at integer multiples only. */
+export const IMAGE_SIZES = { charmander: 96, bulbasaur: 96, squirtle: 96, [BALL_SPRITE]: 30 }
 
 /** Guide id (site.json pages[].guide) -> caption shown under the sprite. */
 export const GUIDE_NAMES = { charmander: 'Charmander', bulbasaur: 'Bulbasaur', squirtle: 'Squirtle' }

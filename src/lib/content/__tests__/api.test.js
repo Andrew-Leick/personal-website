@@ -21,7 +21,7 @@ describe('public API (7.2)', () => {
 
   test('real data has the 7.3 shapes', () => {
     const site = api.getSite()
-    expect(Object.keys(site).sort()).toEqual(['defaultTheme', 'description', 'fanArt', 'locale', 'ogImage', 'ogImageAlt', 'siteUrl', 'themeToggle', 'title'])
+    expect(Object.keys(site).sort()).toEqual(['defaultTheme', 'description', 'fanArt', 'layout', 'locale', 'ogImage', 'ogImageAlt', 'siteUrl', 'themeToggle', 'title'])
     const profile = api.getProfile()
     expect(Object.keys(profile).sort()).toEqual(['about', 'availability', 'contactBlurb', 'currently', 'email', 'headline', 'location', 'name', 'photo', 'resumeUrl', 'summary'].sort())
     for (const l of api.getLinks()) expect(Object.keys(l).sort()).toEqual(['id', 'isExternal', 'kind', 'label', 'showInHero', 'url'])

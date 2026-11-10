@@ -11,6 +11,9 @@ import { isPlaceholder } from './placeholders.js'
 /** Pokémon guide sprites a page may be led by (spec v3 8.2). */
 export const GUIDE_IDS = ['charmander', 'bulbasaur', 'squirtle']
 
+/** Site layouts (spec v4): one scrolling page with the Poké Ball rail, or the v3 separate pages. */
+export const LAYOUTS = ['journey', 'pages']
+
 export const SECTION_IDS = ['about', 'experience', 'projects', 'education', 'skills', 'contact']
 
 export const EMPLOYMENT_TYPE_LABELS = {
@@ -74,6 +77,7 @@ export function normalizeSite(raw) {
     defaultTheme: str(site.defaultTheme) ?? 'system',
     themeToggle: site.themeToggle !== false,
     fanArt: site.fanArt !== false,
+    layout: LAYOUTS.includes(site.layout) ? site.layout : 'journey',
   }
 }
 

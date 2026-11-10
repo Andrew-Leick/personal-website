@@ -6,13 +6,14 @@ import styles from './Section.module.css'
  * that can take focus from /page/#id links. No eyebrow number in v2.
  * Renders inside the page container.
  */
-export default function Section({ id, label, children }) {
+export default function Section({ id, label, level = 2, children }) {
   const headingId = `${id}-heading`
+  const Heading = `h${level}`
   return (
     <section id={id} aria-labelledby={headingId} className={styles.section}>
-      <h2 id={headingId} tabIndex={-1} className={styles.heading}>
+      <Heading id={headingId} tabIndex={-1} className={styles.heading}>
         <MenuCursor /> {label}
-      </h2>
+      </Heading>
       {children}
     </section>
   )

@@ -325,6 +325,20 @@ describe('validator: site.pages (v2 10.2)', () => {
   })
 })
 
+describe('validator: layout (v4)', () => {
+  test('layout may be omitted, journey or pages', () => {
+    expect(run().errors).toEqual([])
+    expect(run((r) => { r.site.layout = 'journey' }).errors).toEqual([])
+    expect(run((r) => { r.site.layout = 'pages' }).errors).toEqual([])
+  })
+  test('unknown layout is an error naming the allowed values', () => {
+    const { errors } = run((r) => { r.site.layout = 'scroll' })
+    expect(errors).toHaveLength(1)
+    expect(errors[0].path).toBe('layout')
+    expect(errors[0].hint).toContain('"journey", "pages"')
+  })
+})
+
 describe('validator: fanArt and guides (v3 8.2)', () => {
   test('fanArt must be a boolean, with the spec message', () => {
     const { errors } = run((r) => { r.site.fanArt = 'yes' })

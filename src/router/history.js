@@ -12,6 +12,7 @@
  *   'same'    navigate() to the URL already shown (no history entry, REQ-904)
  *   'pop'     back/forward to a different path
  *   'hash'    back/forward or native anchor click within the same path
+ *   'scroll'  the v4 journey's scroll spy replaced the path in place (replaceFromScroll)
  */
 
 import { resolveRoute } from '../lib/content/index.js'
@@ -102,6 +103,21 @@ export function getSnapshot() {
 /** Saved scroll position for a history entry key, or null if unknown. */
 export function getSavedScroll(key) {
   return scrollPositions.has(key) ? scrollPositions.get(key) : null
+}
+
+/**
+ * v4 journey: the reader scrolled into another page's section. Swap the path in place (no
+ * new history entry, hash dropped) so the URL, title and nav follow the scroll position.
+ * Route effects only sync the head for this type; they never scroll or move focus.
+ */
+export function replaceFromScroll(path) {
+  if (!path || (path === window.location.pathname && !window.location.hash)) return
+  try {
+    window.history.replaceState(window.history.state, '', path + window.location.search)
+  } catch {
+    return
+  }
+  emit('scroll')
 }
 
 /**

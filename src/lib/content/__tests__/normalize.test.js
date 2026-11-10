@@ -269,3 +269,11 @@ describe('v3 fanArt and guide (8.3)', () => {
   })
   test('GUIDE_IDS', () => expect(GUIDE_IDS).toEqual(['charmander', 'bulbasaur', 'squirtle']))
 })
+
+describe('v4 layout', () => {
+  test('layout defaults to journey; pages is kept; unknown falls back to journey', () => {
+    expect(normalizeSite({}).layout).toBe('journey')
+    expect(normalizeSite({ layout: 'pages' }).layout).toBe('pages')
+    expect(normalizeSite({ layout: 'carousel' }).layout).toBe('journey')
+  })
+})

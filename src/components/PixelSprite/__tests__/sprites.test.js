@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GUIDE_IDS } from '../../../lib/content/index.js'
-import { GUIDE_NAMES, GUIDE_TYPES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
+import { BALL_SPRITE, GUIDE_NAMES, GUIDE_SPRITES, GUIDE_TYPES, IMAGE_SIZES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
 
 // SPEC-v3 5.2 expected table.
 const EXPECTED = {
@@ -65,7 +65,13 @@ describe('sprites', () => {
   })
 
   it('guide Pokémon are PNG images, not SVG grids', () => {
-    expect(IMAGE_SPRITES).toEqual(GUIDE_IDS)
+    expect(GUIDE_SPRITES).toEqual(GUIDE_IDS)
     for (const id of GUIDE_IDS) expect(SPRITES[id]).toBeUndefined()
+  })
+
+  it('the Poké Ball is a 30px PNG and every PNG sprite has a size', () => {
+    expect(IMAGE_SPRITES).toEqual([...GUIDE_IDS, BALL_SPRITE])
+    expect(IMAGE_SIZES[BALL_SPRITE]).toBe(30)
+    for (const id of IMAGE_SPRITES) expect(IMAGE_SIZES[id]).toBeGreaterThan(0)
   })
 })

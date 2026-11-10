@@ -153,6 +153,21 @@ To turn all fan art off, add or edit this top-level field in `src/data/site.json
 
 With `fanArt` set to `false`, every Pokémon character sprite and name disappears from the site: Home shows eggs, the subpage title sprites are gone, and the fan-art disclaimer in the footer is hidden. Set it back to `true` (the default when the field is missing) to bring them back. Run `npm run validate` after either edit.
 
+With fan art off, the scrolling layout (below) still works: the rail shows eggs and no ball opens.
+
+### Layout: one scrolling page or separate pages
+
+`site.layout` in `src/data/site.json` picks how the pages are shown:
+
+```json
+"layout": "journey"
+```
+
+- `"journey"` (the default when the field is missing): Home and every page form one long scrolling page. Each page's Poké Ball sits in the Home menu, glides into a rail on the right (a dock at the bottom on phones) as you scroll, and opens to introduce its page's Pokémon when you reach that section. `/experience/`, `/projects/` and `/about/` still work as links: each opens the same page at that section, and the address bar follows you as you scroll.
+- `"pages"`: the previous layout, with a separate page per entry in `pages`.
+
+Anything else is a validation error. People who ask their system for reduced motion get no gliding or opening animation in either layout.
+
 ## Experience
 
 ### Add an experience

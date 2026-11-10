@@ -1,5 +1,5 @@
 import { BASE_URL } from '../../lib/content/paths.js'
-import { IMAGE_SPRITES, SPRITES } from './sprites.js'
+import { IMAGE_SIZES, IMAGE_SPRITES, SPRITES } from './sprites.js'
 
 /**
  * One sprite. The three guide Pokémon are 96x96 PNGs served from
@@ -13,8 +13,8 @@ export default function PixelSprite({ name, className }) {
       <img
         className={className}
         src={`${BASE_URL}sprites/${name}.png`}
-        width={96}
-        height={96}
+        width={IMAGE_SIZES[name]}
+        height={IMAGE_SIZES[name]}
         alt=""
         aria-hidden="true"
         draggable={false}

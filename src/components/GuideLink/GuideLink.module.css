@@ -89,10 +89,11 @@
   clip-path: inset(50%);
 }
 
+/* Pokémon name: hidden on screen, kept so the link's accessible name stays "Experience, with Charmander". */
 .caption {
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-  line-height: var(--leading-snug);
+  font-size: 0;
+  line-height: 0;
+  clip-path: inset(50%);
 }
 
 .guide[data-type="fire"] { --guide-accent: var(--color-type-fire); }
@@ -104,12 +105,14 @@
   .guide {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
-    row-gap: var(--space-2);
+    row-gap: 0;
     text-align: center;
   }
 
+  /* The sprite PNGs have transparent padding, so pull the label up under the visible pixels. */
   .text {
     justify-items: center;
+    margin-block-start: calc(-1 * var(--space-3));
   }
 
   .label {

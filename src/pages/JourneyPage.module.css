@@ -1,0 +1,77 @@
+/* v4 journey layout. */
+
+.journey {
+  min-width: 0;
+}
+
+/* The hero fills most of the first screen, so the scroll away from it is the glide. */
+.hero {
+  display: grid;
+  align-content: center;
+  min-height: calc(100svh - var(--space-20));
+}
+
+.section {
+  padding-block-end: var(--section-gap);
+  scroll-margin-top: var(--space-4);
+}
+
+.title {
+  margin-block-start: var(--space-8);
+}
+
+/* Intro: 96px box (the Pokémon's native size); the 60px ball sits in its center. */
+.intro {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+}
+
+.introBall {
+  --ball-size: 60px;
+  position: absolute;
+  inset: 18px;
+  display: none;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle, rgb(255 255 255 / 0.95) 0 22%, rgb(255 255 255 / 0.35) 40%, transparent 62%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pokemon {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+}
+
+.pokemonImg {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+
+/* Waiting for the reader to scroll here (set by useSectionReveal only). */
+.intro[data-pending] .introBall {
+  display: block;
+}
+
+.intro[data-pending] .pokemon {
+  opacity: 0;
+  transform: scale(0);
+}
+
+/*
+ * 768 to 1279px: the fixed rail would cover the right edge of the content, so the
+ * journey's containers keep clear of it. Wider screens have room beside the 64rem column.
+ */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .journey :global(.container) {
+    padding-inline-end: calc(var(--rail-ball-size) + var(--space-5) * 2);
+  }
+}

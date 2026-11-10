@@ -119,7 +119,7 @@ h3 {
  * and Chrome reports :focus-visible for programmatic focus that follows a key
  * press, so the ring is removed outright for them.
  */
-:is(h1, h2)[tabindex="-1"]:focus {
+:is(h1, h2, h3)[tabindex="-1"]:focus {
   outline: none;
 }
 
@@ -169,6 +169,13 @@ time {
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
+}
+
+/* v4 journey: room for the bottom dock (< 768px) so it never covers the footer. */
+@media (max-width: 767px) {
+  body:has([data-rail-slot]) {
+    padding-block-end: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .container {

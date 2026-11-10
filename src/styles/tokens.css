@@ -119,8 +119,17 @@
   --sprite-hop-duration: 600ms;
   --sprite-stagger: 250ms;
 
+  /* v4 journey: Poké Ball sizes are multiples of the 30px sprite */
+  --hero-ball-size: 60px;   /* >= 768: 90px */
+  --rail-ball-size: 60px;   /* right rail (>= 768px) */
+  --dock-ball-size: 60px;   /* bottom dock (< 768px) */
+  --dock-height: 72px;
+  --rail-pokemon: 96px;     /* the active section's Pokémon peeking out (>= 1280px only) */
+  --rail-track-height: 70vh;
+
   /* Layers */
   --z-header: 10;
+  --z-rail: 15;
   --z-menu: 20;
   --z-skip-link: 100;
 
@@ -143,6 +152,7 @@
     --text-display: 3rem;
     --text-page-title: 2rem;
     --sprite-px: 6px;
+    --hero-ball-size: 90px;
   }
 }
 

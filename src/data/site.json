@@ -8,6 +8,7 @@
   "defaultTheme": "system",
   "themeToggle": true,
   "fanArt": true,
+  "layout": "journey",
   "pages": [
     {
       "id": "experience",

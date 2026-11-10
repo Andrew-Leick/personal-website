@@ -45,6 +45,10 @@ npm run dev        # http://localhost:5173
 
 `public/fonts/` holds Press Start 2P and VT323, both under the SIL Open Font License 1.1. The license texts (`OFL-*.txt`) sit next to the fonts. The font files must not be modified: `check:routes` verifies their SHA-256 hashes.
 
+## Sprites
+
+`public/sprites/` holds the guide Pokémon (96×96) and the Poké Ball item sprite (`poke-ball.png`, 30×30, from the PokeAPI sprites repository). They are Nintendo / Creatures / GAME FREAK artwork used as fan art; the footer carries the trademark notice and `site.fanArt: false` hides them all. Show them at whole-number scales only (`image-rendering: pixelated`).
+
 ## Deploy (GitHub Pages)
 
 One-time setup, done by Andrew (agents don't create repos or push):
