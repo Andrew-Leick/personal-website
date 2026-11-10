@@ -1,6 +1,6 @@
 import { useLayoutEffect } from 'react'
 import { getHead, getSite } from '../lib/content/index.js'
-import { endAutoScroll, startAutoScroll } from '../lib/journey/state.js'
+import { glideTo as glide } from '../lib/journey/glide.js'
 import { prefersReducedMotion } from '../lib/motion.js'
 import { getSavedScroll } from './history.js'
 import { syncHead } from './syncHead.js'
@@ -45,16 +45,13 @@ function journeyTarget(route, hash) {
   return null
 }
 
-/** Smooth scroll for link clicks in the journey; the scroll spy pauses until it ends. */
+/**
+ * Eased glide for link clicks in the journey (src/lib/journey/glide.js). The scroll spy and
+ * the intros of sections passed on the way pause until it ends.
+ */
 function glideTo(target) {
-  const smooth = !prefersReducedMotion()
-  if (smooth) {
-    startAutoScroll()
-    window.addEventListener('scrollend', endAutoScroll, { once: true })
-  }
-  const behavior = smooth ? 'smooth' : 'instant'
-  if (target) target.scrollIntoView({ behavior, block: 'start' })
-  else window.scrollTo({ top: 0, left: 0, behavior })
+  const sectionId = target?.closest('[data-journey-section]')?.id ?? null
+  glide(target, sectionId)
 }
 
 function journeyEffects(route, nav) {

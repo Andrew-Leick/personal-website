@@ -1,19 +1,40 @@
 import { useEffect } from 'react'
-import { ballTransform, clamp, easeInOut, heroProgress, pickActive, staggered } from '../lib/journey/geometry.js'
-import { isAutoScrolling } from '../lib/journey/state.js'
+import {
+  arcLift,
+  ballTransform,
+  clamp,
+  easeInOut,
+  heroProgress,
+  pickActive,
+  staggered,
+  staggerOrder,
+  tilt,
+  trackProgress,
+} from '../lib/journey/geometry.js'
+import { hop } from '../lib/journey/openBall.js'
+import { setCurrentIntro, tickIntros } from '../lib/journey/intros.js'
+import { autoScrollTarget, isAutoScrolling, onNextGlideEnd } from '../lib/journey/state.js'
 import { prefersReducedMotion } from '../lib/motion.js'
 import { replaceFromScroll } from '../router/history.js'
 
 /** A section counts as active once its top passes this share of the viewport height. */
 const ACTIVE_LINE = 0.4
+/** Keyframes sampled per ball for the compositor-driven glide. */
+const SAMPLES = 24
+
+const supportsScrollTimeline = () => typeof window !== 'undefined' && typeof window.ScrollTimeline === 'function'
 
 /**
- * The v4 journey's single scroll handler (one rAF per frame, no React re-renders):
- * - glides each rail ball from its hero slot ([data-ball-slot]) to its rail slot
- *   ([data-rail-slot]) as the hero scrolls away;
+ * The v4 journey's scroll engine (no React re-renders):
+ * - glides each rail ball ([data-rail-ball]) from its hero slot ([data-ball-slot]) to its
+ *   rail slot ([data-rail-slot]) on an arc, shortest path first. Where the browser has
+ *   ScrollTimeline the glide is a scroll-linked WAAPI animation run by the compositor, so
+ *   the balls never trail the page; otherwise one rAF per frame writes the transforms;
+ * - fades the hero slot's ghost in and its label down as each ball leaves (--leave);
+ * - writes --journey-p (glide progress, fades in the track and dock) and
+ *   --journey-progress (piecewise: reaches ball i as section i becomes active);
  * - docks the rail (data-docked, inert off) once the glide is done;
- * - writes --journey-progress (0 to 1, whole page) for the rail's track;
- * - marks the active section in the rail and moves the URL to it (replaceFromScroll).
+ * - marks the active section (ring, hop, aria-current) and moves the URL to it.
  * @param {{ pages: { id: string, href: string }[], homeHref: string, railRef: { current: HTMLElement|null } }} opts
  */
 export default function useJourneyScroll({ pages, homeHref, railRef }) {
@@ -26,35 +47,130 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
     hrefOf.set('home', homeHref)
     const query = (attr, id) => document.querySelector(`[${attr}="${id}"]`)
 
+    let disposed = false
     let frame = 0
     let docked = null
     let active = null
+    let m = null // measurements, refreshed on resize / content changes
+    let compositor = [] // ScrollTimeline animations, one per ball
+
+    const reduced = () => prefersReducedMotion()
+    const maxScroll = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+    const ballT = (p, rank) => (reduced() ? (p < 0.5 ? 0 : 1) : easeInOut(staggered(p, rank, ids.length)))
+
+    /** Transform for ball `b` when the page is scrolled `s` px and the ball is `t` of the way. */
+    function transformAt(b, s, t) {
+      if (t >= 1) return 'none'
+      const hero = { x: b.heroDoc.x, y: b.heroDoc.y - s, width: b.heroDoc.width }
+      const { tx, ty, scale } = ballTransform(b.railRect, hero, t, b.lift)
+      const half = b.railRect.width / 2
+      const turn = reduced() ? 0 : tilt(t)
+      return `translate(${tx}px, ${ty}px) scale(${scale}) translate(${half}px, ${half}px) rotate(${turn}deg) translate(${-half}px, ${-half}px)`
+    }
+
+    function measure() {
+      const scrollY = window.scrollY
+      const balls = ids.map((id) => {
+        const heroSlot = query('data-ball-slot', id)
+        const railSlot = query('data-rail-slot', id)
+        const heroRect = heroSlot?.getBoundingClientRect()
+        return {
+          id,
+          mover: query('data-rail-ball', id),
+          railSlot,
+          railRect: railSlot?.getBoundingClientRect() ?? null,
+          heroLink: heroSlot?.closest('a') ?? null,
+          heroDoc: heroRect ? { x: heroRect.left, y: heroRect.top + scrollY, width: heroRect.width } : null,
+          link: rail.querySelector(`[data-rail-link="${id}"]`),
+          section: document.getElementById(id),
+          lastT: -1,
+        }
+      })
+      const first = balls[0]
+      const travel = first?.heroDoc ? first.heroDoc.y - 16 : 0
+      balls.forEach((b) => {
+        b.lift = b.heroDoc && b.railRect ? arcLift(b.heroDoc, b.railRect) : 0
+      })
+      const distances = balls.map((b) =>
+        b.heroDoc && b.railRect ? Math.hypot(b.railRect.x - b.heroDoc.x, b.railRect.y - b.heroDoc.y) : 0,
+      )
+      const ranks = staggerOrder(distances)
+      balls.forEach((b, i) => {
+        b.rank = ranks[i]
+      })
+
+      // Track from the first ball's center to the last's, along the rail's axis.
+      const railBox = rail.getBoundingClientRect()
+      const a = balls[0]?.railRect
+      const z = balls[balls.length - 1]?.railRect
+      if (a && z) {
+        const vertical = Math.abs(z.y - a.y) >= Math.abs(z.x - a.x)
+        const start = vertical ? a.y + a.height / 2 - railBox.top : a.x + a.width / 2 - railBox.left
+        const end = vertical ? z.y + z.height / 2 - railBox.top : z.x + z.width / 2 - railBox.left
+        rail.style.setProperty('--track-start', `${start}px`)
+        rail.style.setProperty('--track-length', `${Math.max(0, end - start)}px`)
+      }
+
+      m = { balls, travel }
+      buildCompositor()
+    }
+
+    function buildCompositor() {
+      compositor.forEach((animation) => animation.cancel())
+      compositor = []
+      const max = maxScroll()
+      if (!supportsScrollTimeline() || reduced() || !m || !(m.travel > 0) || !(max > 0)) return
+      let timeline
+      try {
+        timeline = new window.ScrollTimeline({ source: document.documentElement, axis: 'block' })
+      } catch {
+        return
+      }
+      for (const b of m.balls) {
+        if (!b.mover || !b.railRect || !b.heroDoc) continue
+        const end = Math.min(m.travel, max)
+        const keyframes = []
+        for (let k = 0; k <= SAMPLES; k += 1) {
+          const s = (end * k) / SAMPLES
+          const t = ballT(heroProgress(s, m.travel), b.rank)
+          keyframes.push({ offset: s / max, transform: transformAt(b, s, t), easing: 'linear' })
+        }
+        if (keyframes[keyframes.length - 1].offset < 1) keyframes.push({ offset: 1, transform: 'none' })
+        try {
+          b.mover.style.transform = ''
+          compositor.push(b.mover.animate(keyframes, { timeline, fill: 'both' }))
+        } catch {
+          compositor.forEach((animation) => animation.cancel())
+          compositor = []
+          return
+        }
+      }
+    }
 
     function update() {
       frame = 0
+      if (disposed) return
+      if (!m) measure()
+      // Reads first.
       const scrollY = window.scrollY
       const vh = window.innerHeight
-      const reduced = prefersReducedMotion()
+      const max = maxScroll()
+      const tops = m.balls.filter((b) => b.section).map((b) => ({ id: b.id, top: b.section.getBoundingClientRect().top }))
 
-      // 1. Glide: travel ends when the first hero slot would reach the top of the viewport.
-      const firstSlot = query('data-ball-slot', ids[0])
-      const travel = firstSlot ? firstSlot.getBoundingClientRect().top + scrollY - 16 : 0
-      const p = heroProgress(scrollY, travel)
-
-      ids.forEach((id, index) => {
-        const mover = query('data-rail-ball', id)
-        const railSlot = query('data-rail-slot', id)
-        const heroSlot = query('data-ball-slot', id)
-        if (!mover || !railSlot) return
-        let t = 1
-        if (heroSlot) t = reduced ? (p < 0.5 ? 0 : 1) : easeInOut(staggered(p, index, ids.length))
-        const { tx, ty, scale } = ballTransform(
-          railSlot.getBoundingClientRect(),
-          heroSlot ? heroSlot.getBoundingClientRect() : null,
-          t,
-        )
-        mover.style.transform = t >= 1 ? '' : `translate(${tx}px, ${ty}px) scale(${scale})`
-      })
+      // Then writes.
+      const p = heroProgress(scrollY, m.travel)
+      const useRaf = compositor.length === 0
+      for (const b of m.balls) {
+        const t = b.heroDoc ? ballT(p, b.rank) : 1
+        if (t === b.lastT) continue
+        b.lastT = t
+        if (useRaf && b.mover) {
+          const value = b.heroDoc && b.railRect ? transformAt(b, scrollY, t) : 'none'
+          b.mover.style.transform = value === 'none' ? '' : value
+          b.mover.style.willChange = t > 0 && t < 1 ? 'transform' : ''
+        }
+        b.heroLink?.style.setProperty('--leave', String(t))
+      }
 
       const isDocked = p >= 1
       if (isDocked !== docked) {
@@ -62,49 +178,82 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
         rail.toggleAttribute('data-docked', isDocked)
         rail.inert = !isDocked
       }
+      rail.style.setProperty('--journey-p', String(p))
 
-      // 2. Page progress for the rail's track.
-      const max = document.documentElement.scrollHeight - vh
-      rail.style.setProperty('--journey-progress', String(max > 0 ? clamp(scrollY / max) : 0))
-
-      // 3. Active section -> rail highlight + URL.
-      const tops = ids
-        .map((id) => ({ id, el: document.getElementById(id) }))
-        .filter((s) => s.el)
-        .map((s) => ({ id: s.id, top: s.el.getBoundingClientRect().top }))
-      // At the very bottom the last section wins, even if it is too short to reach the line.
+      const line = vh * ACTIVE_LINE
       const atBottom = max > 0 && scrollY >= max - 2
-      const next = atBottom && tops.length ? tops[tops.length - 1].id : pickActive(tops, vh * ACTIVE_LINE)
+      const fill = atBottom ? 1 : trackProgress(tops.map((s) => s.top), line)
+      rail.style.setProperty('--journey-progress', String(clamp(fill)))
+
+      // During a link glide the rail shows the destination at once, instead of flashing every
+      // section passed on the way.
+      const gliding = isAutoScrolling()
+      const next = gliding
+        ? (autoScrollTarget() ?? 'home')
+        : atBottom && tops.length
+          ? tops[tops.length - 1].id
+          : pickActive(tops, line)
       if (next !== active) {
+        const first = active === null
         active = next
-        rail.querySelectorAll('[data-rail-link]').forEach((link) => {
-          const on = link.getAttribute('data-rail-link') === next
-          link.toggleAttribute('data-active', on)
-          if (on) link.setAttribute('aria-current', 'location')
-          else link.removeAttribute('aria-current')
-        })
+        for (const b of m.balls) {
+          if (!b.link) continue
+          const on = b.id === next
+          b.link.toggleAttribute('data-active', on)
+          if (on) b.link.setAttribute('aria-current', 'location')
+          else b.link.removeAttribute('aria-current')
+          if (on && !first && docked) hop(b.railSlot, 6)
+        }
+        // Entering a section: the previous section's ball comes home (src/lib/journey/intros.js).
+        setCurrentIntro(next === 'home' ? null : next)
       }
-      if (!isAutoScrolling()) replaceFromScroll(hrefOf.get(active))
+      // Throws the current section's ball once its header slot is fully on screen.
+      tickIntros()
+      if (!gliding) replaceFromScroll(hrefOf.get(active))
       rail.setAttribute('data-ready', '')
     }
 
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(update)
     }
+    let measureFrame = 0
+    const remeasure = () => {
+      if (disposed || measureFrame) return
+      measureFrame = requestAnimationFrame(() => {
+        measureFrame = 0
+        m = null
+        update()
+      })
+    }
 
     window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', schedule)
-    window.addEventListener('scrollend', schedule)
-    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null
+    window.addEventListener('resize', remeasure)
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(remeasure) : null
     resizeObserver?.observe(document.body)
-    document.fonts?.ready.then(schedule).catch(() => undefined)
+    const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    motionQuery?.addEventListener?.('change', remeasure)
+    document.fonts?.ready.then(remeasure).catch(() => undefined)
+    // A glide that ends where it started fires no scroll event; run a frame anyway.
+    let stopGlideListen = () => undefined
+    const listenGlides = () => {
+      stopGlideListen = onNextGlideEnd(() => {
+        if (disposed) return
+        schedule()
+        listenGlides()
+      })
+    }
+    listenGlides()
     schedule()
 
     return () => {
+      disposed = true
       if (frame) cancelAnimationFrame(frame)
+      if (measureFrame) cancelAnimationFrame(measureFrame)
+      compositor.forEach((animation) => animation.cancel())
+      stopGlideListen()
       window.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', schedule)
-      window.removeEventListener('scrollend', schedule)
+      window.removeEventListener('resize', remeasure)
+      motionQuery?.removeEventListener?.('change', remeasure)
       resizeObserver?.disconnect()
     }
   }, [pages, homeHref, railRef])

@@ -16,8 +16,9 @@ import pageStyles from './Page.module.css'
 import styles from './JourneyPage.module.css'
 
 /**
- * Section title with its intro: a Poké Ball that opens to reveal the page's Pokémon
- * (useSectionReveal). At rest, and without JS, the Pokémon is simply shown.
+ * Section title with its intro (useSectionReveal): an empty dashed slot that the rail throws
+ * a Poké Ball into; it opens to reveal the page's Pokémon while the underline draws across.
+ * At rest, and without JS, the Pokémon and the full underline are simply shown.
  */
 function JourneySection({ page, content }) {
   const guide = content.site.fanArt && page.guide ? page.guide : null
@@ -28,10 +29,12 @@ function JourneySection({ page, content }) {
       aria-labelledby={headingId}
       className={`container ${pageStyles.page} ${styles.section}`}
       data-type={guide ? GUIDE_TYPES[guide] : 'normal'}
+      data-journey-section=""
     >
       <h2 id={headingId} tabIndex={-1} className={`${pageStyles.title} ${styles.title}`}>
         {guide && (
           <span className={styles.intro} data-intro={page.id} aria-hidden="true">
+            <span className={styles.slotRing} />
             <PokeBall className={styles.introBall} />
             <span className={styles.flash} data-part="flash" />
             <span className={styles.pokemon} data-part="pokemon">
@@ -39,7 +42,10 @@ function JourneySection({ page, content }) {
             </span>
           </span>
         )}
-        <span>{page.label}</span>
+        <span className={styles.label} data-part="label">
+          {page.label}
+        </span>
+        <span className={styles.underline} data-part="underline" aria-hidden="true" />
       </h2>
       <PageSections page={page} content={content} level={3} leadId={false} />
     </section>
@@ -55,7 +61,7 @@ export default function JourneyPage({ content }) {
   const { site, profile, links, pages } = content
   const railRef = useRef(null)
   useJourneyScroll({ pages, homeHref: getHomeHref(), railRef })
-  useSectionReveal({ enabled: site.fanArt })
+  useSectionReveal({ enabled: site.fanArt, pages })
   const heroLinks = links.filter((link) => link.showInHero)
 
   return (

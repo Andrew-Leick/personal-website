@@ -12,6 +12,7 @@ import styles from './BallRail.module.css'
  * useJourneyScroll moves each one over its hero slot; as the hero scrolls away they glide
  * here. Until then the rail is inert, so keyboard and screen-reader users meet each
  * page link once (in the hero). With fanArt off the balls are the original egg sprite.
+ * A ball that is out at its section heading shows as a dot ([data-out], src/lib/journey/rail.js).
  */
 const BallRail = forwardRef(function BallRail({ pages, fanArt }, ref) {
   return (
@@ -38,6 +39,7 @@ const BallRail = forwardRef(function BallRail({ pages, fanArt }, ref) {
                         <PixelSprite name="egg" className={styles.egg} />
                       </span>
                     )}
+                    {guide && <span className={styles.dot} aria-hidden="true" />}
                     <span className={styles.flash} data-part="flash" aria-hidden="true" />
                     {guide && (
                       <span className={styles.pokemon} data-part="pokemon" aria-hidden="true">

@@ -1,17 +1,6 @@
 // Small shared state for the v4 journey, kept outside React so scroll handlers never
 // re-render the page.
 
-/** Page ids whose section intro has already played (or must not play) this page load. */
-const revealed = new Set()
-
-export function isRevealed(id) {
-  return revealed.has(id)
-}
-
-export function markRevealed(id) {
-  revealed.add(id)
-}
-
 /** Rail ball element per page id, so a hero click can open the ball shown over its slot. */
 const balls = new Map()
 
@@ -25,19 +14,37 @@ export function getBall(id) {
 }
 
 /**
- * Programmatic scrolling (a link click gliding to a section). While it runs, the scroll
- * spy must not rewrite the URL to each section the page passes on the way.
+ * Programmatic scrolling (src/lib/journey/glide.js). While it runs, the scroll spy does not
+ * rewrite the URL, and section intros the page only passes on the way do not play.
+ * `target` is the journey section id the glide is heading to (null = top or unknown).
  */
-let autoScrollUntil = 0
+let gliding = false
+let glideTarget = null
+const glideEndListeners = new Set()
 
-export function startAutoScroll(maxMs = 1500) {
-  autoScrollUntil = performance.now() + maxMs
-}
-
-export function endAutoScroll() {
-  autoScrollUntil = 0
+export function setAutoScroll(on, target = null) {
+  gliding = on
+  glideTarget = on ? target : null
 }
 
 export function isAutoScrolling() {
-  return performance.now() < autoScrollUntil
+  return gliding
+}
+
+export function autoScrollTarget() {
+  return glideTarget
+}
+
+/** Run `callback({ target, cancelled })` once, when the next glide ends. Returns an unsubscribe. */
+export function onNextGlideEnd(callback) {
+  const once = (info) => {
+    glideEndListeners.delete(once)
+    callback(info)
+  }
+  glideEndListeners.add(once)
+  return () => glideEndListeners.delete(once)
+}
+
+export function emitGlideEnd(info) {
+  ;[...glideEndListeners].forEach((listener) => listener(info))
 }

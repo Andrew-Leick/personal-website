@@ -69,3 +69,52 @@ Make the site feel alive, modelled on https://jld2nd.dev/: one continuous page w
 - **Per-page `h1`** (SPEC-v2 5.3): in the journey, one `h1` per document (V4-12).
 - **`<main>` remount per route** (SPEC-v2 5.1): in the journey, `<main>` stays mounted across journey routes.
 - **v3 Home guide sprites** (SPEC-v3 8.2): in the journey, Poké Balls replace the Pokémon in the hero. `GuideLink` remains for `"pages"`.
+
+## 7. v4.1: smoother transitions
+
+A review in headless Chrome found 12 flow problems: the click waited on the opening, the ball snapped shut, intros played while passing, the fill ran ahead of the sections, the rail popped in, the active state snapped, the balls bunched, the hero slots looked empty, duplicate balls sat at the headings, the section introduction was small, and the balls trailed the page by a frame. v4.1 changes:
+
+| ID | Requirement |
+| :- | :- |
+| V4-16 | Hero click hands over to the page glide at the flash (`OPEN_HANDOFF`, 300ms). The rest of the 600ms opening plays while the page moves. When the glide ends, the ball closes with `closeBall`: the Pokémon shrinks back in and the ball fades in over 4 steps. Where the rail's peek shows the Pokémon (≥ 1280px, active), it stays. |
+| V4-17 | Journey link glides use `src/lib/journey/glide.js`: an eased rAF scroll lasting `clamp(450 + distance × 0.12, 450, 900)` ms. Wheel, touch or a key cancels it, and it reports a real end (`onNextGlideEnd`). This replaces native smooth scrolling and the 1.5s auto-scroll timeout. |
+| V4-18 | During a glide, sections the page only passes keep their intro pending. The destination's intro plays when the glide ends. A destination already opened from the hero gets a landing hop. The rail shows the destination as active for the whole glide. |
+| V4-19 | The rail track runs from the first ball's center to the last's (`--track-start`, `--track-length`). Its fill is piecewise (`trackProgress`): it reaches ball *i* exactly when section *i* becomes active. |
+| V4-20 | The track and the dock background fade in over the second half of the glide (`--journey-p`). The active ring steps in, the newly active ball hops, and the peeking Pokémon animates both in and out (position via `translate`, a transition rather than a jump). |
+| V4-21 | Balls glide on arcs (`arcPoint`, lift = ¼ of the distance, at most 120px) with a stepped tilt of up to 12°. The shortest path leaves first (`staggerOrder`). |
+| V4-22 | Hero slots show a grey ghost of the ball and dim their label as the ball leaves (`--leave`, 0 to 1); this reverses on scroll up. |
+| V4-23 | Section headings start pending with an empty dashed slot. At 70% of the viewport, a copy of the rail ball is thrown along an arc in quarter turns (`throwBall`, 420ms). It lands, opens, and the underline (now its own element) draws across in 8 steps while the title steps in. The resting, no-JS and reduced-motion state is the finished heading. |
+| V4-24 | Where `ScrollTimeline` exists (Chrome, Edge, Safari 26), the glide is a scroll-linked WAAPI animation with 24 sampled keyframes per ball, run by the compositor. Otherwise one rAF writes the transforms, with cached elements, reads before writes, and `will-change` only in flight. |
+
+Verified in headless Chrome:
+- the page starts moving 0.38s after a hero click and lands at about 1.15s (was 0.8s / 1.8s);
+- the ball opacity changes in 0.25 steps, with no snap;
+- Experience stays pending when a glide passes it;
+- the fill is at 0.5 as Projects activates and 1 at About;
+- 3 scroll-linked animations, one per ball;
+- reduced motion leaves 0 animations and nothing pending;
+- `fanArt: false` works.
+
+Still to do by hand: a real trackpad in Chrome, Safari and Firefox (Firefox uses the rAF path).
+
+## 8. v4.2: throws that always land, and the dot indicator
+
+| ID | Requirement |
+| :- | :- |
+| V4-25 | `throwBall` re-measures the heading's slot every frame and bends the arc toward it, so the ball lands exactly on the slot however far the reader keeps scrolling. The real ball appears (`data-landed`) in the same frame the thrown copy is removed. |
+| V4-26 | When a ball is thrown to its heading, its rail slot turns into a dot in the section's type color (`data-out`, `src/lib/journey/rail.js`), and the active ring tightens around it. |
+| V4-27 | When a different section is entered, every ball that is out returns: the dot grows back into the ball with a small drop (`data-return`). Re-entering an opened section turns its ball into a dot again. A hero click ends with the destination as a dot. |
+| V4-28 | Each journey section has an extra 20vh of space after it, so one section's animations finish before the next heading's throw starts. |
+
+## 9. v4.3: one ball out at a time
+
+| ID | Requirement |
+| :- | :- |
+| V4-29 | The rail no longer shows a Pokémon beside a ball. A ball that is out shows only as the dot (V4-26). |
+| V4-30 | Exactly one section's ball is out: the active section's (`src/lib/journey/intros.js`, driven each frame by `useJourneyScroll`). All other headers show the empty dashed slot. |
+| V4-31 | Entering a section throws its ball once its header slot is fully on screen. This replays on every visit, including when scrolling back up (the throw waits until the header scrolls into view). |
+| V4-32 | Leaving a section recalls its ball. If its header is on screen, the Pokémon shrinks back, the underline retracts, and the ball is thrown back to its rail slot (dot → ball). Off screen, the header just resets and the ball returns. |
+| V4-33 | A hero click opens the ball on the way. On arrival the destination header shows the Pokémon with a landing hop (no second throw), and its rail slot is a dot. |
+| V4-34 | Async steps carry a per-section generation number, so scrolling quickly back and forth cancels half-finished sequences cleanly. |
+
+This replaces V4-18's rule that an intro plays once per page load.

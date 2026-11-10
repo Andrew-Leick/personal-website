@@ -11,13 +11,43 @@
   min-height: calc(100svh - var(--space-20));
 }
 
+/*
+ * Extra room after each section (v4.2): the next heading's throw starts well after the
+ * previous section's ball has gone home, so the animations never pile up.
+ */
 .section {
-  padding-block-end: var(--section-gap);
+  padding-block-end: calc(var(--section-gap) + 20vh);
   scroll-margin-top: var(--space-4);
 }
 
-.title {
+/* The underline is its own element (not the border) so the intro can draw it across. */
+.section .title {
+  position: relative;
   margin-block-start: var(--space-8);
+  border-block-end: none;
+}
+
+.underline {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: var(--border-width-thick);
+  background-color: var(--page-accent, var(--color-border-strong));
+  transform-origin: left center;
+}
+
+.label {
+  display: inline-block;
+}
+
+/* Empty slot waiting for the throw: dashed ring in the page's type color. */
+.slotRing {
+  position: absolute;
+  inset: 14px;
+  border: var(--border-width-pixel) dashed var(--page-accent, var(--color-border-strong));
+  border-radius: var(--radius-full);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 /* Intro: 96px box (the Pokémon's native size); the 60px ball sits in its center. */
@@ -56,14 +86,40 @@
   image-rendering: pixelated;
 }
 
-/* Waiting for the reader to scroll here (set by useSectionReveal only). */
-.intro[data-pending] .introBall {
-  display: block;
+/*
+ * Waiting for the reader (data-pending on the h2, set by useSectionReveal only): empty
+ * dashed slot, no Pokémon, underline not drawn, title a step back. data-landed: the thrown
+ * ball has arrived and is about to open.
+ */
+.title[data-pending] .slotRing {
+  opacity: 0.7;
 }
 
-.intro[data-pending] .pokemon {
+.title[data-pending][data-landed] .slotRing {
+  opacity: 0;
+}
+
+.title[data-pending] .introBall {
+  display: block;
+  visibility: hidden;
+}
+
+.title[data-pending][data-landed] .introBall {
+  visibility: visible;
+}
+
+.title[data-pending] .pokemon {
   opacity: 0;
   transform: scale(0);
+}
+
+.title[data-pending] .underline {
+  transform: scaleX(0);
+}
+
+.title[data-pending] .label {
+  opacity: 0.35;
+  transform: translateX(-16px);
 }
 
 /*

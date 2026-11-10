@@ -18,11 +18,33 @@
   color: var(--color-text);
 }
 
-/* Empty: the rail's ball is drawn over it. 30px sprite x2 on phones, x3 from 768px. */
+/*
+ * The rail's ball is drawn over this square (30px sprite x2 on phones, x3 from 768px).
+ * --leave (0 to 1, set by useJourneyScroll) is how far that ball has left: a faint ghost
+ * ball fades in and the label dims, so the slot never looks empty. Both reverse on scroll up.
+ */
 .slot {
   display: block;
   width: var(--hero-ball-size);
   height: var(--hero-ball-size);
+}
+
+.ghost {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  filter: grayscale(1);
+  opacity: calc(var(--leave, 0) * 0.2);
+}
+
+.label {
+  opacity: calc(1 - var(--leave, 0) * 0.4);
+}
+
+.link:hover .label,
+.link:focus-visible .label {
+  opacity: 1;
 }
 
 .label {

@@ -28,17 +28,76 @@ export function staggered(p, index, count, spread = 0.18) {
 }
 
 /**
- * Transform that puts a rail ball over its hero slot (t = 0) or leaves it in the rail (t = 1).
+ * Point at `t` on a quadratic curve from `from` to `to` whose control point sits `lift` px
+ * above the midpoint, so a positive lift gives a throw-like arc. lift 0 is a straight line.
+ * @param {{ x: number, y: number }} from
+ * @param {{ x: number, y: number }} to
+ */
+export function arcPoint(from, to, lift, t) {
+  const cx = (from.x + to.x) / 2
+  const cy = (from.y + to.y) / 2 - lift
+  const u = 1 - t
+  return {
+    x: u * u * from.x + 2 * u * t * cx + t * t * to.x,
+    y: u * u * from.y + 2 * u * t * cy + t * t * to.y,
+  }
+}
+
+/** Arc height for a throw of this length: a quarter of the distance, at most 120px. */
+export function arcLift(from, to, max = 120) {
+  return Math.min(max, Math.hypot(to.x - from.x, to.y - from.y) * 0.25)
+}
+
+/**
+ * Transform that puts a rail ball over its hero slot (t = 0) or leaves it in the rail (t = 1),
+ * travelling on an arc `lift` px high (0 = straight).
  * Rects are viewport rects { x, y, width } of the untransformed rail slot and the hero slot.
  * The transform origin is the top-left corner.
  * @returns {{ tx: number, ty: number, scale: number }}
  */
-export function ballTransform(rail, hero, t) {
+export function ballTransform(rail, hero, t, lift = 0) {
   if (!rail || !hero || !(rail.width > 0)) return { tx: 0, ty: 0, scale: 1 }
-  const x = lerp(hero.x, rail.x, t)
-  const y = lerp(hero.y, rail.y, t)
+  const { x, y } = arcPoint(hero, rail, lift, t)
   const size = lerp(hero.width, rail.width, t)
   return { tx: x - rail.x, ty: y - rail.y, scale: size / rail.width }
+}
+
+/** In-flight tilt in degrees: 0 at both ends, up to -max mid-flight, in `steps` pixel steps. */
+export function tilt(t, max = 12, steps = 3) {
+  return (-max * Math.round(Math.sin(Math.PI * clamp(t)) * steps)) / steps
+}
+
+/**
+ * Launch order for the balls: the shortest path leaves first, so the balls never bunch.
+ * Returns each ball's rank (0 = first) in input order. Ties keep input order.
+ * @param {number[]} distances
+ */
+export function staggerOrder(distances) {
+  const order = distances.map((d, i) => [d, i]).sort((a, b) => a[0] - b[0] || a[1] - b[1])
+  const ranks = new Array(distances.length)
+  order.forEach(([, i], rank) => {
+    ranks[i] = rank
+  })
+  return ranks
+}
+
+/**
+ * Rail track fill (0 to 1) that reaches ball i exactly when section i becomes active and
+ * moves through each section in proportion: like Pac-Man eating the dots.
+ * 0 while the hero is showing; 1 once the last section is active.
+ * @param {number[]} tops  viewport tops of the sections, in document order
+ * @param {number} line    the activation line (viewport y)
+ */
+export function trackProgress(tops, line) {
+  const n = tops.length
+  if (n === 0 || tops[0] > line) return 0
+  if (n === 1) return 1
+  let i = 0
+  while (i + 1 < n && tops[i + 1] <= line) i += 1
+  if (i === n - 1) return 1
+  const span = tops[i + 1] - tops[i]
+  const within = span > 0 ? clamp((line - tops[i]) / span) : 0
+  return (i + within) / (n - 1)
 }
 
 /**

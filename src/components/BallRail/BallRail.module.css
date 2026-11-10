@@ -1,9 +1,16 @@
 /*
  * v4 rail. Mobile (< 768px): bottom dock. >= 768px: column on the right edge.
- * Balls use integer multiples of the 30px sprite: 30px in the dock, 60px in the rail.
+ * Balls use integer multiples of the 30px sprite (60px in both).
+ *
+ * Variables written by useJourneyScroll:
+ *   --journey-p         0 to 1, how far the balls have glided from the hero (fades the rail in)
+ *   --journey-progress  0 to 1, track fill: reaches ball i as section i becomes active
+ *   --track-start       px from the rail's top (rail) or left (dock) to the first ball's center
+ *   --track-length      px from the first ball's center to the last's
  */
 .rail {
   --rail-ball: var(--dock-ball-size);
+  --rail-fade: clamp(0, calc((var(--journey-p, 0) - 0.5) * 2), 1);
   position: fixed;
   inset-inline: 0;
   inset-block-end: 0;
@@ -13,19 +20,14 @@
   pointer-events: none;
 }
 
-/* Dock background: fades in once the balls have arrived. */
+/* Dock background: forms while the balls arrive (second half of the glide). */
 .rail::before {
   position: absolute;
   inset: 0;
   border-block-start: var(--border-width-pixel) solid var(--color-border-strong);
   background-color: var(--color-bg);
   content: "";
-  opacity: 0;
-  transition: opacity var(--duration-base) var(--ease-standard);
-}
-
-.rail[data-docked]::before {
-  opacity: 1;
+  opacity: var(--rail-fade);
 }
 
 /* Hidden until the first frame has placed the balls, so they never flash in the dock. */
@@ -33,17 +35,15 @@
   visibility: hidden;
 }
 
+/* Track through the ball centers; the fill eats its way from ball to ball. */
 .track {
   position: absolute;
-  inset-inline: 0;
-  inset-block-start: 0;
+  inset-inline-start: var(--track-start, 0);
+  inset-block-start: calc(var(--dock-height) / 2 - var(--border-width-thick) / 2);
+  width: var(--track-length, 0);
   height: var(--border-width-thick);
-  opacity: 0;
-  transition: opacity var(--duration-base) var(--ease-standard);
-}
-
-.rail[data-docked] .track {
-  opacity: 1;
+  background-color: var(--color-border);
+  opacity: var(--rail-fade);
 }
 
 .fill {
@@ -102,6 +102,45 @@
   --ball-size: var(--rail-ball);
   position: absolute;
   inset: 0;
+  transition: scale 160ms steps(3, end), opacity 160ms steps(3, end);
+}
+
+/*
+ * Ball out at its section heading (data-out, set by src/lib/journey/rail.js): the slot shows
+ * a small dot in the section's type color. `scale` (not `transform`) so it never fights the
+ * open/close animations. data-return: the ball drops back in when another section is entered.
+ */
+.dot {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border: var(--border-width-pixel) solid var(--sprite-outline);
+  border-radius: var(--radius-full);
+  background-color: var(--item-accent);
+  scale: 0;
+  transition: scale 200ms steps(4, end);
+}
+
+.link[data-out] .ball {
+  scale: 0;
+  opacity: 0;
+}
+
+.link[data-out] .dot {
+  scale: 1;
+}
+
+.link[data-return] .ball {
+  animation: ball-return 360ms steps(6, end);
+}
+
+@keyframes ball-return {
+  from { scale: 0; translate: 0 -16px; }
+  60% { scale: 1.15; translate: 0 0; }
+  to { scale: 1; translate: 0 0; }
 }
 
 .egg {
@@ -118,18 +157,27 @@
   pointer-events: none;
 }
 
-/* The page's Pokémon: hidden at rest, pops out above the ball when it opens. */
+/*
+ * The page's Pokémon: hidden at rest; pops out above the ball only when a hero click opens
+ * it (v4.3: no peek beside the rail, the Pokémon lives in the section header instead).
+ */
 .pokemon {
   position: absolute;
   inset-inline-start: 50%;
-  inset-block-end: 100%;
+  inset-block-start: 50%;
   width: var(--rail-pokemon);
   height: var(--rail-pokemon);
+  margin-block-start: calc(var(--rail-pokemon) / -2);
   margin-inline-start: calc(var(--rail-pokemon) / -2);
+  translate: 0 calc(-50% - var(--rail-ball) / 2);
   opacity: 0;
   transform: scale(0);
   transform-origin: 50% 100%;
   pointer-events: none;
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) steps(3, end),
+    translate var(--duration-base) var(--ease-standard);
 }
 
 .pokemonImg {
@@ -138,24 +186,24 @@
   image-rendering: pixelated;
 }
 
-/* Active section: type-colored ring, and its Pokémon peeks out of the ball. */
+/* Active section: type-colored ring that steps in. */
 .link[data-active] .slot::after {
   position: absolute;
   inset: -6px;
   border: var(--border-width-pixel) solid var(--item-accent);
   border-radius: var(--radius-full);
   content: "";
+  animation: ring-in 180ms steps(3, end);
 }
 
-/* Docked: the Pokémon only peeks out where there is room beside the rail (>= 1280px). */
-@media (min-width: 1280px) {
-  .rail[data-docked] .link[data-active] .pokemon {
-    opacity: 1;
-    transform: scale(1);
-    transition:
-      opacity var(--duration-base) var(--ease-standard),
-      transform var(--duration-base) steps(3, end);
-  }
+/* Around a dot, the ring tightens to fit it. */
+.link[data-out] .slot::after {
+  inset: calc(50% - 13px);
+}
+
+@keyframes ring-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* Hover or focus on the hero slot wiggles its ball (BallLink sets data-hover). */
@@ -191,12 +239,6 @@
   opacity: 1;
 }
 
-/* Hide the peeking Pokémon while the tip is shown, so they never overlap. */
-.link:hover .pokemon,
-.link:focus-visible .pokemon {
-  visibility: hidden;
-}
-
 .item[data-type="fire"] { --item-accent: var(--color-type-fire); }
 .item[data-type="grass"] { --item-accent: var(--color-type-grass); }
 .item[data-type="water"] { --item-accent: var(--color-type-water); }
@@ -217,13 +259,10 @@
   }
 
   .track {
-    inset-block: 50%;
-    inset-inline: 50% auto;
+    inset-block-start: var(--track-start, 0);
+    inset-inline-start: calc(50% - var(--border-width-thick) / 2);
     width: var(--border-width-thick);
-    height: var(--rail-track-height);
-    margin-inline-start: calc(var(--border-width-thick) / -2);
-    background-color: var(--color-border);
-    transform: translateY(-50%);
+    height: var(--track-length, 0);
   }
 
   .fill {
@@ -237,22 +276,6 @@
     height: 100%;
   }
 
-  /* Rail: the Pokémon peeks out to the left of its ball, the tip appears to the left. */
-  .pokemon {
-    inset-inline: auto 100%;
-    inset-block: 50% auto;
-    margin: calc(var(--rail-pokemon) / -2) var(--space-2) 0 0;
-    transform-origin: 100% 50%;
-  }
-
-  /* Before docking (balls still over the hero), the Pokémon pops out above instead. */
-  .rail:not([data-docked]) .pokemon {
-    inset-inline: 50% auto;
-    inset-block: auto 100%;
-    margin: 0 0 0 calc(var(--rail-pokemon) / -2);
-    transform-origin: 50% 100%;
-  }
-
   .tip {
     inset-block: 50% auto;
     inset-inline: auto calc(100% + var(--space-3));
@@ -261,10 +284,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rail[data-docked] .link[data-active] .pokemon {
+  .pokemon {
     transition: none;
   }
 
+  .ball,
+  .dot {
+    transition: none;
+  }
+
+  .link[data-active] .slot::after,
+  .link[data-return] .ball,
   .mover[data-hover] .ball {
     animation: none;
   }

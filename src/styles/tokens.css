@@ -124,8 +124,7 @@
   --rail-ball-size: 60px;   /* right rail (>= 768px) */
   --dock-ball-size: 60px;   /* bottom dock (< 768px) */
   --dock-height: 72px;
-  --rail-pokemon: 96px;     /* the active section's Pokémon peeking out (>= 1280px only) */
-  --rail-track-height: 70vh;
+  --rail-pokemon: 96px;     /* the Pokémon popping out of a rail ball on a hero click */
 
   /* Layers */
   --z-header: 10;

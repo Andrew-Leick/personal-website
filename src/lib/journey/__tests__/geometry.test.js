@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { ballTransform, clamp, easeInOut, heroProgress, lerp, pickActive, staggered } from '../geometry.js'
+import { arcLift, arcPoint, ballTransform, clamp, easeInOut, heroProgress, lerp, pickActive, staggered, staggerOrder, tilt, trackProgress } from '../geometry.js'
 
 describe('basics', () => {
   test('clamp and lerp', () => {
@@ -72,5 +72,60 @@ describe('pickActive', () => {
   test('nothing above the line is home', () => {
     expect(pickActive(sections, 50)).toBe('home')
     expect(pickActive([], 400)).toBe('home')
+  })
+})
+
+describe('arcs', () => {
+  const from = { x: 0, y: 100 }
+  const to = { x: 200, y: 100 }
+  test('arcPoint keeps its ends and peaks at half the lift', () => {
+    expect(arcPoint(from, to, 80, 0)).toEqual(from)
+    expect(arcPoint(from, to, 80, 1)).toEqual(to)
+    expect(arcPoint(from, to, 80, 0.5)).toEqual({ x: 100, y: 60 })
+  })
+  test('lift 0 is a straight line', () => {
+    expect(arcPoint(from, to, 0, 0.25)).toEqual({ x: 50, y: 100 })
+  })
+  test('arcLift is a quarter of the distance, capped', () => {
+    expect(arcLift(from, to)).toBe(50)
+    expect(arcLift({ x: 0, y: 0 }, { x: 0, y: 2000 })).toBe(120)
+  })
+  test('ballTransform follows the arc', () => {
+    const rail = { x: 200, y: 100, width: 60 }
+    const hero = { x: 0, y: 100, width: 60 }
+    expect(ballTransform(rail, hero, 0.5, 80)).toEqual({ tx: -100, ty: -40, scale: 1 })
+  })
+  test('tilt is 0 at the ends and stepped in between', () => {
+    expect(tilt(0)).toBe(-0)
+    expect(tilt(1)).toBe(-0)
+    expect(tilt(0.5)).toBe(-12)
+    expect([0, -4, -8, -12]).toContain(tilt(0.2))
+  })
+})
+
+describe('staggerOrder', () => {
+  test('shortest path first, ties in input order', () => {
+    expect(staggerOrder([900, 700, 500])).toEqual([2, 1, 0])
+    expect(staggerOrder([300, 300, 100])).toEqual([1, 2, 0])
+    expect(staggerOrder([])).toEqual([])
+  })
+})
+
+describe('trackProgress', () => {
+  test('0 on the hero, i/(n-1) the moment section i activates', () => {
+    const tops = [400, 1400, 2400]
+    expect(trackProgress(tops, 300)).toBe(0)
+    expect(trackProgress(tops, 400)).toBe(0)
+    expect(trackProgress(tops, 1400)).toBe(0.5)
+    expect(trackProgress(tops, 2400)).toBe(1)
+    expect(trackProgress(tops, 9000)).toBe(1)
+  })
+  test('moves through a section in proportion', () => {
+    expect(trackProgress([0, 1000, 2000], 500)).toBe(0.25)
+    expect(trackProgress([0, 1000, 2000], 1500)).toBe(0.75)
+  })
+  test('edge cases', () => {
+    expect(trackProgress([], 100)).toBe(0)
+    expect(trackProgress([50], 100)).toBe(1)
   })
 })
