@@ -1,0 +1,5 @@
+[
+  { "id": "languages", "name": "Languages", "items": ["Java", "Python", "C/C++", "TypeScript", "JavaScript", "HTML"] },
+  { "id": "cloud", "name": "Cloud (AWS)", "items": ["Lambda", "S3", "DynamoDB", "Athena", "API Gateway", "Redshift", "QuickSight"] },
+  { "id": "tools-frameworks", "name": "Tools & Frameworks", "items": ["Git", "Node.js", "MCP", "NumPy", "Visual Studio", "IntelliJ"] }
+]

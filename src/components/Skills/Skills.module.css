@@ -1,0 +1,22 @@
+.groups {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.group {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.name {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+}
+
+@media (min-width: 1024px) {
+  .group {
+    grid-template-columns: var(--date-column) minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Andrew Leick",
+  "headline": "Electrical Engineering student at Stanford University",
+  "summary": "Seeking software development roles. Two summers as a Software Development Engineer Intern at Amazon, building systems on AWS.",
+  "about": [
+    "I study Electrical Engineering at Stanford University and expect to graduate in June 2028. I am looking for software development roles.",
+    "At Amazon I spent two summers as a Software Development Engineer Intern. In 2026 I built a log correlation platform for on-call engineers, with an ingestion pipeline on AWS Lambda, S3 and DynamoDB, Athena-backed search, a TypeScript UI and an MCP server for AI agents. In 2025 I built an AWS system that centralizes contract storage, with Node.js Lambdas, Amazon Redshift and QuickSight dashboards.",
+    "Earlier, as a Software Research Intern at Georgia Tech Research Institute, I programmed a robot to navigate and map an unknown environment with Python and ROS. I was also president and programming/electrical lead of my FIRST Robotics team."
+  ],
+  "currently": null,
+  "availability": "TODO: target roles and availability (e.g. internship vs full-time, start date)",
+  "email": "aleick@stanford.edu",
+  "contactBlurb": "The best way to reach me is by email.",
+  "resumeUrl": "content/resume/andrew-leick-resume.pdf",
+  "photo": null
+}

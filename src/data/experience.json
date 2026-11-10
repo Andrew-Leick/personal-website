@@ -1,0 +1,74 @@
+[
+  {
+    "id": "amazon-sde-intern-2026",
+    "organization": "Amazon",
+    "organizationUrl": null,
+    "role": "Software Development Engineer Intern",
+    "employmentType": "internship",
+    "start": "2026-06",
+    "end": "2026-09",
+    "summary": null,
+    "highlights": [
+      "Designed and built an end-to-end log correlation platform for on-call engineers, cutting investigation time from 30–60 minutes to under 10 by returning every related log across the team’s services from a single search.",
+      "Designed a custom structured logging format and onboarded team services onto it.",
+      "Built an ingestion pipeline handling 100K+ requests/minute and 200+ TB of logs per month, using two Node.js AWS Lambdas to index raw logs in S3 by business identifier and store structured logs in DynamoDB.",
+      "Developed an API Gateway–triggered query Lambda that resolves related business identifiers from DynamoDB and dynamically builds Amazon Athena queries to return all correlated logs.",
+      "Built a TypeScript search UI based on on-call engineer feedback, integrated with the query backend and supporting fine-grained filtering across common identifiers.",
+      "Built an MCP server exposing the platform’s search and filtering tools to AI agents, enabling automated agent-driven investigations."
+    ],
+    "technologies": ["Node.js", "TypeScript", "AWS Lambda", "S3", "DynamoDB", "API Gateway", "Athena", "MCP"],
+    "visible": true
+  },
+  {
+    "id": "amazon-sde-intern-2025",
+    "organization": "Amazon",
+    "organizationUrl": null,
+    "role": "Software Development Engineer Intern",
+    "employmentType": "internship",
+    "start": "2025-06",
+    "end": "2025-09",
+    "summary": null,
+    "highlights": [
+      "Designed and implemented an end-to-end AWS system to centralize contract storage for a distributed team, replacing fragmented local document workflows.",
+      "Developed Node.js AWS Lambdas that extract contract metadata with AI-powered parsing and model it in Amazon Redshift for scalable cross-team querying.",
+      "Built Amazon QuickSight dashboards giving engineers and leadership a real-time view of contract status, ownership, and key metadata."
+    ],
+    "technologies": ["Node.js", "AWS Lambda", "Redshift", "QuickSight"],
+    "visible": true
+  },
+  {
+    "id": "gtri-research-intern",
+    "organization": "Georgia Tech Research Institute",
+    "organizationUrl": null,
+    "role": "Software Research Intern",
+    "employmentType": "internship",
+    "start": "2023-06",
+    "end": "2023-07",
+    "summary": null,
+    "highlights": [
+      "1 of 64 selected from a field of 2,200 applicants.",
+      "Built and programmed a robot to autonomously navigate and map an unknown environment using Python and Robot Operating System (ROS).",
+      "Presented results to an audience of 200."
+    ],
+    "technologies": ["Python", "ROS"],
+    "visible": true
+  },
+  {
+    "id": "first-robotics",
+    "organization": "FIRST Robotics",
+    "organizationUrl": null,
+    "role": "Team President & Programming/Electrical Lead",
+    "employmentType": null,
+    "start": "2020-08",
+    "end": "2024-05",
+    "summary": null,
+    "highlights": [
+      "Led a team of 25 students in designing, building, and programming a competition robot.",
+      "Fundraised and managed a budget of $20,000+ for parts, travel, and competition expenses.",
+      "Programmed robot control systems and autonomous pathfinding using Java.",
+      "Led CAD design for the team using Fusion360."
+    ],
+    "technologies": ["Java", "Fusion360"],
+    "visible": true
+  }
+]

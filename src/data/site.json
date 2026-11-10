@@ -1,0 +1,18 @@
+{
+  "siteUrl": "https://andrew-leick.github.io/",
+  "title": "Andrew Leick",
+  "description": "Andrew Leick is a Stanford Electrical Engineering student and two-time Amazon software development engineer intern seeking software roles.",
+  "locale": "en_US",
+  "ogImage": "og-image.png",
+  "ogImageAlt": "Andrew Leick, portfolio",
+  "defaultTheme": "system",
+  "themeToggle": true,
+  "sections": [
+    { "id": "about", "label": "About", "visible": true },
+    { "id": "experience", "label": "Experience", "visible": true },
+    { "id": "projects", "label": "Projects", "visible": true },
+    { "id": "education", "label": "Education", "visible": true },
+    { "id": "skills", "label": "Skills", "visible": true },
+    { "id": "contact", "label": "Contact", "visible": true }
+  ]
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "nfl-play-reconstruction",
+    "title": "NFL Play Reconstruction",
+    "summary": "College football computer-vision project built by a three-person team.",
+    "role": "Built the jersey number recognition model, the team classifier, and the offense/defense classifier",
+    "teamSize": 3,
+    "context": null,
+    "start": null,
+    "end": null,
+    "status": "in-progress",
+    "featured": true,
+    "order": 1,
+    "highlights": [
+      "TODO: add results/metrics and confirm the course context."
+    ],
+    "technologies": [
+      "Python"
+    ],
+    "links": {
+      "repo": "https://github.com/CarterDessommes/NFL-Play-Reconstruction"
+    },
+    "githubRepo": "CarterDessommes/NFL-Play-Reconstruction",
+    "image": null,
+    "visible": true
+  }
+]

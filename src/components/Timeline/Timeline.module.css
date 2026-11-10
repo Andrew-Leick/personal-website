@@ -1,0 +1,89 @@
+/*
+ * Shared layout for Experience and Education entries.
+ * < 1024px: single column, date in the meta line under the title.
+ * >= 1024px: fixed date column on the left, everything else on the right.
+ */
+.list {
+  display: grid;
+  gap: var(--space-12);
+  list-style: none;
+}
+
+.entry {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.dateColumn {
+  display: none;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+}
+
+.title {
+  font-size: var(--text-xl);
+}
+
+.separator {
+  color: var(--color-text-muted);
+}
+
+.org {
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+}
+
+.sub {
+  font-weight: var(--weight-medium);
+}
+
+.meta {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.prose {
+  max-width: var(--measure);
+}
+
+.highlights {
+  display: grid;
+  gap: var(--space-2);
+  max-width: var(--measure);
+  padding-inline-start: var(--space-5);
+}
+
+.highlights li::marker {
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 1024px) {
+  .entry {
+    grid-template-columns: var(--date-column) minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+
+  .dateColumn {
+    display: block;
+    padding-block-start: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dateInline {
+    display: none;
+  }
+}

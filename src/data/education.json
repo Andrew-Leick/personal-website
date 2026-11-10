@@ -1,0 +1,27 @@
+[
+  {
+    "id": "stanford",
+    "institution": "Stanford University",
+    "institutionUrl": "https://www.stanford.edu",
+    "degree": "B.S.",
+    "field": "Electrical Engineering",
+    "minor": null,
+    "start": null,
+    "end": "2028-06",
+    "expected": true,
+    "gpa": "3.83/4.0",
+    "honors": [],
+    "coursework": [
+      "Programming Abstractions",
+      "Computer Systems from the Ground Up",
+      "Computer Vision: Foundations and Applications",
+      "Operating Systems Principles (Fall 2026)",
+      "Mathematical Foundations of Computing",
+      "From Languages to Information",
+      "Probability for Computer Scientists",
+      "Linear Algebra & Multivariable Calculus",
+      "Differential Equations"
+    ],
+    "visible": true
+  }
+]

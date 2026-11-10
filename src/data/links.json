@@ -1,0 +1,5 @@
+[
+  { "id": "github", "kind": "github", "label": "GitHub", "url": "https://github.com/Andrew-Leick", "showInHero": true },
+  { "id": "linkedin", "kind": "linkedin", "label": "LinkedIn", "url": "https://www.linkedin.com/in/andrew-leick/", "showInHero": true },
+  { "id": "email", "kind": "email", "label": "Email", "url": "mailto:aleick@stanford.edu", "showInHero": true }
+]

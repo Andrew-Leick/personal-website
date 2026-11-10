@@ -1,0 +1,25 @@
+/*
+ * Dark theme.
+ * Every theme defines exactly the same set of semantic tokens.
+ */
+
+:root[data-theme="dark"] {
+  --color-bg: var(--gray-950);
+  --color-bg-subtle: var(--gray-900);
+  --color-text: var(--gray-50);
+  --color-text-muted: var(--gray-400);
+  --color-border: var(--gray-800);
+  --color-border-strong: var(--gray-50);
+  --color-accent: var(--gray-50);
+  --color-accent-contrast: var(--gray-950);
+  --color-link: var(--gray-50);
+  --color-link-hover: var(--gray-300);
+  --color-focus-ring: var(--gray-50);
+  --color-tag-bg: var(--gray-900);
+  --color-tag-text: var(--gray-200);
+  --color-selection-bg: var(--gray-50);
+  --color-selection-text: var(--gray-950);
+  --color-scheme: dark;
+
+  color-scheme: dark;
+}

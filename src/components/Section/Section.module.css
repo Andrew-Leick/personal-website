@@ -1,0 +1,21 @@
+.section {
+  margin-block-start: var(--section-gap);
+}
+
+.inner {
+  padding-block-start: var(--space-8);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.eyebrow {
+  margin-block-end: var(--space-2);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.heading {
+  margin-block-end: var(--space-8);
+}

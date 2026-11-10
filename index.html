@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#ffffff" />
+    <script>
+      /* Theme bootstrap (runs before first paint to avoid a flash of the wrong theme).
+         1. a saved choice in localStorage wins;
+         3. otherwise follow prefers-color-scheme.
+         Step 2 (site.json defaultTheme) is applied by the app on mount when nothing is saved.
+         The app re-checks saved values against its THEMES list. */
+      (function () {
+        var theme = null;
+        try {
+          var saved = window.localStorage.getItem('theme');
+          if (saved && /^[a-z][a-z0-9-]*$/.test(saved)) theme = saved;
+        } catch (e) {
+          /* storage blocked: fall through */
+        }
+        if (!theme) {
+          var dark = false;
+          try {
+            dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          } catch (e) {
+            /* matchMedia unavailable */
+          }
+          theme = dark ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+    <!-- content:head -->
+  </head>
+  <body>
+    <noscript>
+      <div class="noscript">
+        <!-- content:noscript -->
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
