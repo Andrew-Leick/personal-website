@@ -11,9 +11,7 @@
     "status": "in-progress",
     "featured": true,
     "order": 1,
-    "highlights": [
-      "TODO: add results/metrics and confirm the course context."
-    ],
+    "highlights": [],
     "technologies": [
       "Python"
     ],
