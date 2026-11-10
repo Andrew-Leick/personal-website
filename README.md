@@ -1,8 +1,8 @@
 # Andrew Leick: personal site
 
-A single-page portfolio built with Vite and React and hosted on GitHub Pages. All content lives in JSON files under `src/data/`. To add or edit an experience, project or skill, you edit one file. See **[docs/CONTENT-GUIDE.md](docs/CONTENT-GUIDE.md)**.
+A portfolio built with Vite and React and hosted on GitHub Pages: a Home page plus Experience, Projects and About pages (the page list is data in `src/data/site.json`). All content lives in JSON files under `src/data/`. To add or edit an experience, project or skill, you edit one file. See **[docs/CONTENT-GUIDE.md](docs/CONTENT-GUIDE.md)**.
 
-The build spec is in [docs/spec/SPEC.md](docs/spec/SPEC.md), and the authoritative content facts are in [docs/spec/CONTENT-FACTS.md](docs/spec/CONTENT-FACTS.md).
+The build spec is [docs/spec/SPEC.md](docs/spec/SPEC.md) (v1) as amended by [docs/spec/SPEC-v2.md](docs/spec/SPEC-v2.md) (home + subpages), and the authoritative content facts are in [docs/spec/CONTENT-FACTS.md](docs/spec/CONTENT-FACTS.md).
 
 ## Setup
 
@@ -19,25 +19,31 @@ npm run dev        # http://localhost:5173
 | Script | What it does |
 | :- | :- |
 | `npm run dev` | Dev server. Data edits reload the page; invalid content shows an error overlay. |
-| `npm run build` | `validate`, then a production build into `dist/` (including `robots.txt`, `sitemap.xml`, and `CNAME` for a custom domain) |
-| `npm run preview` | Serve `dist/` locally on port 4173 |
+| `npm run build` | `validate`, then a production build into `dist/`: `index.html`, one `{page}/index.html` per page, `404.html`, `robots.txt`, `sitemap.xml`, and `CNAME` for a custom domain |
+| `npm run preview` | Serve `dist/` locally on port 4173 (`/experience/` etc. work; unknown paths fall back to `index.html`, and the app shows Not found) |
 | `npm run lint` | oxlint (must report 0 errors and 0 warnings) |
 | `npm run test` | Vitest unit tests for the content API, formatters, validator and Vite plugin |
 | `npm run validate` | Validate `src/data/*.json`; placeholders are warnings |
 | `npm run validate:strict` | Same, but `TODO:` placeholders are errors (the deploy runs this) |
-| `npm run check:links` | Request every URL in the data and check nav anchors |
-| `npm run check:size` | Gzip size budget for `dist/` (JS ≤ 90 KB, CSS ≤ 15 KB, total ≤ 150 KB) |
+| `npm run check:links` | Request every URL in the data, and check every page and section link resolves to a route |
+| `npm run check:size` | Size budget for `dist/` (JS ≤ 90 KB gzip, CSS ≤ 15 KB gzip, fonts ≤ 32 KB raw, initial transfer incl. fonts ≤ 150 KB) |
+| `npm run check:routes` | After a build: every page has `dist/{id}/index.html` with the right `<title>` and canonical, `404.html` is `noindex`, the sitemap lists Home and every page, and no file differs from `index.html` outside the head. Uses `BASE_PATH` like the build. |
 | `npm run sync:github` | Refresh `src/data/generated/github.json` (stars, language) for projects with `githubRepo` |
-| `npm run ci` | lint + test + validate + build + check:size |
+| `npm run ci` | lint + test + validate + build + check:size + check:routes |
 
 ## How it fits together
 
 - `src/data/*.json`: the content.
-- `src/lib/content/`: the content API (`index.js`: `getSiteContent()` and the other getters), plus normalization, date formatting, and the validator (`validate.js`). Components import content only from `src/lib/content/index.js`.
-- `scripts/vite-plugin-content.js`: injects the `<title>`, meta, Open Graph and JSON-LD tags and the `<noscript>` fallback into `index.html`. It also validates content during build and dev, and emits `robots.txt`, `sitemap.xml` and `CNAME`.
-- `scripts/*.mjs`: validate, check-links, check-size, sync-github.
+- `src/lib/content/`: the content API (`index.js`: `getSiteContent()`, `getPages()`, `resolveRoute()`, `getHead()` and the other getters), plus normalization, routes (`routes.js`), per-page head values (`head.js`), date formatting, and the validator (`validate.js`). Components import content only from `src/lib/content/index.js`.
+- Routing: clean URLs with the History API. The build writes a real HTML file per page (`dist/experience/index.html`, ...) with that page's title, description and canonical, so every URL returns 200 on GitHub Pages; `dist/404.html` (noindex) covers unknown paths. In the browser a small router (frontend, `src/router/`) takes over.
+- `scripts/vite-plugin-content.js`: injects the per-page `<title>`, meta, Open Graph and (Home only) JSON-LD tags and the `<noscript>` fallback into `index.html`, following the request URL in dev. It validates content during build and dev, writes the per-page HTML files and `404.html`, and emits `robots.txt`, `sitemap.xml` and `CNAME`.
+- `scripts/*.mjs`: validate, check-links, check-size, check-routes, sync-github.
 - `.github/workflows/ci.yml`: runs `npm run ci` on pull requests and non-main branches.
 - `.github/workflows/deploy.yml`: runs on pushes to `main`. It does `validate:strict` and `ci`, then deploys to GitHub Pages.
+
+## Fonts and licenses
+
+`public/fonts/` holds Press Start 2P and Pixelify Sans, both under the SIL Open Font License 1.1. The license texts (`OFL-*.txt`) sit next to the fonts. The font files must not be modified: `check:routes` verifies their SHA-256 hashes.
 
 ## Deploy (GitHub Pages)
 
@@ -58,6 +64,6 @@ The deploy runs `npm run validate:strict`, so **it fails while any `TODO:` place
 - set `BASE_PATH: /personal-website/` in `.github/workflows/deploy.yml`;
 - set `"siteUrl": "https://andrew-leick.github.io/personal-website/"` in `src/data/site.json`.
 
-The build warns if the two don't agree.
+The build warns if the two don't agree. Page URLs follow automatically (`/personal-website/experience/`).
 
 **Custom domain:** change `siteUrl` in `src/data/site.json` to the domain. That's the only file change; `dist/CNAME` is generated from it. Then follow the DNS and HTTPS steps in [docs/CONTENT-GUIDE.md](docs/CONTENT-GUIDE.md#custom-domain-pending-no-domain-chosen-yet).

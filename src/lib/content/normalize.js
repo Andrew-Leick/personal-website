@@ -4,8 +4,12 @@
 
 import { formatDateRange, parseDate, DATE_PLACEHOLDER } from './format.js'
 import { resolveAsset } from './paths.js'
+import { isPlaceholder } from './placeholders.js'
 
 /** @typedef {import('./types.js').SiteContent} SiteContent */
+
+/** Pokémon guide sprites a page may be led by (spec v3 8.2). */
+export const GUIDE_IDS = ['charmander', 'bulbasaur', 'squirtle']
 
 export const SECTION_IDS = ['about', 'experience', 'projects', 'education', 'skills', 'contact']
 
@@ -69,6 +73,7 @@ export function normalizeSite(raw) {
     ogImageAlt: str(site.ogImageAlt),
     defaultTheme: str(site.defaultTheme) ?? 'system',
     themeToggle: site.themeToggle !== false,
+    fanArt: site.fanArt !== false,
   }
 }
 
@@ -282,11 +287,9 @@ export function normalizeSkills(raw) {
   }))
 }
 
-/**
- * site.sections filtered: visible && has content. index ("01", "02", ...) assigned after filtering.
- */
-export function deriveSections(rawSections, content) {
-  const hasContent = {
+/** Which sections have content to show (v1 deriveSections rules). */
+export function sectionHasContent(content) {
+  return {
     about: content.profile.about.length > 0,
     experience: content.experience.length > 0,
     projects: content.projects.length > 0,
@@ -294,11 +297,99 @@ export function deriveSections(rawSections, content) {
     skills: content.skills.length > 0,
     contact: Boolean(content.profile.email) || content.links.length > 0,
   }
-  const seen = new Set()
-  return (Array.isArray(rawSections) ? rawSections : [])
-    .filter((s) => s && SECTION_IDS.includes(s.id) && s.visible !== false && hasContent[s.id])
-    .filter((s) => (seen.has(s.id) ? false : (seen.add(s.id), true)))
-    .map((s, i) => ({ id: s.id, label: str(s.label) ?? s.id, index: String(i + 1).padStart(2, '0') }))
+}
+
+/** Every value is a real (non-placeholder, non-empty) string. */
+const allReal = (...values) => values.every((v) => typeof v === 'string' && v.trim() !== '' && !isPlaceholder(v))
+
+/** Derived teaser for one section (spec v2 10.5), or null. */
+export function sectionTeaser(sectionId, content) {
+  switch (sectionId) {
+    case 'experience': {
+      const e = content.experience[0]
+      return e && allReal(e.role, e.organization) ? `${e.role}, ${e.organization}` : null
+    }
+    case 'projects': {
+      const featured = content.projects.filter((p) => p.featured)
+      const pick = (featured.length ? featured : content.projects).slice(0, 2)
+      if (!pick.length || !allReal(...pick.map((p) => p.title))) return null
+      const titles = pick.map((p) => p.title).join(' · ')
+      return featured.length ? `Featured: ${titles}` : titles
+    }
+    case 'education': {
+      const e = content.education[0]
+      if (!e) return null
+      const dates = [e.start, e.end].filter((d) => d !== null)
+      if (!allReal(e.degree, e.field, e.institution, ...dates) || (e.minor !== null && !allReal(e.minor))) return null
+      return e.dateLabel ? `${e.degreeLabel}, ${e.institution} · ${e.dateLabel}` : `${e.degreeLabel}, ${e.institution}`
+    }
+    case 'skills': {
+      const g = content.skills[0]
+      if (!g) return null
+      const items = g.items.slice(0, 4)
+      return items.length && allReal(...items) ? items.join(', ') : null
+    }
+    default:
+      return null
+  }
+}
+
+/**
+ * site.pages -> shown pages (spec v2 10.3). A section is placed when its page is visible, the
+ * section is listed there, not hidden, has content, and was not already placed on an earlier
+ * page. A page is shown when it is visible and has at least one placed section.
+ * @param {unknown} rawPages  site.pages
+ * @param {object} content    normalized profile, links, experience, education, projects, skills
+ * @param {string} base       BASE_URL
+ * @returns {{ pages: import('./types.js').Page[], sections: import('./types.js').Section[] }}
+ */
+export function derivePages(rawPages, content, base = '/') {
+  const has = sectionHasContent(content)
+  const b = base.endsWith('/') ? base : `${base}/`
+  const placed = new Set()
+  const pages = []
+  const seenPages = new Set()
+  for (const raw of Array.isArray(rawPages) ? rawPages : []) {
+    if (!raw || typeof raw !== 'object' || raw.visible === false) continue
+    const id = str(raw.id)
+    if (!id || seenPages.has(id)) continue
+    seenPages.add(id)
+    const path = `${id}/`
+    const href = b + path
+    const sections = []
+    for (const s of Array.isArray(raw.sections) ? raw.sections : []) {
+      if (!s || !SECTION_IDS.includes(s.id) || s.visible === false || !has[s.id] || placed.has(s.id)) continue
+      placed.add(s.id)
+      sections.push({ id: s.id, label: str(s.label) ?? s.id, index: '', pageId: id, href: `${href}#${s.id}`, lead: s.id === id })
+    }
+    if (!sections.length) continue
+    const override = str(raw.teaser)
+    let teaser = override && override.trim() ? override : null
+    if (!teaser) {
+      for (const s of sections) {
+        teaser = sectionTeaser(s.id, content)
+        if (teaser) break
+      }
+    }
+    pages.push({
+      id,
+      path,
+      href,
+      label: str(raw.label) ?? id,
+      guide: GUIDE_IDS.includes(raw.guide) ? raw.guide : null,
+      blurb: str(raw.blurb) ?? '',
+      description: str(raw.description) ?? '',
+      teaser,
+      index: String(pages.length + 1).padStart(2, '0'),
+      sections,
+      hasLead: sections.some((s) => s.lead),
+    })
+  }
+  const sections = pages.flatMap((p) => p.sections)
+  sections.forEach((s, i) => {
+    s.index = String(i + 1).padStart(2, '0')
+  })
+  return { pages, sections }
 }
 
 export function deepFreeze(value) {
@@ -324,6 +415,6 @@ export function normalizeContent(raw, { baseUrl = '/' } = {}) {
   const education = normalizeEducation(raw.education)
   const projects = normalizeProjects(raw.projects, raw.github, baseUrl)
   const skills = normalizeSkills(raw.skills)
-  const sections = deriveSections(raw.site && raw.site.sections, { profile, links, experience, education, projects, skills })
-  return deepFreeze({ site, profile, links, experience, education, projects, skills, sections })
+  const { pages, sections } = derivePages(raw.site && raw.site.pages, { profile, links, experience, education, projects, skills }, baseUrl)
+  return deepFreeze({ site, profile, links, experience, education, projects, skills, pages, sections })
 }

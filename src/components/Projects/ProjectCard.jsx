@@ -16,15 +16,15 @@ function ContextLine({ project }) {
   const stats = project.githubStats
   const parts = []
   if (project.contextLabel) parts.push(<span key="context">{project.contextLabel}</span>)
-  if (stats) {
+  if (stats && stats.stars > 0) {
     parts.push(
       <span key="stars">
         <span aria-hidden="true">★</span>
         <span className="visually-hidden">GitHub stars:</span> {stats.stars}
       </span>,
     )
-    if (stats.language) parts.push(<span key="lang">{stats.language}</span>)
   }
+  if (stats?.language) parts.push(<span key="lang">{stats.language}</span>)
   if (parts.length === 0) return null
   return (
     <p className={styles.context}>
@@ -42,13 +42,14 @@ function ContextLine({ project }) {
  * One project. The card itself is not a link: the title and each link in the
  * link row are separate anchors (no nesting).
  */
-export default function ProjectCard({ project }) {
+export default function ProjectCard({ project, headingLevel = 3 }) {
+  const Title = `h${headingLevel}`
   const highlights = project.highlights.slice(0, MAX_CARD_HIGHLIGHTS)
   const linkItems = LINK_LABELS.filter(([key]) => project.links[key])
   const hasBadges = project.featured || project.statusLabel
 
   return (
-    <article className={styles.card} aria-labelledby={`project-${project.id}-title`}>
+    <article className={`pixel-dialog ${styles.card}`} aria-labelledby={`project-${project.id}-title`}>
       {project.image && (
         <img
           className={styles.image}
@@ -61,13 +62,13 @@ export default function ProjectCard({ project }) {
         />
       )}
 
-      <h3 id={`project-${project.id}-title`} className={styles.title}>
+      <Title id={`project-${project.id}-title`} className={styles.title}>
         {project.primaryUrl ? (
           <ExternalLink href={project.primaryUrl}>{project.title}</ExternalLink>
         ) : (
           project.title
         )}
-      </h3>
+      </Title>
 
       {hasBadges && (
         <p className={styles.badges}>

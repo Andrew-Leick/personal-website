@@ -1,0 +1,23 @@
+.box {
+  position: relative;
+}
+
+.more {
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  inset-block-end: var(--space-3);
+  width: calc(7 * var(--cursor-px));
+  height: calc(4 * var(--cursor-px));
+  color: var(--color-cursor);
+  animation: more-bob var(--sprite-bob-duration) steps(1, end) 0ms var(--sprite-bob-iterations) both;
+}
+
+@keyframes more-bob {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(var(--cursor-px)); }
+  100% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .more { animation: none; }
+}

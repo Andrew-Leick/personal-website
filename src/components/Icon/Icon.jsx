@@ -68,6 +68,12 @@ const PATHS = {
       <path d="M6 6l12 12M18 6 6 18" />
     </g>
   ),
+  'arrow-right': (
+    <g {...STROKE}>
+      <path d="M4 12h16" />
+      <path d="m14 6 6 6-6 6" />
+    </g>
+  ),
   copy: (
     <g {...STROKE}>
       <rect x="9" y="9" width="11" height="11" rx="1" />

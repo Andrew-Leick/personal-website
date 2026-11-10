@@ -1,18 +1,27 @@
-// Vite content plugin (spec 7.5, REQ-500 to REQ-505, REQ-114).
-// - Replaces <!-- content:head --> and <!-- content:noscript --> in index.html.
+// Vite content plugin (spec 7.5, REQ-500 to REQ-505, REQ-114; spec v2 REQ-940 to REQ-946).
+// - Replaces <!-- content:head --> (with the route's head, wrapped in content:head:start/end
+//   comments) and <!-- content:noscript --> in index.html. In dev the head follows the request URL.
 // - Validates content at build start (fails the build on errors) and on every data edit in dev
 //   (errors go to the Vite error overlay; the page reloads once fixed).
-// - Emits robots.txt, sitemap.xml and, for a custom domain, CNAME.
+// - After the build, writes dist/{pageId}/index.html per shown page and dist/404.html: copies of
+//   dist/index.html with only the head block swapped.
+// - Emits robots.txt, sitemap.xml (home + every page) and, for a custom domain, CNAME.
 
-import { existsSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { join, relative, sep, resolve } from 'node:path'
 import { loadAndValidate, formatReport, ROOT } from './lib/content-files.mjs'
 import { formatIssue } from '../src/lib/content/validate.js'
 import { normalizeContent } from '../src/lib/content/normalize.js'
 import { isPlaceholder } from '../src/lib/content/placeholders.js'
+import { headFor } from '../src/lib/content/head.js'
+import { resolveRouteWithBase, NOT_FOUND_ROUTE } from '../src/lib/content/routes.js'
 
 const HEAD_MARKER = '<!-- content:head -->'
 const NOSCRIPT_MARKER = '<!-- content:noscript -->'
+export const HEAD_START = '<!-- content:head:start -->'
+export const HEAD_END = '<!-- content:head:end -->'
+const HEAD_BLOCK_RE = /<!-- content:head:start -->[\s\S]*?<!-- content:head:end -->/
+const HOME_ROUTE = { kind: 'home', page: null, canonicalPath: null }
 
 /** Escape text for HTML text and double-quoted attribute contexts. */
 export function escapeHtml(value) {
@@ -35,8 +44,6 @@ function jsonForScript(value) {
     .replace(LINE_SEPARATORS, (ch) => `\\u${ch.charCodeAt(0).toString(16)}`)
 }
 
-const real = (v) => (typeof v === 'string' && v.trim() && !isPlaceholder(v) ? v : null)
-
 /** Hostname to put in CNAME, or null for *.github.io (no custom domain). */
 export function customDomainOf(siteUrl) {
   try {
@@ -48,29 +55,30 @@ export function customDomainOf(siteUrl) {
 }
 
 /**
- * Build the <head> block.
+ * Build the <head> block for a route (spec v2 section 7), wrapped in the start/end comments.
  * @param {import('../src/lib/content/types.js').SiteContent} c
+ * @param {import('../src/lib/content/types.js').Route} [route]  defaults to Home
  */
-export function renderHead(c) {
-  const { site, profile, links, education } = c
-  const headline = real(profile.headline)
-  const title = headline ? `${profile.name} | ${headline}` : site.title
-  const description = site.description
-  const url = site.siteUrl
+export function renderHead(c, route = HOME_ROUTE) {
+  const { site } = c
+  const { title, description, canonical, robots, jsonLd } = headFor(route, c)
   // site.ogImage is resolved with BASE_URL; turn it into an absolute URL under siteUrl.
-  const ogImageAbs = site.ogImage ? absoluteFromBase(site.ogImage, url) : null
+  const ogImageAbs = site.ogImage ? absoluteFromBase(site.ogImage, site.siteUrl) : null
 
   const tags = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
-    `<link rel="canonical" href="${escapeHtml(url)}" />`,
+  ]
+  if (canonical) tags.push(`<link rel="canonical" href="${escapeHtml(canonical)}" />`)
+  if (robots === 'noindex') tags.push(`<meta name="robots" content="noindex" />`)
+  tags.push(
     `<meta property="og:type" content="website" />`,
     `<meta property="og:locale" content="${escapeHtml(site.locale)}" />`,
     `<meta property="og:site_name" content="${escapeHtml(site.title)}" />`,
     `<meta property="og:title" content="${escapeHtml(title)}" />`,
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
-    `<meta property="og:url" content="${escapeHtml(url)}" />`,
-  ]
+  )
+  if (canonical) tags.push(`<meta property="og:url" content="${escapeHtml(canonical)}" />`)
   if (ogImageAbs) {
     tags.push(
       `<meta property="og:image" content="${escapeHtml(ogImageAbs)}" />`,
@@ -88,24 +96,16 @@ export function renderHead(c) {
     tags.push(`<meta name="twitter:image" content="${escapeHtml(ogImageAbs)}" />`)
     if (site.ogImageAlt) tags.push(`<meta name="twitter:image:alt" content="${escapeHtml(site.ogImageAlt)}" />`)
   }
+  // JSON-LD Person (REQ-503): Home only (REQ-880).
+  if (jsonLd) tags.push(`<script type="application/ld+json">${jsonForScript(jsonLd)}</script>`)
 
-  // JSON-LD Person (REQ-503). Placeholder values are omitted. No address/location by design.
-  const person = { '@context': 'https://schema.org', '@type': 'Person', name: profile.name, url }
-  if (headline) person.jobTitle = headline
-  if (real(profile.email)) person.email = `mailto:${profile.email}`
-  const sameAs = links.filter((l) => l.kind !== 'email' && /^https:\/\//.test(l.url) && !isPlaceholder(l.url)).map((l) => l.url)
-  if (sameAs.length) person.sameAs = sameAs
-  const alumniOf = education
-    .filter((e) => real(e.institution))
-    .map((e) => {
-      const org = { '@type': 'CollegeOrUniversity', name: e.institution }
-      if (real(e.institutionUrl)) org.url = e.institutionUrl
-      return org
-    })
-  if (alumniOf.length) person.alumniOf = alumniOf
-  tags.push(`<script type="application/ld+json">${jsonForScript(person)}</script>`)
+  return [HEAD_START, ...tags, HEAD_END].join('\n    ')
+}
 
-  return tags.join('\n    ')
+/** Replace the head block of a built HTML file (between the start/end comments). */
+export function swapHead(html, head) {
+  if (!HEAD_BLOCK_RE.test(html)) throw new Error('content plugin: head block comments not found in built index.html')
+  return html.replace(HEAD_BLOCK_RE, () => head)
 }
 
 /** "/base/og-image.png" (BASE_URL-resolved) -> absolute URL under siteUrl. */
@@ -126,10 +126,13 @@ export function renderNoscript(c) {
     if (isPlaceholder(l.url)) continue
     items.push(`<li><a href="${escapeHtml(l.url)}">${escapeHtml(l.label)}</a></li>`)
   }
+  // REQ-943: links to each shown page, absolute with the base.
+  const pages = (c.pages ?? []).map((p) => `<li><a href="${escapeHtml(p.href)}">${escapeHtml(p.label)}</a></li>`)
   return [
     `<p><strong>${escapeHtml(profile.name)}</strong></p>`,
     `<p>This site needs JavaScript. My resume and links:</p>`,
     `<ul>${items.join('')}</ul>`,
+    ...(pages.length ? [`<ul>${pages.join('')}</ul>`] : []),
   ].join('\n      ')
 }
 
@@ -137,13 +140,24 @@ export function renderRobots(siteUrl) {
   return `User-agent: *\nAllow: /\nSitemap: ${siteUrl}sitemap.xml\n`
 }
 
-export function renderSitemap(siteUrl) {
+/** Absolute URLs of Home and every shown page (REQ-882). */
+export function sitemapUrls(c) {
+  return [c.site.siteUrl, ...c.pages.map((p) => `${c.site.siteUrl}${p.path}`)]
+}
+
+export function renderSitemap(c) {
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    `  <url><loc>${escapeHtml(siteUrl)}</loc></url>\n` +
+    sitemapUrls(c).map((u) => `  <url><loc>${escapeHtml(u)}</loc></url>\n`).join('') +
     '</urlset>\n'
   )
+}
+
+/** Dev request URL -> pathname (query and hash removed). */
+export function requestPath(url) {
+  if (typeof url !== 'string' || !url) return '/'
+  return url.split(/[?#]/)[0] || '/'
 }
 
 class ContentError extends Error {
@@ -159,6 +173,7 @@ class ContentError extends Error {
 export function contentPlugin() {
   let base = '/'
   let command = 'serve'
+  let outDir = 'dist'
   let state = null // { content, result } from the last load
 
   const load = () => {
@@ -180,6 +195,7 @@ export function contentPlugin() {
     configResolved(config) {
       base = config.base
       command = config.command
+      outDir = resolve(config.root, config.build.outDir)
     },
 
     buildStart() {
@@ -229,7 +245,7 @@ export function contentPlugin() {
 
     transformIndexHtml: {
       order: 'pre',
-      handler(html) {
+      handler(html, ctx) {
         const { content, result } = load()
         if (!content) {
           // Dev with invalid content: keep the page loadable so the overlay can show the errors.
@@ -238,7 +254,12 @@ export function contentPlugin() {
             .replace(HEAD_MARKER, `<title>Content error</title>`)
             .replace(NOSCRIPT_MARKER, `<pre>${msg}</pre>`)
         }
-        return html.replace(HEAD_MARKER, renderHead(content)).replace(NOSCRIPT_MARKER, renderNoscript(content))
+        // Build: index.html is Home (other routes are written in writeBundle).
+        // Dev: Vite's SPA fallback serves index.html for every path, so use the request URL (REQ-946).
+        const route = command === 'serve' ? resolveRouteWithBase(requestPath(ctx && ctx.originalUrl), base, content) : HOME_ROUTE
+        const head = renderHead(content, route)
+        const noscript = renderNoscript(content)
+        return html.replace(HEAD_MARKER, () => head).replace(NOSCRIPT_MARKER, () => noscript)
       },
     },
 
@@ -247,13 +268,30 @@ export function contentPlugin() {
       if (!content) return
       const siteUrl = content.site.siteUrl
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: renderRobots(siteUrl) })
-      this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: renderSitemap(siteUrl) })
+      this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: renderSitemap(content) })
       // Custom domain: GitHub Pages reads dist/CNAME. Derived from siteUrl unless public/CNAME exists
       // (Vite copies that one; the validator checks it agrees with siteUrl).
       const domain = customDomainOf(siteUrl)
       if (domain && !existsSync(join(ROOT, 'public', 'CNAME'))) {
         this.emitFile({ type: 'asset', fileName: 'CNAME', source: `${domain}\n` })
       }
+    },
+
+    // REQ-940 to REQ-942: one static HTML file per shown page plus 404.html, each a copy of the
+    // built index.html with only the head block swapped, so asset URLs (absolute with base) match.
+    writeBundle(options) {
+      const content = state && state.content ? state.content : load().content
+      if (!content) return
+      const dir = options && options.dir ? options.dir : outDir
+      const indexPath = join(dir, 'index.html')
+      if (!existsSync(indexPath)) return
+      const html = readFileSync(indexPath, 'utf8')
+      for (const page of content.pages) {
+        const route = { kind: 'page', page, canonicalPath: null }
+        mkdirSync(join(dir, page.id), { recursive: true })
+        writeFileSync(join(dir, page.id, 'index.html'), swapHead(html, renderHead(content, route)))
+      }
+      writeFileSync(join(dir, '404.html'), swapHead(html, renderHead(content, NOT_FOUND_ROUTE)))
     },
   }
 }

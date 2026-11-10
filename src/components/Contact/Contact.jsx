@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../Icon/Icon.jsx'
 import { LinkList } from '../LinkButton/LinkButton.jsx'
+import ResumeLink from '../ResumeLink/ResumeLink.jsx'
 import styles from './Contact.module.css'
 
 const RESET_MS = 2000
@@ -16,7 +17,10 @@ async function copyToClipboard(text) {
   }
 }
 
-/** Contact blurb, email (mailto + copy button with live announcement), all links. */
+/**
+ * Contact blurb, email (mailto + copy button with live announcement), all
+ * links, and the resume button (REQ-874).
+ */
 export default function Contact({ profile, links }) {
   const [status, setStatus] = useState('idle') // idle | copied | failed
   const timer = useRef(null)
@@ -43,7 +47,7 @@ export default function Contact({ profile, links }) {
           <a className={styles.email} href={`mailto:${profile.email}`}>
             {profile.email}
           </a>
-          <button type="button" className={styles.copy} onClick={handleCopy} data-print="hide">
+          <button type="button" className={`pixel-button ${styles.copy}`} onClick={handleCopy} data-print="hide">
             <Icon name="copy" />
             <span>{buttonText}</span>
           </button>
@@ -53,7 +57,10 @@ export default function Contact({ profile, links }) {
         {announcement}
       </p>
 
-      <LinkList links={links} variant="outline" label="Profiles and contact links" />
+      <div className={styles.actions}>
+        <ResumeLink href={profile.resumeUrl} />
+        <LinkList links={links} variant="outline" label="Profiles and contact links" />
+      </div>
     </div>
   )
 }

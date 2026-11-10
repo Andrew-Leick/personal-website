@@ -3,7 +3,8 @@ import ExternalLink from '../ExternalLink/ExternalLink.jsx'
 import TagList from '../Tag/Tag.jsx'
 import styles from '../Timeline/Timeline.module.css'
 
-function ExperienceEntry({ job }) {
+function ExperienceEntry({ job, headingLevel }) {
+  const Title = `h${headingLevel}`
   const date = <DateRange label={job.dateLabel} start={job.start} end={job.end} />
   // Locations are never shown on the site (CONTENT-FACTS decision), even if data has one.
   const rest = [job.employmentType].filter(Boolean)
@@ -13,7 +14,7 @@ function ExperienceEntry({ job }) {
       <p className={styles.dateColumn}>{date}</p>
       <div className={styles.body}>
         <div className={styles.header}>
-          <h3 className={styles.title}>{job.role}</h3>
+          <Title className={styles.title}>{job.role}</Title>
           <span className={styles.separator} aria-hidden="true">
             ·
           </span>
@@ -51,13 +52,16 @@ function ExperienceEntry({ job }) {
   )
 }
 
-/** Experience list, newest first (order comes from getExperience()). */
-export default function Experience({ experience }) {
+/**
+ * Experience list, newest first (order comes from getExperience()).
+ * `headingLevel` (2 or 3) sets the entry title tag (SPEC-v2 5.6).
+ */
+export default function Experience({ experience, headingLevel = 3 }) {
   if (!experience || experience.length === 0) return null
   return (
     <ol className={styles.list}>
       {experience.map((job) => (
-        <ExperienceEntry key={job.id} job={job} />
+        <ExperienceEntry key={job.id} job={job} headingLevel={headingLevel} />
       ))}
     </ol>
   )

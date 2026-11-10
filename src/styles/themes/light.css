@@ -5,21 +5,29 @@
 
 :root,
 :root[data-theme="light"] {
-  --color-bg: var(--gray-0);
-  --color-bg-subtle: var(--gray-100);
-  --color-text: var(--gray-950);
-  --color-text-muted: var(--gray-600);
-  --color-border: var(--gray-200);
-  --color-border-strong: var(--gray-950);
-  --color-accent: var(--gray-950);
-  --color-accent-contrast: var(--gray-0);
-  --color-link: var(--gray-950);
-  --color-link-hover: var(--gray-700);
-  --color-focus-ring: var(--gray-950);
-  --color-tag-bg: var(--gray-100);
-  --color-tag-text: var(--gray-800);
-  --color-selection-bg: var(--gray-950);
-  --color-selection-text: var(--gray-0);
+  --color-bg: var(--pk-paper);
+  --color-bg-subtle: var(--pk-paper-2);
+  --color-text: var(--pk-ink);
+  --color-text-muted: var(--pk-ink-2);
+  --color-border: var(--pk-sand);
+  --color-border-strong: var(--pk-ink);
+  --color-accent: var(--pk-red);
+  --color-accent-contrast: var(--pk-white);
+  --color-link: var(--pk-ink);
+  --color-link-hover: var(--pk-red-deep);
+  --color-focus-ring: var(--pk-blue);
+  --color-tag-bg: var(--pk-sky-1);
+  --color-tag-text: var(--pk-ink);
+  --color-selection-bg: var(--pk-blue);
+  --color-selection-text: var(--pk-white);
+  --color-dialog-bg: var(--pk-white);
+  --color-dialog-border: var(--pk-ink);
+  --color-dialog-border-inner: var(--pk-slate);
+  --color-cursor: var(--pk-red);
+  --color-type-fire: var(--pk-fire);
+  --color-type-grass: var(--pk-grass);
+  --color-type-water: var(--pk-water);
+  --color-type-normal: var(--pk-ink-2);
   --color-scheme: light;
 
   color-scheme: light;
@@ -28,21 +36,29 @@
 /* Print always uses the light tokens, whatever theme is active on screen. */
 @media print {
   html:root[data-theme] {
-    --color-bg: var(--gray-0);
-    --color-bg-subtle: var(--gray-100);
-    --color-text: var(--gray-950);
-    --color-text-muted: var(--gray-600);
-    --color-border: var(--gray-200);
-    --color-border-strong: var(--gray-950);
-    --color-accent: var(--gray-950);
-    --color-accent-contrast: var(--gray-0);
-    --color-link: var(--gray-950);
-    --color-link-hover: var(--gray-700);
-    --color-focus-ring: var(--gray-950);
-    --color-tag-bg: var(--gray-100);
-    --color-tag-text: var(--gray-800);
-    --color-selection-bg: var(--gray-950);
-    --color-selection-text: var(--gray-0);
+    --color-bg: var(--pk-paper);
+    --color-bg-subtle: var(--pk-paper-2);
+    --color-text: var(--pk-ink);
+    --color-text-muted: var(--pk-ink-2);
+    --color-border: var(--pk-sand);
+    --color-border-strong: var(--pk-ink);
+    --color-accent: var(--pk-red);
+    --color-accent-contrast: var(--pk-white);
+    --color-link: var(--pk-ink);
+    --color-link-hover: var(--pk-red-deep);
+    --color-focus-ring: var(--pk-blue);
+    --color-tag-bg: var(--pk-sky-1);
+    --color-tag-text: var(--pk-ink);
+    --color-selection-bg: var(--pk-blue);
+    --color-selection-text: var(--pk-white);
+    --color-dialog-bg: var(--pk-white);
+    --color-dialog-border: var(--pk-ink);
+    --color-dialog-border-inner: var(--pk-slate);
+    --color-cursor: var(--pk-red);
+    --color-type-fire: var(--pk-fire);
+    --color-type-grass: var(--pk-grass);
+    --color-type-water: var(--pk-water);
+    --color-type-normal: var(--pk-ink-2);
     --color-scheme: light;
 
     color-scheme: light;

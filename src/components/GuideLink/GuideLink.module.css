@@ -1,0 +1,139 @@
+.guide {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-4);
+  min-height: var(--target-min);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration-line: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.guide:hover,
+.guide:focus-visible {
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text);
+}
+
+.sprite {
+  width: calc(16 * var(--sprite-px));
+  height: calc(16 * var(--sprite-px));
+  animation: sprite-bob var(--sprite-bob-duration) steps(1, end) var(--guide-delay, 0ms)
+    var(--sprite-bob-iterations) both;
+}
+
+/* The bob stays first in the list so it is never restarted when hover or focus ends. */
+.guide:hover .sprite,
+.guide:focus-visible .sprite {
+  animation:
+    sprite-bob var(--sprite-bob-duration) steps(1, end) var(--guide-delay, 0ms)
+      var(--sprite-bob-iterations) both,
+    sprite-hop var(--sprite-hop-duration) steps(1, end) 0ms infinite;
+}
+
+.text {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  min-width: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.cursor {
+  visibility: hidden;
+}
+
+.labelText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.guide:hover .cursor,
+.guide:focus-visible .cursor {
+  visibility: visible;
+}
+
+.guide:hover .labelText,
+.guide:focus-visible .labelText {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--border-width-pixel);
+  text-decoration-color: var(--guide-accent);
+  text-underline-offset: 0.25em;
+}
+
+/*
+ * Hidden ", with " that completes the accessible name ("Experience, with
+ * Charmander"). Not position:absolute like .visually-hidden: Chrome inserts a
+ * space before out-of-flow nodes, which would give "Experience , with ...".
+ */
+.joiner {
+  font-size: 0;
+  clip-path: inset(50%);
+}
+
+.caption {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
+.guide[data-type="fire"] { --guide-accent: var(--color-type-fire); }
+.guide[data-type="grass"] { --guide-accent: var(--color-type-grass); }
+.guide[data-type="water"] { --guide-accent: var(--color-type-water); }
+.guide[data-type="normal"] { --guide-accent: var(--color-type-normal); }
+
+@media (min-width: 480px) {
+  .guide {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    row-gap: var(--space-2);
+    text-align: center;
+  }
+
+  .text {
+    justify-items: center;
+  }
+
+  .label {
+    position: relative;
+  }
+
+  .cursor {
+    position: absolute;
+    inset-inline-end: 100%;
+    margin-inline-end: var(--space-2);
+  }
+}
+
+@keyframes sprite-bob {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(calc(var(--sprite-px) * -1)); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes sprite-hop {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(calc(var(--sprite-px) * -2)); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(calc(var(--sprite-px) * -1)); }
+  100% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sprite,
+  .guide:hover .sprite,
+  .guide:focus-visible .sprite {
+    animation: none;
+  }
+}

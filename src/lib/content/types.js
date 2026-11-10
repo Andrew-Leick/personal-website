@@ -2,11 +2,30 @@
 // This module exports nothing at runtime.
 
 /** @typedef {{ siteUrl: string, title: string, description: string, locale: string,
- *   ogImage: string|null, ogImageAlt: string|null, defaultTheme: string, themeToggle: boolean }} Site
+ *   ogImage: string|null, ogImageAlt: string|null, defaultTheme: string, themeToggle: boolean,
+ *   fanArt: boolean }} Site  // fanArt: false hides all Pokémon sprites (default true)
  *   // ogImage is resolved with BASE_URL */
 
 /** @typedef {{ id: 'about'|'experience'|'projects'|'education'|'skills'|'contact',
- *   label: string, index: string }} Section   // index: "01", "02", ... in display order */
+ *   label: string, index: string,
+ *   pageId: string, href: string, lead: boolean }} Section
+ *   // index: "01", "02", ... across all placed sections in page order (kept from v1; v2 UI does not render it)
+ *   // href: page.href + '#' + id ; lead: id === pageId */
+
+/** @typedef {{ id: string, path: string,        // "experience/" (no leading slash, trailing slash)
+ *   href: string,                                // BASE_URL + path, e.g. "/experience/"
+ *   label: string, guide: 'charmander'|'bulbasaur'|'squirtle'|null, blurb: string, description: string,
+ *   teaser: string|null, index: string,          // "01", "02", ... among shown pages
+ *   sections: Section[], hasLead: boolean }} Page */
+
+/** @typedef {{ kind: 'home'|'page'|'not-found', page: Page|null,
+ *   canonicalPath: string|null }} Route
+ *   // canonicalPath: the normalized full pathname (with base) the router should show,
+ *   //   e.g. "/experience/" for input "/experience" or "/experience/index.html"; null for not-found */
+
+/** @typedef {{ title: string, description: string, canonical: string|null,
+ *   robots: 'index'|'noindex', jsonLd: object|null }} Head
+ *   // jsonLd: the Person object on home, null elsewhere */
 
 /** @typedef {{ src: string, alt: string }} Image   // src already resolved with BASE_URL */
 
@@ -47,6 +66,6 @@
 /** @typedef {{ id: string, name: string, items: string[] }} SkillGroup */
 
 /** @typedef {{ site: Site, profile: Profile, links: Link[], experience: Experience[],
- *   education: Education[], projects: Project[], skills: SkillGroup[], sections: Section[] }} SiteContent */
+ *   education: Education[], projects: Project[], skills: SkillGroup[], pages: Page[], sections: Section[] }} SiteContent */
 
 export {}

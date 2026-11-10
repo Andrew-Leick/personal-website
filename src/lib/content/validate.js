@@ -1,11 +1,12 @@
 // Content validator (spec 6.11). Pure apart from optional file-existence checks under publicDir.
 // No dependencies. Returns { errors: Issue[], warnings: Issue[] } with Issue = { file, path, message, hint }.
 
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, statSync, readdirSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { isValidDate, parseDate, DATE_PLACEHOLDER } from './format.js'
 import { isPlaceholder, isPlaceholderId } from './placeholders.js'
-import { SECTION_IDS } from './normalize.js'
+import { SECTION_IDS, GUIDE_IDS } from './normalize.js'
+import { RESERVED_PAGE_IDS } from './routes.js'
 
 /** @typedef {{ file: string, path: string, message: string, hint: string|null }} Issue */
 
@@ -57,14 +58,33 @@ const SCHEMAS = {
     ogImageAlt: req(nul(s(120))),
     defaultTheme: req({ type: 'string', max: 40, pattern: THEME_RE, patternHint: 'use "system", "light", "dark" or a lowercase theme name like "navy"' }),
     themeToggle: req({ type: 'boolean' }),
-    sections: req({
+    fanArt: { type: 'boolean', hint: 'use true to show the sprites or false to hide them' },
+    pages: req({
       type: 'array',
+      minItems: 1,
+      maxItems: 6,
       item: {
         type: 'object',
         fields: {
-          id: req({ type: 'enum', values: SECTION_IDS }),
+          id: req({ type: 'id' }),
           label: req(s(20)),
-          visible: req({ type: 'boolean' }),
+          guide: nul({ type: 'enum', values: GUIDE_IDS }),
+          blurb: req(s(100)),
+          description: req(s(160, { min: 50 })),
+          teaser: nul(s(100)),
+          visible: { type: 'boolean' },
+          sections: req({
+            type: 'array',
+            minItems: 1,
+            item: {
+              type: 'object',
+              fields: {
+                id: req({ type: 'enum', values: SECTION_IDS }),
+                label: req(s(20)),
+                visible: { type: 'boolean' },
+              },
+            },
+          }),
         },
       },
     }),
@@ -270,10 +290,17 @@ export function jsonParseIssue(file, text, err) {
 // Validator core
 
 class Ctx {
-  constructor({ strict, publicDir, fileExists, fileSize }) {
+  constructor({ strict, publicDir, fileExists, fileSize, listDir }) {
     this.strict = Boolean(strict)
     this.publicDir = publicDir || null
     this.fileExists = fileExists || ((p) => existsSync(p))
+    this.listDir = listDir || ((p) => {
+      try {
+        return readdirSync(p)
+      } catch {
+        return []
+      }
+    })
     this.fileSize = fileSize || ((p) => {
       try {
         return statSync(p).size
@@ -374,7 +401,7 @@ function checkValue(ctx, file, path, value, spec) {
       if (isPlaceholderId(value)) ctx.placeholder(file, path, value, 'placeholder entry (id starts with "todo-")')
       return
     case 'boolean':
-      if (typeof value !== 'boolean') ctx.error(file, path, `expected true or false, got ${preview(value)}`, 'write true or false without quotes')
+      if (typeof value !== 'boolean') ctx.error(file, path, `expected true or false, got ${preview(value)}`, spec.hint || 'write true or false without quotes')
       return
     case 'integer':
       if (!Number.isInteger(value)) return ctx.error(file, path, `expected a whole number, got ${preview(value)}`, 'write a number without quotes, e.g. 3')
@@ -412,7 +439,9 @@ function checkValue(ctx, file, path, value, spec) {
       return checkStrArray(ctx, file, path, value, spec)
     case 'array':
       if (!Array.isArray(value)) return ctx.error(file, path, `expected a list [...], got ${typeName(value)}`)
-      value.forEach((item, i) => checkValue(ctx, file, `${path}[${i}]`, item, spec.item))
+      if (spec.minItems !== undefined && value.length < spec.minItems) ctx.error(file, path, `has ${value.length} items, needs at least ${spec.minItems}`, 'add an item')
+      if (spec.maxItems !== undefined && value.length > spec.maxItems) ctx.error(file, path, `has ${value.length} items, the limit is ${spec.maxItems}`, `remove ${value.length - spec.maxItems} item(s)`)
+      value.forEach((item, i) => checkValue(ctx, file, `${path}${itemPath(i, item)}`, item, spec.item))
       return
     case 'object':
       if (typeof value !== 'object' || Array.isArray(value)) return ctx.error(file, path, `expected an object {...}, got ${typeName(value)}`)
@@ -508,31 +537,83 @@ function checkObject(ctx, key, data) {
   return true
 }
 
+/** site.json: like checkObject, but the v1 "sections" key gets a migration message. */
+function checkSiteObject(ctx, site) {
+  const file = FILES.site
+  if (!site || typeof site !== 'object' || Array.isArray(site)) return checkObject(ctx, 'site', site)
+  if (!('sections' in site)) return checkObject(ctx, 'site', site)
+  ctx.error(file, 'sections', '"sections" moved into "pages[].sections" in v2', 'see docs/CONTENT-GUIDE.md "Pages and navigation"')
+  const { sections: _ignored, ...rest } = site
+  checkFields(ctx, file, '', rest, SCHEMAS.site)
+  return true
+}
+
+/**
+ * Page rules (spec v2 10.2): unique ids, reserved ids, no clash with public/ entries, each
+ * section on at most one page, unplaced sections warned, composed titles <= 70 characters.
+ */
+function checkPages(ctx, pages, profile) {
+  const file = FILES.site
+  const pageIds = new Map()
+  const guideAt = new Map()
+  const placedAt = new Map() // section id -> { path, pageId }
+  const publicNames = ctx.publicDir ? new Set(ctx.listDir(ctx.publicDir)) : new Set()
+  const name = profile && typeof profile.name === 'string' ? profile.name : null
+  pages.forEach((page, i) => {
+    if (!page || typeof page !== 'object' || Array.isArray(page)) return
+    const path = `pages${itemPath(i, page)}`
+    if (typeof page.id === 'string' && ID_RE.test(page.id)) {
+      const idPath = `${path}.id`
+      if (pageIds.has(page.id)) ctx.error(file, idPath, `duplicate page id ${q(page.id)} (also at pages[${pageIds.get(page.id)}])`, 'page ids must be unique; rename one')
+      else pageIds.set(page.id, i)
+      if (RESERVED_PAGE_IDS.includes(page.id)) {
+        ctx.error(file, idPath, `page id ${q(page.id)} is reserved`, `choose another id; ${RESERVED_PAGE_IDS.map(q).join(', ')} are used by the build`)
+      } else if (publicNames.has(page.id)) {
+        ctx.error(file, idPath, `page id ${q(page.id)} clashes with public/${page.id}`, 'choose another id, or rename that file or folder in public/')
+      }
+    }
+    if (typeof page.guide === 'string' && GUIDE_IDS.includes(page.guide)) {
+      if (guideAt.has(page.guide)) ctx.error(file, `${path}.guide`, `duplicate guide ${q(page.guide)} (also at pages[${guideAt.get(page.guide)}])`, 'each guide can lead only one page')
+      else guideAt.set(page.guide, i)
+    }
+    if (name && typeof page.label === 'string' && page.label.trim()) {
+      const title = `${page.label} | ${name}`
+      if (title.length > 70) ctx.warn(file, `${path}.label`, `page title ${q(title)} is ${title.length} characters, over 70`, 'use a shorter label so search results do not cut the title off')
+    }
+    if (!Array.isArray(page.sections)) return
+    page.sections.forEach((sec, j) => {
+      if (!sec || typeof sec !== 'object' || typeof sec.id !== 'string' || !SECTION_IDS.includes(sec.id)) return
+      const secPath = `${path}.sections${itemPath(j, sec)}.id`
+      const prev = placedAt.get(sec.id)
+      if (prev) {
+        ctx.error(file, secPath, `section ${q(sec.id)} is listed twice: here and at ${prev.path}${prev.pageId ? ` (page ${q(prev.pageId)})` : ''}`, 'a section can appear on only one page; remove one of them')
+      } else {
+        placedAt.set(sec.id, { path: secPath, pageId: typeof page.id === 'string' ? page.id : null })
+      }
+    })
+  })
+  for (const id of SECTION_IDS) {
+    if (!placedAt.has(id)) ctx.warn(file, 'pages', `section ${q(id)} is not on any page, so it will not be shown`, `add { "id": ${q(id)}, "label": "..." } to a page's "sections" if you want it shown`)
+  }
+}
+
 /**
  * Validate all content.
  * @param {{ site?: any, profile?: any, links?: any, experience?: any, education?: any,
  *   projects?: any, skills?: any, github?: any }} raw  parsed JSON per file; a missing key
  *   is skipped (the loader reports missing/unparseable files itself). `github` is optional.
  * @param {{ strict?: boolean, publicDir?: string, fileExists?: (p: string) => boolean,
- *   fileSize?: (p: string) => number|null }} [options]
+ *   fileSize?: (p: string) => number|null, listDir?: (p: string) => string[] }} [options]
  * @returns {{ errors: Issue[], warnings: Issue[] }}
  */
 export function validateContent(raw, options = {}) {
   const ctx = new Ctx(options)
   const has = (k) => raw && Object.prototype.hasOwnProperty.call(raw, k) && raw[k] !== undefined
 
-  if (has('site') && checkObject(ctx, 'site', raw.site)) {
+  if (has('site') && checkSiteObject(ctx, raw.site)) {
     const site = raw.site
     if (site.ogImage && !site.ogImageAlt) ctx.error(FILES.site, 'ogImageAlt', 'required when ogImage is set', 'describe the image, e.g. "Andrew Leick, portfolio"')
-    if (Array.isArray(site.sections)) {
-      const seen = new Map()
-      site.sections.forEach((sec, i) => {
-        if (sec && typeof sec.id === 'string') {
-          if (seen.has(sec.id)) ctx.error(FILES.site, `sections[${i}].id`, `duplicate section ${q(sec.id)} (also at [${seen.get(sec.id)}])`, 'list each section once')
-          else seen.set(sec.id, i)
-        }
-      })
-    }
+    if (Array.isArray(site.pages)) checkPages(ctx, site.pages, has('profile') ? raw.profile : null)
     if (ctx.publicDir && typeof site.siteUrl === 'string') {
       const cnamePath = join(ctx.publicDir, 'CNAME')
       if (ctx.fileExists(cnamePath)) {

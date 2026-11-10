@@ -4,6 +4,13 @@
   max-width: var(--measure);
 }
 
+.photo {
+  width: var(--photo-size);
+  height: var(--photo-size);
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
 .currently {
   margin-block-start: var(--space-2);
   padding-inline-start: var(--space-4);

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Check every URL in the content data, and that every nav #anchor resolves to a rendered section.
+// Check every URL in the content data, that every page href and section href resolves to a route
+// (spec v2 REQ-947), and that every #anchor used in data points to a placed section.
 // Usage: node scripts/check-links.mjs
 // - 10 s timeout per URL; HEAD first, GET if HEAD is refused.
 // - LinkedIn often answers 999 (bot blocking): reported as a warning, not an error.
@@ -8,7 +9,8 @@
 // Exits 1 on any 4xx/5xx, network failure, or unknown anchor.
 
 import { readContentFiles, formatReport, loadAndValidate } from './lib/content-files.mjs'
-import { normalizeContent, SECTION_IDS } from '../src/lib/content/normalize.js'
+import { normalizeContent } from '../src/lib/content/normalize.js'
+import { resolveRouteWithBase, sectionHrefOf } from '../src/lib/content/routes.js'
 import { isPlaceholder } from '../src/lib/content/placeholders.js'
 
 const TIMEOUT_MS = 10_000
@@ -37,19 +39,29 @@ function collectUrls() {
   return out
 }
 
-/** Anchors the page links to: nav (from getSections), plus #top and #main. */
+/** Internal hrefs: every page href and section href must resolve; data #anchors must be placed. */
 function checkAnchors() {
   const problems = []
-  const rendered = new Set(['top', 'main', ...c.sections.map((s) => s.id)])
-  for (const s of c.sections) {
-    if (!SECTION_IDS.includes(s.id)) problems.push(`#${s.id}: not a known section id`)
+  const hrefs = []
+  for (const p of c.pages) {
+    hrefs.push(p.href)
+    const r = resolveRouteWithBase(p.href, '/', c)
+    if (r.kind !== 'page' || r.page.id !== p.id) problems.push(`page "${p.id}": ${p.href} does not resolve to the page`)
   }
-  // Any "#anchor" referenced in data URLs must point to a rendered section.
+  for (const s of c.sections) {
+    const href = sectionHrefOf(s.id, c)
+    hrefs.push(href)
+    const [path, hash] = (href ?? '').split('#')
+    const r = resolveRouteWithBase(path, '/', c)
+    if (!href || r.kind !== 'page' || r.page.id !== s.pageId || hash !== s.id) problems.push(`section "${s.id}": ${href} does not resolve to page "${s.pageId}"`)
+  }
+  // Any "#anchor" referenced in data URLs must point to a placed section (or the page-level ids).
+  const placed = new Set(['top', 'main', ...c.sections.map((s) => s.id)])
   for (const { url, where } of collectUrls()) {
     const m = /^#([\w-]+)$/.exec(url)
-    if (m && !rendered.has(m[1])) problems.push(`${where}: #${m[1]} is not a rendered section`)
+    if (m && !placed.has(m[1])) problems.push(`${where}: #${m[1]} is not a placed section`)
   }
-  return { anchors: [...rendered].map((a) => `#${a}`), problems }
+  return { anchors: hrefs, problems }
 }
 
 async function request(url, method) {
@@ -92,10 +104,10 @@ const icon = { ok: '✓', warn: '⚠', error: '✖' }
 for (const r of results) console.log(`${icon[r.level]} ${r.note.padEnd(10)} ${r.url}  (${r.where})`)
 
 const { anchors, problems } = checkAnchors()
-console.log(`\nAnchors used by navigation: ${anchors.join(', ')}`)
+console.log(`\nInternal page and section links: ${anchors.join(', ')}`)
 for (const p of problems) console.log(`✖ ${p}`)
 
 const errors = results.filter((r) => r.level === 'error').length + problems.length
 const warnings = results.filter((r) => r.level === 'warn').length
-console.log(`\n${errors ? 'Links failed' : 'Links OK'}: ${results.length} URLs, ${anchors.length} anchors, ${errors} errors, ${warnings} warnings`)
+console.log(`\n${errors ? 'Links failed' : 'Links OK'}: ${results.length} URLs, ${anchors.length} internal links, ${errors} errors, ${warnings} warnings`)
 process.exit(errors ? 1 : 0)

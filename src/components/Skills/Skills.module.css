@@ -12,6 +12,8 @@
 .name {
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  letter-spacing: normal;
 }
 
 @media (min-width: 1024px) {

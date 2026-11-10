@@ -7,12 +7,43 @@
   "ogImageAlt": "Andrew Leick, portfolio",
   "defaultTheme": "system",
   "themeToggle": true,
-  "sections": [
-    { "id": "about", "label": "About", "visible": true },
-    { "id": "experience", "label": "Experience", "visible": true },
-    { "id": "projects", "label": "Projects", "visible": true },
-    { "id": "education", "label": "Education", "visible": true },
-    { "id": "skills", "label": "Skills", "visible": true },
-    { "id": "contact", "label": "Contact", "visible": true }
+  "fanArt": true,
+  "pages": [
+    {
+      "id": "experience",
+      "label": "Experience",
+      "guide": "charmander",
+      "blurb": "Internships, research and leadership.",
+      "description": "Andrew Leick's experience: two Software Development Engineer internships at Amazon, research at Georgia Tech Research Institute, and FIRST Robotics.",
+      "visible": true,
+      "sections": [
+        { "id": "experience", "label": "Experience" }
+      ]
+    },
+    {
+      "id": "projects",
+      "label": "Projects",
+      "guide": "bulbasaur",
+      "blurb": "Things I have built.",
+      "description": "Projects by Andrew Leick, a Stanford Electrical Engineering student, with code links and his role on each.",
+      "visible": true,
+      "sections": [
+        { "id": "projects", "label": "Projects" }
+      ]
+    },
+    {
+      "id": "about",
+      "label": "About",
+      "guide": "squirtle",
+      "blurb": "Background, education, skills and contact.",
+      "description": "About Andrew Leick: Stanford Electrical Engineering student, his coursework, technical skills, and how to get in touch.",
+      "visible": true,
+      "sections": [
+        { "id": "about", "label": "About" },
+        { "id": "education", "label": "Education" },
+        { "id": "skills", "label": "Skills" },
+        { "id": "contact", "label": "Contact" }
+      ]
+    }
   ]
 }

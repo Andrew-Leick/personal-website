@@ -1,0 +1,6 @@
+.cursor {
+  flex: none;
+  width: calc(4 * var(--cursor-px));
+  height: calc(7 * var(--cursor-px));
+  color: var(--color-cursor);
+}

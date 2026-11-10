@@ -11,6 +11,8 @@ import projects from '../../data/projects.json'
 import skills from '../../data/skills.json'
 import { normalizeContent } from './normalize.js'
 import { BASE_URL } from './paths.js'
+import { resolveRouteWithBase, sectionHrefOf } from './routes.js'
+import { headFor } from './head.js'
 
 // generated/github.json is written by `npm run sync:github` and may not exist.
 // An eager glob resolves to {} when the file is missing instead of failing the import.
@@ -57,9 +59,51 @@ export function getSkills() {
   return content.skills
 }
 
-/** @returns {import('./types.js').Section[]} visible sections that have content, in site.json order */
+/** @returns {import('./types.js').Section[]} every placed section across shown pages, in page order */
 export function getSections() {
   return content.sections
+}
+
+/** @returns {import('./types.js').Page[]} shown pages, in site.json order */
+export function getPages() {
+  return content.pages
+}
+
+/**
+ * @param {string} id
+ * @returns {import('./types.js').Page|null}
+ */
+export function getPage(id) {
+  return content.pages.find((p) => p.id === id) ?? null
+}
+
+/** @returns {string} the Home href: BASE_URL, e.g. "/" or "/personal-website/" */
+export function getHomeHref() {
+  return BASE_URL
+}
+
+/**
+ * @param {string} sectionId
+ * @returns {string|null} e.g. "/about/#contact"; null if the section is not placed on a shown page
+ */
+export function getSectionHref(sectionId) {
+  return sectionHrefOf(sectionId, content)
+}
+
+/**
+ * @param {string} pathname location.pathname (includes the base)
+ * @returns {import('./types.js').Route}
+ */
+export function resolveRoute(pathname) {
+  return resolveRouteWithBase(pathname, BASE_URL, content)
+}
+
+/**
+ * @param {import('./types.js').Route} route
+ * @returns {import('./types.js').Head}
+ */
+export function getHead(route) {
+  return Object.freeze(headFor(route, content))
 }
 
 /** @returns {import('./types.js').SiteContent} */
@@ -67,5 +111,6 @@ export function getSiteContent() {
   return content
 }
 
+export { GUIDE_IDS } from './normalize.js'
 export { isPlaceholder } from './placeholders.js'
 export { formatDateRange, formatMonth } from './format.js'

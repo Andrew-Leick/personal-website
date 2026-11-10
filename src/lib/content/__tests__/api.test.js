@@ -5,23 +5,23 @@ import * as api from '../index.js'
 describe('public API (7.2)', () => {
   test('exports exactly the specified functions', () => {
     expect(Object.keys(api).sort()).toEqual(
-      ['formatDateRange', 'formatMonth', 'getEducation', 'getExperience', 'getLinks', 'getProfile', 'getProjects', 'getSections', 'getSite', 'getSiteContent', 'getSkills', 'isPlaceholder'].sort(),
+      ['GUIDE_IDS', 'formatDateRange', 'formatMonth', 'getEducation', 'getExperience', 'getHead', 'getHomeHref', 'getLinks', 'getPage', 'getPages', 'getProfile', 'getProjects', 'getSectionHref', 'getSections', 'getSite', 'getSiteContent', 'getSkills', 'isPlaceholder', 'resolveRoute'].sort(),
     )
-    for (const fn of Object.values(api)) expect(typeof fn).toBe('function')
+    for (const [name, v] of Object.entries(api)) expect(typeof v).toBe(name === 'GUIDE_IDS' ? 'object' : 'function')
   })
 
   test('getSiteContent bundles every getter result', () => {
     const c = api.getSiteContent()
     expect(c).toEqual({
       site: api.getSite(), profile: api.getProfile(), links: api.getLinks(), experience: api.getExperience(),
-      education: api.getEducation(), projects: api.getProjects(), skills: api.getSkills(), sections: api.getSections(),
+      education: api.getEducation(), projects: api.getProjects(), skills: api.getSkills(), pages: api.getPages(), sections: api.getSections(),
     })
     expect(Object.isFrozen(c)).toBe(true)
   })
 
   test('real data has the 7.3 shapes', () => {
     const site = api.getSite()
-    expect(Object.keys(site).sort()).toEqual(['defaultTheme', 'description', 'locale', 'ogImage', 'ogImageAlt', 'siteUrl', 'themeToggle', 'title'])
+    expect(Object.keys(site).sort()).toEqual(['defaultTheme', 'description', 'fanArt', 'locale', 'ogImage', 'ogImageAlt', 'siteUrl', 'themeToggle', 'title'])
     const profile = api.getProfile()
     expect(Object.keys(profile).sort()).toEqual(['about', 'availability', 'contactBlurb', 'currently', 'email', 'headline', 'location', 'name', 'photo', 'resumeUrl', 'summary'].sort())
     for (const l of api.getLinks()) expect(Object.keys(l).sort()).toEqual(['id', 'isExternal', 'kind', 'label', 'showInHero', 'url'])
@@ -29,7 +29,42 @@ describe('public API (7.2)', () => {
     for (const e of api.getEducation()) expect(Object.keys(e).sort()).toEqual(['coursework', 'dateLabel', 'degree', 'degreeLabel', 'end', 'expected', 'field', 'gpa', 'honors', 'id', 'institution', 'institutionUrl', 'location', 'minor', 'start'])
     for (const p of api.getProjects()) expect(Object.keys(p).sort()).toEqual(['context', 'contextLabel', 'dateLabel', 'end', 'featured', 'githubStats', 'highlights', 'id', 'image', 'links', 'order', 'primaryUrl', 'role', 'start', 'status', 'statusLabel', 'summary', 'teamSize', 'technologies', 'title'])
     for (const g of api.getSkills()) expect(Object.keys(g).sort()).toEqual(['id', 'items', 'name'])
-    for (const s of api.getSections()) expect(s.index).toMatch(/^\d{2}$/)
+    for (const s of api.getSections()) {
+      expect(Object.keys(s).sort()).toEqual(['href', 'id', 'index', 'label', 'lead', 'pageId'])
+      expect(s.index).toMatch(/^\d{2}$/)
+    }
+    for (const p of api.getPages()) {
+      expect(Object.keys(p).sort()).toEqual(['blurb', 'description', 'guide', 'hasLead', 'href', 'id', 'index', 'label', 'path', 'sections', 'teaser'])
+    }
+  })
+
+  test('v3 fanArt and guides on real data (REQ-1050)', () => {
+    expect(api.getSite().fanArt).toBe(true)
+    expect(api.getPages().map((p) => p.guide)).toEqual(['charmander', 'bulbasaur', 'squirtle'])
+    expect(api.GUIDE_IDS).toEqual(['charmander', 'bulbasaur', 'squirtle'])
+  })
+
+  test('guide names never appear in head output (REQ-1052)', () => {
+    for (const route of [{ kind: 'home', page: null, canonicalPath: '/' }, ...api.getPages().map((page) => ({ kind: 'page', page, canonicalPath: page.href })), { kind: 'not-found', page: null, canonicalPath: null }]) {
+      expect(JSON.stringify(api.getHead(route)).toLowerCase()).not.toMatch(/charmander|bulbasaur|squirtle/)
+    }
+  })
+
+  test('v2 pages, teasers, routes and head on real data (10.2, 10.5)', () => {
+    expect(api.getPages().map((p) => [p.id, p.index, p.href, p.teaser])).toEqual([
+      ['experience', '01', '/experience/', 'Software Development Engineer Intern, Amazon'],
+      ['projects', '02', '/projects/', 'Featured: NFL Play Reconstruction'],
+      ['about', '03', '/about/', 'B.S. Electrical Engineering, Stanford University · Expected Jun 2028'],
+    ])
+    expect(api.getPage('about').sections.map((s) => s.id)).toEqual(['about', 'education', 'skills', 'contact'])
+    expect(api.getPage('nope')).toBeNull()
+    expect(api.getHomeHref()).toBe('/')
+    expect(api.getSectionHref('contact')).toBe('/about/#contact')
+    expect(api.resolveRoute('/projects')).toMatchObject({ kind: 'page', canonicalPath: '/projects/' })
+    const head = api.getHead(api.resolveRoute('/experience/'))
+    expect(head).toMatchObject({ title: 'Experience | Andrew Leick', canonical: 'https://andrew-leick.github.io/experience/', robots: 'index', jsonLd: null })
+    expect(Object.isFrozen(head)).toBe(true)
+    expect(api.getHead(api.resolveRoute('/')).jsonLd['@type']).toBe('Person')
   })
 
   test('Andrew decided: no locations rendered', () => {

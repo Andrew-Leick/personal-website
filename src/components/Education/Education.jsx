@@ -3,7 +3,8 @@ import ExternalLink from '../ExternalLink/ExternalLink.jsx'
 import TagList from '../Tag/Tag.jsx'
 import styles from '../Timeline/Timeline.module.css'
 
-function EducationEntry({ entry }) {
+function EducationEntry({ entry, headingLevel }) {
+  const Title = `h${headingLevel}`
   const date = <DateRange label={entry.dateLabel} start={entry.start} end={entry.end} />
   // Locations are never shown on the site (CONTENT-FACTS decision), even if data has one.
   const rest = [entry.gpa ? `GPA ${entry.gpa}` : null].filter(Boolean)
@@ -13,13 +14,13 @@ function EducationEntry({ entry }) {
       <p className={styles.dateColumn}>{date}</p>
       <div className={styles.body}>
         <div>
-          <h3 className={styles.title}>
+          <Title className={styles.title}>
             {entry.institutionUrl ? (
               <ExternalLink href={entry.institutionUrl}>{entry.institution}</ExternalLink>
             ) : (
               entry.institution
             )}
-          </h3>
+          </Title>
           {entry.degreeLabel && <p className={styles.sub}>{entry.degreeLabel}</p>}
         </div>
 
@@ -46,13 +47,16 @@ function EducationEntry({ entry }) {
   )
 }
 
-/** Education list, newest first (order comes from getEducation()). */
-export default function Education({ education }) {
+/**
+ * Education list, newest first (order comes from getEducation()).
+ * `headingLevel` (2 or 3) sets the entry title tag (SPEC-v2 5.6).
+ */
+export default function Education({ education, headingLevel = 3 }) {
   if (!education || education.length === 0) return null
   return (
     <ol className={styles.list}>
       {education.map((entry) => (
-        <EducationEntry key={entry.id} entry={entry} />
+        <EducationEntry key={entry.id} entry={entry} headingLevel={headingLevel} />
       ))}
     </ol>
   )

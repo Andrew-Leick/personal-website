@@ -17,7 +17,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--header-height) + var(--space-4));
+  scroll-padding-top: var(--space-4);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -31,7 +31,8 @@ body {
   min-height: 100dvh;
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
+  font-synthesis: none;
   font-size: var(--text-base);
   font-weight: var(--weight-regular);
   line-height: var(--leading-normal);
@@ -85,27 +86,40 @@ h3 {
 }
 
 h1 {
+  font-family: var(--font-body);
   font-size: var(--text-4xl);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
+  letter-spacing: 0;
 }
 
 h2 {
+  font-family: var(--font-body);
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
+  letter-spacing: 0;
 }
 
 h3 {
+  font-family: var(--font-body);
   font-size: var(--text-xl);
+  letter-spacing: 0;
   font-weight: var(--weight-medium);
   line-height: var(--leading-snug);
 }
 
-/* Headings that receive programmatic focus (nav targets) */
+/* Elements that only receive programmatic focus (skip link target). */
 [tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/*
+ * Headings focused by the router (REQ-901). They are never in the tab order,
+ * and Chrome reports :focus-visible for programmatic focus that follows a key
+ * press, so the ring is removed outright for them.
+ */
+:is(h1, h2)[tabindex="-1"]:focus {
   outline: none;
 }
 
@@ -118,6 +132,7 @@ a {
 }
 
 /* Links inside headings get a >= 24px tall target (WCAG 2.5.8). */
+h2 a,
 h3 a {
   display: inline-block;
   padding-block: var(--space-1);
@@ -161,6 +176,30 @@ time {
   max-width: var(--container-max);
   margin-inline: auto;
   padding-inline: var(--gutter);
+}
+
+/* Pokémon-style dialog box: thick outer border, gap, thin inner line. */
+.pixel-dialog {
+  border: var(--border-width-thick) solid var(--color-dialog-border);
+  border-radius: var(--radius-dialog);
+  background-color: var(--color-dialog-bg);
+  box-shadow:
+    inset 0 0 0 var(--border-width-pixel) var(--color-dialog-bg),
+    inset 0 0 0 var(--border-width-thick) var(--color-dialog-border-inner);
+}
+
+/* Chunky pixel button: 2px border + 4px hard drop shadow; presses down 2px. */
+.pixel-button {
+  border: var(--border-width-pixel) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 var(--border-width-thick) 0 0 var(--color-border-strong);
+  margin-block-end: var(--border-width-thick);
+  font-weight: var(--weight-bold);
+}
+
+.pixel-button:active {
+  transform: translateY(var(--border-width-pixel));
+  box-shadow: 0 var(--border-width-pixel) 0 0 var(--color-border-strong);
 }
 
 /* No-JS fallback block (index.html <noscript>). */
@@ -219,6 +258,14 @@ time {
     font-size: var(--text-xs);
     color: var(--color-text-muted);
     overflow-wrap: anywhere;
+  }
+
+  svg {
+    display: none !important;
+  }
+
+  .pixel-dialog {
+    box-shadow: none;
   }
 
   [data-print="avoid-break"],

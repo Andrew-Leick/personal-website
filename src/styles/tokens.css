@@ -1,50 +1,100 @@
 /*
- * Design tokens.
- * Primitives (the palette) and theme-independent semantic tokens
- * (type, space, layout, motion). Components never use primitives directly;
- * they use the semantic color tokens defined in themes/*.css.
+ * Design tokens (SPEC-v3 section 6).
+ * - Palette primitives (--pk-*): used ONLY by themes/*.css.
+ * - Sprite art color tokens (--sprite-outline, --sprite-eye-*, --sprite-char-*,
+ *   --sprite-bulb-*, --sprite-squirt-*, --sprite-egg-*): theme-independent
+ *   pixel-art colors, used
+ *   only by src/components/PixelSprite/sprites.js.
+ * - Everything else: theme-independent semantic tokens.
  */
 
 :root {
-  /* Neutral palette */
-  --gray-0:   #ffffff;
-  --gray-50:  #fafafa;
-  --gray-100: #f2f2f2;
-  --gray-200: #e5e5e5;
-  --gray-300: #d4d4d4;
-  --gray-400: #a3a3a3;
-  --gray-500: #737373;
-  --gray-600: #525252;
-  --gray-700: #404040;
-  --gray-800: #262626;
-  --gray-900: #171717;
-  --gray-950: #0a0a0a;
+  /* Palette primitives: day */
+  --pk-white: #FFFFFF;
+  --pk-paper: #FFFDF5;
+  --pk-paper-2: #F2EFE2;
+  --pk-sky-1: #E6ECF5;
+  --pk-sand: #C9C5B5;
+  --pk-ink: #1C1C28;
+  --pk-ink-2: #4A4A5C;
+  --pk-slate: #6878A8;
+  --pk-red: #C8102E;
+  --pk-red-deep: #A00D25;
+  --pk-blue: #2050C8;
+  --pk-fire: #C2410C;
+  --pk-grass: #2E7D32;
+  --pk-water: #1D63B8;
+
+  /* Palette primitives: night */
+  --pk-night: #12121C;
+  --pk-night-2: #1E1E2C;
+  --pk-night-3: #1A1A28;
+  --pk-night-4: #262638;
+  --pk-night-line: #3A3A50;
+  --pk-moon: #F4F2E8;
+  --pk-moon-2: #B4B2C4;
+  --pk-slate-light: #7A88B8;
+  --pk-red-light: #FF6B6B;
+  --pk-red-lighter: #FF9A9A;
+  --pk-blue-light: #7AA8FF;
+  --pk-fire-light: #FF8C42;
+  --pk-grass-light: #6CCB5F;
+  --pk-water-light: #5AA9FF;
+
+  /* Sprite art (same in every theme) */
+  --sprite-outline: #202028;
+  --sprite-eye-white: #FFFFFF;
+  --sprite-char-body: #F08030;
+  --sprite-char-belly: #F8D890;
+  --sprite-char-flame-outer: #E03018;
+  --sprite-char-flame-inner: #F8D030;
+  --sprite-bulb-body: #78C8A0;
+  --sprite-bulb-spot: #4A9078;
+  --sprite-bulb-bulb: #58B048;
+  --sprite-bulb-bulb-dark: #307830;
+  --sprite-bulb-eye: #C83030;
+  --sprite-squirt-body: #78B8E8;
+  --sprite-squirt-shell: #B87838;
+  --sprite-squirt-shell-light: #E8B868;
+  --sprite-squirt-belly: #F0D890;
+  --sprite-squirt-eye: #783018;
+  --sprite-egg-shell: #F4F0DC;
+  --sprite-egg-spot: #78C850;
 }
 
 :root {
-  /* Typography */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* Typography: self-hosted, @font-face in index.html (SPEC-v3 6.4) */
+  --font-display: "Press Start 2P", ui-monospace, "Courier New", monospace;
+  --font-body: "Pixelify Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-body);
 
-  --text-xs:   0.75rem;    /* 12px: tags, footnotes */
-  --text-sm:   0.875rem;   /* 14px: meta lines, nav */
-  --text-base: 1rem;       /* 16px: body (never smaller) */
-  --text-lg:   1.125rem;   /* 18px: hero summary, lead */
-  --text-xl:   1.25rem;    /* 20px: h3 */
-  --text-2xl:  clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);  /* h2 */
-  --text-3xl:  clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);   /* hero headline */
-  --text-4xl:  clamp(2.25rem, 1.6rem + 3vw, 3.5rem);     /* h1 name */
+  /* Body sizes (Pixelify Sans) */
+  --text-xs:   0.875rem;  /* 14px: captions, tags, fine print */
+  --text-sm:   1rem;      /* 16px: meta lines, nav */
+  --text-base: 1.125rem;  /* 18px: body */
+  --text-lg:   1.25rem;   /* 20px: Home role line, lead */
+  --text-xl:   1.375rem;  /* 22px: entry titles */
+  --text-2xl:  1.5rem;    /* 24px */
+  --text-3xl:  1.25rem;   /* 20px (legacy alias) */
+  --text-4xl:  1.5rem;    /* 24px (legacy alias) */
+
+  /* Display sizes (Press Start 2P): multiples of 8px at a 16px root only */
+  --text-display-sm:  1rem;    /* 16px: header name, section h2, dialog prompt */
+  --text-display:     1.5rem;  /* 24px: Home h1 (>=480: 2rem, >=768: 3rem) */
+  --text-page-title:  1.5rem;  /* 24px: subpage h1 (>=768: 2rem) */
+  --leading-display:  1.5;
 
   --weight-regular: 400;
-  --weight-medium:  500;
+  --weight-medium:  700;  /* Pixelify Sans ships 400 and 700 only */
   --weight-bold:    700;
 
-  --leading-tight:  1.1;
+  --leading-tight:  1.2;
   --leading-snug:   1.35;
   --leading-normal: 1.6;
 
-  --tracking-tight: -0.02em;  /* h1, h2 */
-  --tracking-wide:  0.08em;   /* uppercase labels (section eyebrow, "Featured") */
+  --tracking-tight: 0;       /* never tighten pixel fonts */
+  --tracking-wide:  0.06em;
 
   /* Spacing (4px base) */
   --space-1: 0.25rem;  --space-2: 0.5rem;  --space-3: 0.75rem; --space-4: 1rem;
@@ -52,26 +102,38 @@
   --space-12: 3rem;    --space-16: 4rem;   --space-20: 5rem;   --space-24: 6rem;
 
   /* Layout */
-  --container-max: 64rem;     /* 1024px */
-  --measure: 68ch;            /* max prose line length */
+  --container-max: 64rem;
+  --measure: 68ch;
   --gutter: clamp(1rem, 0.5rem + 2.5vw, 2rem);
   --header-height: 3.5rem;
-  --section-gap: clamp(4rem, 3rem + 4vw, 6rem);  /* vertical space between sections */
+  --section-gap: clamp(4rem, 3rem + 4vw, 6rem);
 
   /* Shape */
   --border-width: 1px;
+  --border-width-pixel: 2px;
+  --border-width-thick: 4px;
   --radius-sm: 2px;
   --radius-md: 4px;
+  --radius-dialog: 6px;
   --radius-full: 9999px;
 
   /* Focus */
-  --focus-ring-width: 2px;
-  --focus-ring-offset: 3px;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+
+  /* Pixel scales (integers only) */
+  --sprite-px: 4px;        /* Home sprites: 64px; >=768: 6px = 96px */
+  --sprite-px-title: 2px;  /* subpage title sprite: 32px */
+  --cursor-px: 2px;        /* ▶ 8x14px, ▼ 14x8px */
 
   /* Motion */
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --sprite-bob-duration: 1000ms;
+  --sprite-bob-iterations: 4;
+  --sprite-hop-duration: 600ms;
+  --sprite-stagger: 250ms;
 
   /* Layers */
   --z-header: 10;
@@ -81,11 +143,23 @@
   /* Hit area */
   --target-min: 44px;
 
-  /* Component sizes (theme-independent layout lengths) */
+  /* Component sizes */
   --icon-size: 1.125rem;
   --photo-size: 120px;
   --photo-size-md: 160px;
   --date-column: 11rem;
+}
+
+@media (min-width: 480px) {
+  :root { --text-display: 2rem; }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --text-display: 3rem;
+    --text-page-title: 2rem;
+    --sprite-px: 6px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

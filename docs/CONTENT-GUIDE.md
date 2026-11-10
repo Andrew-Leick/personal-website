@@ -10,7 +10,7 @@ Everything on the site comes from the JSON files in `src/data/`. To change the s
 | `src/data/education.json` | Degrees (a list) |
 | `src/data/skills.json` | Skill groups (a list) |
 | `src/data/links.json` | GitHub, LinkedIn, email and other profile links (a list) |
-| `src/data/site.json` | Site URL, search description, theme, section order and labels |
+| `src/data/site.json` | Site URL, search description, theme, and the pages: which pages exist, their order, labels and which sections each shows |
 | `src/data/generated/github.json` | Written by `npm run sync:github`. Do not edit by hand. |
 
 ## The everyday loop
@@ -35,6 +35,123 @@ While `npm run dev` runs, a broken data file shows a red error overlay in the br
 - **Hide without deleting:** add `"visible": false` to any list entry.
 - **No locations:** Andrew decided not to show any location. Leave every `location` field out.
 - **No phone number** anywhere on the site.
+
+## Pages and navigation
+
+The site has a Home page (`/`) plus the pages listed under `"pages"` in `src/data/site.json`. Each page gets its own URL (`/experience/`, `/projects/`, `/about/`), a link in the header and footer, and a sprite guide on Home. The list order is the order everywhere. (Since v3 the Home page no longer shows each page's `blurb` or `teaser`. They stay in the data and are still validated.)
+
+Today's setup:
+
+```json
+"pages": [
+  {
+    "id": "experience",
+    "label": "Experience",
+    "blurb": "Internships, research and leadership.",
+    "description": "Andrew Leick's experience: two Software Development Engineer internships at Amazon, research at Georgia Tech Research Institute, and FIRST Robotics.",
+    "visible": true,
+    "sections": [{ "id": "experience", "label": "Experience" }]
+  },
+  { "id": "projects", "...": "..." },
+  { "id": "about", "...": "...", "sections": [
+    { "id": "about", "label": "About" },
+    { "id": "education", "label": "Education" },
+    { "id": "skills", "label": "Skills" },
+    { "id": "contact", "label": "Contact" }
+  ] }
+]
+```
+
+| Field | Limit | What it does |
+| :- | :- | :- |
+| `id` | lowercase-with-hyphens | The URL: `"id": "experience"` is `/experience/`. Must be unique. `assets`, `content`, `index` and `404` are reserved, and it can't match a file or folder name in `public/` (e.g. `favicon.svg` is fine, but a folder `public/talks/` blocks the id `talks`). |
+| `label` | 20 | Nav link, page heading, Explore row and browser tab title ("Experience \| Andrew Leick") |
+| `blurb` | 100 | Kept in the data and validated; not shown on Home since v3 |
+| `description` | 50 to 160 | The search-engine and link-preview description for that page |
+| `teaser` | 100, optional | The small line under the blurb on Home. Leave it out (or `null`) and it is filled in from the data: the newest role, the featured projects, the degree, or the first few skills. |
+| `visible` | optional | `false` hides the page everywhere: its nav link, Explore row, URL (it shows "Page not found") and sitemap entry |
+| `sections` | 1 or more | What the page shows, in order. Each is `{ "id": ..., "label": ... }` with `id` one of `about`, `experience`, `projects`, `education`, `skills`, `contact`. Add `"visible": false` to hide one. |
+
+Rules:
+- **Each section can be on only one page.** Listing `skills` on two pages is an error.
+- A section that is on no page is not shown. `npm run validate` warns about it, in case that was a mistake.
+- A section with no data (for example an empty `skills.json`) is skipped, and a page left with nothing to show disappears.
+- When a section's `id` matches the page `id` (like `experience` on the `experience` page), it is the page's main content and sits right under the page heading. Every other section gets its own heading, using its `label`.
+- Up to 6 pages.
+
+Every change below is an edit to `src/data/site.json` only. With `npm run dev` running, the site updates when you save.
+
+### Rename a page
+Change `label`. The URL stays the same because it comes from `id`:
+
+```json
+{ "id": "about", "label": "About me", "...": "..." }
+```
+
+Changing `id` too (e.g. to `"me"`) moves the page to `/me/`. Old links to `/about/` would then show "Page not found".
+
+### Reorder the pages
+Move the whole `{ ... }` page object up or down in the `pages` list. The header, footer, Explore list and its numbers (01, 02, ...) follow.
+
+### Hide a page
+Add `"visible": false`:
+
+```json
+{ "id": "projects", "label": "Projects", "visible": false, "...": "..." }
+```
+
+### Move Skills to its own `/skills/` page
+1. Delete the `{ "id": "skills", "label": "Skills" }` line from the `about` page's `sections`.
+2. Add a new page where you want it in the list:
+
+```json
+{
+  "id": "skills",
+  "label": "Skills",
+  "blurb": "Languages, cloud and tools.",
+  "description": "Technical skills of Andrew Leick: programming languages, AWS cloud services, and the tools and frameworks he uses.",
+  "sections": [{ "id": "skills", "label": "Skills" }]
+}
+```
+
+Remember the comma between page objects. `npm run build` then also writes `dist/skills/index.html` and adds `/skills/` to the sitemap.
+
+### Change a Home blurb or teaser
+Edit `blurb` for the muted line. To replace the automatic teaser, set `teaser`:
+
+```json
+{ "id": "projects", "label": "Projects", "blurb": "Things I have built.", "teaser": "Code links and my role on each project", "...": "..." }
+```
+
+Remove `teaser` (or set it to `null`) to go back to the automatic one. The automatic teaser skips anything that still has a `TODO:` placeholder.
+
+## Sprite guides and the fan-art switch
+
+Home shows one pixel sprite per page. Which sprite leads which page is the `guide` field on each page in `src/data/site.json`. The allowed values are `"charmander"`, `"bulbasaur"` and `"squirtle"` (or `null`).
+
+```json
+{ "id": "experience", "label": "Experience", "guide": "charmander", "...": "..." }
+```
+
+To give Experience to Squirtle and About to Charmander, swap the two values:
+
+```json
+{ "id": "experience", "label": "Experience", "guide": "squirtle", "...": "..." }
+{ "id": "about", "label": "About", "guide": "charmander", "...": "..." }
+```
+
+Rules:
+- Each sprite can lead only one page. Using the same guide twice is a validation error that names both pages.
+- A page with `"guide": null`, or no `guide` field, shows an egg instead, with no caption.
+- A misspelled name gets a "did you mean" hint.
+
+To turn all fan art off, add or edit this top-level field in `src/data/site.json`:
+
+```json
+"fanArt": false
+```
+
+With `fanArt` set to `false`, every Pokémon character sprite and name disappears from the site: Home shows eggs, the subpage title sprites are gone, and the fan-art disclaimer in the footer is hidden. Set it back to `true` (the default when the field is missing) to bring them back. Run `npm run validate` after either edit.
 
 ## Experience
 
@@ -136,7 +253,7 @@ Edit `src/data/profile.json`:
 | `name` | 60 | |
 | `headline` | 80 | Shown under the name and used in the page title |
 | `summary` | 280 | One short paragraph in the hero |
-| `about` | 1 to 4 paragraphs, 700 each | The About section |
+| `about` | 1 to 4 paragraphs, 700 each | The About section (top of the About page) |
 | `currently` | 160 | Optional "Currently" line in About |
 | `availability` | 80 | Optional, e.g. "Open to software internships for summer 2027" |
 | `email` | | Plain address, no `mailto:` |
@@ -144,7 +261,7 @@ Edit `src/data/profile.json`:
 | `resumeUrl` | | Path to the PDF, see below |
 | `photo` | | `null` or `{ "src": "...", "alt": "..." }` |
 
-The search-engine description is `description` in `src/data/site.json`, 50 to 160 characters.
+The search-engine description for Home is `description` in `src/data/site.json`, 50 to 160 characters. Each page has its own `description` (see "Pages and navigation").
 
 ## Links
 
@@ -217,9 +334,10 @@ This fetches stars, language and last-push date for each project with a `githubR
 ## Other checks
 
 ```bash
-npm run check:links   # requests every URL in the data; LinkedIn's 999 counts as a warning
+npm run check:links   # requests every URL in the data (LinkedIn's 999 is a warning) and checks every page/section link resolves
 npm run test          # unit tests for the content code
-npm run ci            # everything CI runs: lint, test, validate, build, size budget
+npm run check:routes  # after a build: checks dist/ has one HTML file per page plus 404.html, with the right titles
+npm run ci            # everything CI runs: lint, test, validate, build, size budget, check:routes
 ```
 
 ## Custom domain (pending: no domain chosen yet)

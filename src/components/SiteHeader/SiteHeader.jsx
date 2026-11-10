@@ -1,19 +1,40 @@
+import Link from '../../router/Link.jsx'
 import Nav from '../Nav/Nav.jsx'
 import ThemeToggle from '../ThemeToggle/ThemeToggle.jsx'
 import styles from './SiteHeader.module.css'
 
-/** Sticky banner: name (link to #top), primary nav, optional theme toggle. */
-export default function SiteHeader({ name, sections, activeId, showThemeToggle, theme, onToggleTheme }) {
+/**
+ * Banner (REQ-840 to REQ-842). Not sticky. Name links Home; the primary nav
+ * lists every page and is always visible: one row at >= 768px, a second
+ * full-width row below that. No menu button.
+ */
+export default function SiteHeader({
+  name,
+  homeHref,
+  pages,
+  currentId,
+  showThemeToggle,
+  theme,
+  onToggleTheme,
+}) {
   return (
-    <header className={styles.header}>
+    <header id="top" className={styles.header}>
       <div className={`container ${styles.inner}`}>
-        <a href="#top" className={styles.name}>
+        <Link
+          href={homeHref}
+          className={styles.name}
+          aria-current={currentId === 'home' ? 'page' : undefined}
+        >
           {name}
-        </a>
-        <div className={styles.actions}>
-          <Nav sections={sections} activeId={activeId} />
-          {showThemeToggle && <ThemeToggle theme={theme} onToggle={onToggleTheme} />}
+        </Link>
+        <div className={styles.nav}>
+          <Nav label="Primary" items={pages} currentId={currentId} variant="header" />
         </div>
+        {showThemeToggle && (
+          <div className={styles.toggle}>
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          </div>
+        )}
       </div>
     </header>
   )

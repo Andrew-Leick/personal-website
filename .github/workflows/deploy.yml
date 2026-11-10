@@ -38,7 +38,7 @@ jobs:
         run: npm ci
       - name: Validate content (strict, no placeholders)
         run: npm run validate:strict
-      - name: Lint, test, validate, build, check size
+      - name: Lint, test, validate, build, check size and routes
         run: npm run ci
       - name: Set up Pages
         uses: actions/configure-pages@v6

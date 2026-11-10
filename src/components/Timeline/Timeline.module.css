@@ -33,6 +33,9 @@
 
 .title {
   font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  letter-spacing: normal;
 }
 
 .separator {

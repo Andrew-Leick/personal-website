@@ -11,7 +11,7 @@ import styles from './LinkButton.module.css'
  * name always comes from `aria-label` (the link's label).
  */
 export default function LinkButton({ link, variant = 'outline', compact = false }) {
-  const className = [styles.link, styles[variant], compact ? styles.compact : null]
+  const className = [styles.link, styles[variant], compact ? styles.compact : null, variant === 'outline' ? 'pixel-button' : null]
     .filter(Boolean)
     .join(' ')
 

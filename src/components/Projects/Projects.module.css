@@ -17,15 +17,11 @@
   gap: var(--space-3);
   min-width: 0;
   padding: var(--space-6);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-bg);
-  transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .card:hover,
 .card:focus-within {
-  border-color: var(--color-border-strong);
+  --color-dialog-border-inner: var(--color-type-grass);
 }
 
 .image {
@@ -40,6 +36,9 @@
 
 .title {
   font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  letter-spacing: normal;
 }
 
 .title a {
@@ -61,7 +60,9 @@
   display: inline-block;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
+  border-width: var(--border-width-pixel);
+  font-family: var(--font-body);
+  font-weight: var(--weight-bold);
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-wide);
   line-height: var(--leading-snug);
@@ -131,4 +132,10 @@
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* Exactly one project: one column at every width, capped at the measure. */
+.grid.single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: var(--measure);
 }
