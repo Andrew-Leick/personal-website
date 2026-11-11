@@ -14,3 +14,7 @@ export function settled(animations) {
 }
 
 export const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+
+/** Resolves after the next frame has been painted (two animation frames). */
+export const nextPaint = () =>
+  new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))

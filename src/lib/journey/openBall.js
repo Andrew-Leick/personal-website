@@ -16,6 +16,8 @@ const OPEN_DURATION = 700
 /** How far the lid swings open, clockwise. 90°: it stands upright beside the ball (and a
  * quarter turn keeps the pixel art crisp at rest). */
 const LID_ANGLE = 90
+const LID_STEPS = 5
+const LID_SWING_MS = Math.round(OPEN_DURATION * 0.35)
 /** When the Pokémon starts to appear (section intros sync the title to this). */
 export const OPEN_POP_AT = Math.round(OPEN_DURATION * 0.45)
 
@@ -26,21 +28,63 @@ function run(el, keyframes, options) {
   return el.animate(keyframes, { duration: OPEN_DURATION, fill: 'forwards', ...options })
 }
 
+/*
+ * The lid swing is driven from the main thread (one style write per pixel step), not with
+ * the Web Animations API. A WAAPI transform animation runs on the compositor, and for the
+ * lid (whose image is clip-pathed along the seam) Chromium-based browsers such as Arc
+ * could leave that compositor layer undrawn: on a still page (after a hero click) the lid
+ * vanished for the whole swing. Plain style changes are always painted. It is only 5 steps.
+ */
+const swings = new WeakMap()
+
+function stopSwing(lid) {
+  swings.get(lid)?.()
+  swings.delete(lid)
+  if (lid) lid.style.transform = ''
+}
+
+function swingLid(lid) {
+  if (!lid) return Promise.resolve()
+  stopSwing(lid)
+  return new Promise((resolve) => {
+    const start = performance.now()
+    let frame = 0
+    let shown = -1
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / LID_SWING_MS)
+      const step = Math.min(LID_STEPS, Math.floor(t * LID_STEPS))
+      if (step !== shown) {
+        shown = step
+        lid.style.transform = `rotate(${(LID_ANGLE * step) / LID_STEPS}deg)`
+      }
+      if (t < 1) {
+        frame = requestAnimationFrame(tick)
+      } else {
+        swings.delete(lid)
+        resolve()
+      }
+    }
+    frame = requestAnimationFrame(tick)
+    swings.set(lid, () => {
+      cancelAnimationFrame(frame)
+      resolve()
+    })
+  })
+}
+
 /** Cancel every sequence so the ball shows its CSS (closed or resting) state again. */
 export function resetBall(root) {
-  if (root) PARTS.forEach((name) => cancelAnimations(part(root, name)))
+  if (!root) return
+  PARTS.forEach((name) => cancelAnimations(part(root, name)))
+  stopSwing(part(root, 'top'))
 }
 
 export function openBall(root) {
   if (!root || prefersReducedMotion()) return Promise.resolve()
   resetBall(root)
-  return settled([
-    // 1. The lid swings up and right on its hinge (pixel steps); the bottom never moves.
-    run(part(root, 'top'), [
-      { transform: 'rotate(0deg)', offset: 0, easing: 'steps(5, end)' },
-      { transform: `rotate(${LID_ANGLE}deg)`, offset: 0.35 },
-      { transform: `rotate(${LID_ANGLE}deg)`, offset: 1 },
-    ]),
+  // 1. The lid swings up and right on its hinge (pixel steps); the bottom never moves.
+  const swung = swingLid(part(root, 'top'))
+  const rest = settled([
     // 2. White flash out of the open ball.
     run(part(root, 'flash'), [
       { opacity: 0, transform: 'scale(0.2)', offset: 0 },
@@ -66,6 +110,7 @@ export function openBall(root) {
       { opacity: 0, offset: 1 },
     ], { easing: 'steps(6, end)' }),
   ])
+  return Promise.all([swung, rest]).then(() => undefined)
 }
 
 /** Short landing bounce for a part that is already showing (2 pixel steps). */

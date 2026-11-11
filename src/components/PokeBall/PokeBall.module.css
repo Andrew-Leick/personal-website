@@ -6,7 +6,8 @@
   transform-origin: 50% 85%;
 }
 
-/* The lid's rotating wrapper: same box as the ball, holds the clipped top image. */
+/* The lid's rotating wrapper: same box as the ball, holds the clipped top image. Its swing
+ * is set from the main thread (src/lib/journey/openBall.js), never a compositor animation. */
 .lid {
   position: absolute;
   inset: 0;

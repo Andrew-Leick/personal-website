@@ -17,7 +17,7 @@
 // section is tracked as `flight`, so a reversal turns it around instead of restarting.
 
 import { prefersReducedMotion } from '../motion.js'
-import { cancelAnimations, part, settled } from './anim.js'
+import { cancelAnimations, nextPaint, part, settled } from './anim.js'
 import { OPEN_POP_AT, openBall, resetBall } from './openBall.js'
 import { recall, resetRail, sendOut } from './rail.js'
 import { getBall, isAutoScrolling } from './state.js'
@@ -91,6 +91,10 @@ async function throwOut(s) {
   previous?.abort()
   sendOut(s.id)
   await track(s, flight)
+  if (!alive()) return
+  // Let the landed ball paint once, closed, before the lid starts to swing. Revealing it and
+  // starting the lid's (GPU) animation in the same frame could leave the lid undrawn.
+  await nextPaint()
   if (!alive()) return
   const [underline, label] = extras(s)
   const timing = { delay: OPEN_POP_AT, fill: 'both' }
