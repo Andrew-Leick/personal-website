@@ -1,91 +1,151 @@
-// Rail → section heading throw (spec v4.1 / v4.2): a copy of the rail's Poké Ball arcs from
-// the rail (or the phone dock) into the heading's empty slot, spinning in quarter turns.
+// Flying sprites (spec v4.1–v4.4).
 //
-// The heading moves while the page scrolls, so the target is re-measured on every frame:
-// the arc always ends exactly on the slot, wherever it is when the throw lands.
+// throwBall: a copy of a Poké Ball arcs from one element to another, spinning in quarter
+// turns. Used rail → section header (send out) and header → rail (recall).
+// flyElement: the same flight for a sprite copy that already exists (the hero Pokémon).
+//
+// - The target is re-measured on every frame, so the arc always ends exactly on it, however
+//   the page scrolls meanwhile.
+// - A flight is a promise with `copy` (the flying element) and `abort()`. A throw can start
+//   from another flight's copy (fromEl = flight.copy) and abort that flight in the same
+//   frame: the ball turns around in mid-air instead of jumping.
 
 import { BALL_SPRITE } from '../../components/PixelSprite/sprites.js'
 import { BASE_URL } from '../content/paths.js'
 import { prefersReducedMotion } from '../motion.js'
 import { arcLift, arcPoint, lerp } from './geometry.js'
 
-export const THROW_DURATION = 420
+/** Flight time grows with distance, so long desktop throws never blur across the screen. */
+export function throwDuration(distance) {
+  return Math.min(650, Math.max(380, 320 + distance * 0.25))
+}
 
 const easeOut = (t) => 1 - (1 - t) ** 2
 const center = (rect) => ({ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 })
 
-/**
- * Throw from `fromEl` (the rail ball) to `toEl` (the heading's ball box). `onLand` runs in the
- * same frame the copy is removed, so the real ball can appear with no gap or flicker.
- * Resolves after landing. Resolves at once (after onLand) when motion is reduced or a rect
- * is missing.
- */
-export function throwBall(fromEl, toEl, onLand) {
-  const land = () => onLand?.()
-  if (!fromEl || !toEl || prefersReducedMotion()) {
-    land()
-    return Promise.resolve()
-  }
-  const from = fromEl.getBoundingClientRect()
-  const first = toEl.getBoundingClientRect()
-  if (!(from.width > 0) || !(first.width > 0)) {
-    land()
-    return Promise.resolve()
-  }
+/** A finished (or skipped) flight. */
+function landedFlight() {
+  const flight = Promise.resolve()
+  flight.copy = null
+  flight.abort = () => undefined
+  return flight
+}
 
-  const start = center(from)
-  // Arc height from the distance at launch, so the curve keeps its shape while it follows.
-  const lift = arcLift(start, center(first))
+/**
+ * A fixed-position pixel sprite copy at `rect` (viewport), on top of the page and the rail.
+ * Marked [data-flight] so tests and cleanups can find every copy in the air.
+ */
+export function makeCopy(src, rect) {
   const copy = document.createElement('img')
-  copy.src = `${BASE_URL}sprites/${BALL_SPRITE}.png`
+  copy.src = src
   copy.alt = ''
   copy.setAttribute('aria-hidden', 'true')
+  copy.setAttribute('data-flight', '')
   Object.assign(copy.style, {
     position: 'fixed',
     left: '0px',
     top: '0px',
-    width: `${first.width}px`,
-    height: `${first.height}px`,
+    width: `${rect.width}px`,
+    height: `${rect.height}px`,
+    transform: `translate(${rect.x}px, ${rect.y}px)`,
     imageRendering: 'pixelated',
     pointerEvents: 'none',
     zIndex: '16',
-    transformOrigin: '50% 50%',
     willChange: 'transform',
   })
+  document.body.appendChild(copy)
+  return copy
+}
+
+/**
+ * Fly the existing fixed copy `copy` onto `toEl`, ending at toEl's size. `spin`: quarter
+ * turns (a thrown ball) or none (a Pokémon). `onLand` runs in the frame the flight ends;
+ * the copy is removed then (also on abort, which skips onLand). If either end measures 0
+ * wide (not laid out), it lands at once.
+ * @returns {Promise<void> & { copy: HTMLElement|null, abort: () => void }}
+ */
+export function flyElement(copy, toEl, { onLand, spin = true } = {}) {
+  const from = copy.getBoundingClientRect()
+  const first = toEl?.getBoundingClientRect()
+  if (!(from.width > 0) || !(first?.width > 0)) {
+    copy.remove()
+    onLand?.()
+    return landedFlight()
+  }
+  const start = center(from)
+  const end = center(first)
+  // Arc height from the distance at launch, so the curve keeps its shape while it follows.
+  const lift = arcLift(start, end)
+  const duration = throwDuration(Math.hypot(end.x - start.x, end.y - start.y))
+  // Starting from another flight: keep its current spin so a turn-around is seamless.
+  const startTurn = Number(copy.dataset.turn ?? 0)
+  copy.style.transformOrigin = '50% 50%'
+  let shownSize = 0
 
   function place(t) {
     const to = toEl.getBoundingClientRect()
-    const size = to.width || first.width
-    const point = arcPoint(start, center(to), lift, easeOut(t))
-    const scale = lerp(from.width, size, easeOut(t)) / size
-    // Quarter turns keep the pixel art square; one full spin over the throw.
-    const turn = Math.min(4, Math.floor(t * 4)) * 90
-    copy.style.width = `${size}px`
-    copy.style.height = `${size}px`
+    const size = to.width > 0 ? to.width : first.width
+    const e = easeOut(t)
+    const point = arcPoint(start, center(to), lift, e)
+    const scale = lerp(from.width, size, e) / size
+    const turn = spin ? startTurn + Math.min(4, Math.floor(t * 4)) * 90 : 0
+    if (spin) copy.dataset.turn = String(turn % 360)
+    if (size !== shownSize) {
+      shownSize = size
+      copy.style.width = `${size}px`
+      copy.style.height = `${size}px`
+    }
     copy.style.transform = `translate(${point.x - size / 2}px, ${point.y - size / 2}px) scale(${scale}) rotate(${turn}deg)`
   }
-
   place(0)
-  document.body.appendChild(copy)
+
+  let frame = 0
+  let finish = () => undefined
+  const flight = new Promise((resolve) => {
+    finish = (landed) => {
+      cancelAnimationFrame(frame)
+      if (landed) onLand?.()
+      copy.remove()
+      resolve()
+    }
+    const startTime = performance.now()
+    const step = (now) => {
+      const t = Math.min(1, (now - startTime) / duration)
+      if (t < 1) {
+        place(t)
+        frame = requestAnimationFrame(step)
+      } else {
+        finish(true)
+      }
+    }
+    frame = requestAnimationFrame(step)
+  })
+  flight.copy = copy
+  flight.abort = () => finish(false)
+  return flight
+}
+
+/**
+ * Throw a Poké Ball from `fromEl` to `toEl` (both laid out; their current viewport rects
+ * are used). With reduced motion, or a missing rect, it lands at once.
+ * @returns {Promise<void> & { copy: HTMLElement|null, abort: () => void }}
+ */
+export function throwBall(fromEl, toEl, onLand) {
+  if (!fromEl || !toEl || prefersReducedMotion()) {
+    onLand?.()
+    return landedFlight()
+  }
+  const from = fromEl.getBoundingClientRect()
+  if (!(from.width > 0)) {
+    onLand?.()
+    return landedFlight()
+  }
+  const copy = makeCopy(`${BASE_URL}sprites/${BALL_SPRITE}.png`, from)
+  copy.dataset.turn = fromEl.dataset?.turn ?? '0'
   // A small recoil on the rail ball as it throws.
   fromEl.querySelector?.('[data-part="ball"]')?.animate?.(
     [{ translate: '0 0' }, { translate: '-4px 0' }, { translate: '0 0' }],
     { duration: 200, easing: 'steps(3, end)', composite: 'add' },
   )
-
-  return new Promise((resolve) => {
-    const startTime = performance.now()
-    const step = (now) => {
-      const t = Math.min(1, (now - startTime) / THROW_DURATION)
-      if (t < 1) {
-        place(t)
-        requestAnimationFrame(step)
-        return
-      }
-      land()
-      copy.remove()
-      resolve()
-    }
-    requestAnimationFrame(step)
-  })
+  return flyElement(copy, toEl, { onLand, spin: true })
 }

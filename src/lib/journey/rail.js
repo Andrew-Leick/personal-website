@@ -9,14 +9,6 @@ const RETURN_MS = 400
 
 const linkOf = (id) => getBall(id)?.closest('[data-rail-link]') ?? null
 
-export function isOut(id) {
-  return out.has(id)
-}
-
-export function outIds() {
-  return [...out]
-}
-
 /** The ball leaves the rail (thrown to its heading, or its section re-entered). */
 export function sendOut(id) {
   if (!id || out.has(id)) return

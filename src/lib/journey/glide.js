@@ -3,25 +3,15 @@
 
 import { prefersReducedMotion } from '../motion.js'
 import { clamp, easeInOut } from './geometry.js'
-import { emitGlideEnd, setAutoScroll } from './state.js'
+import { beginGlide, emitGlideEnd, endGlide } from './state.js'
 
-export const GLIDE_MIN_MS = 450
-export const GLIDE_MAX_MS = 900
+const GLIDE_MIN_MS = 450
+const GLIDE_MAX_MS = 900
 
 /** Duration for a glide of `distance` px. */
-export function glideDuration(distance) {
-  return clamp(GLIDE_MIN_MS + Math.abs(distance) * 0.12, GLIDE_MIN_MS, GLIDE_MAX_MS)
-}
+const glideDuration = (distance) => clamp(GLIDE_MIN_MS + Math.abs(distance) * 0.12, GLIDE_MIN_MS, GLIDE_MAX_MS)
 
 let cancelCurrent = null
-
-/** Document y that puts `el` at the top, honoring scroll-margin-top and scroll-padding-top. */
-function targetY(el) {
-  if (!el) return 0
-  const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0
-  const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
-  return el.getBoundingClientRect().top + window.scrollY - margin - padding
-}
 
 const maxScroll = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
 
@@ -33,15 +23,22 @@ const maxScroll = () => Math.max(0, document.documentElement.scrollHeight - wind
 export function glideTo(el, targetId = null) {
   cancelCurrent?.()
   const from = window.scrollY
-  const destination = () => clamp(targetY(el), 0, maxScroll())
+  // scroll-margin-top / scroll-padding-top are read once; only the element's rect is
+  // re-read each frame, so late layout shifts (fonts) are still absorbed.
+  const offset = el
+    ? (parseFloat(getComputedStyle(el).scrollMarginTop) || 0) +
+      (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0)
+    : 0
+  const destination = () => (el ? clamp(el.getBoundingClientRect().top + window.scrollY - offset, 0, maxScroll()) : 0)
+  const seq = beginGlide(targetId)
 
   if (prefersReducedMotion() || Math.abs(destination() - from) < 2) {
     window.scrollTo({ top: destination(), left: 0, behavior: 'instant' })
-    emitGlideEnd({ target: targetId, cancelled: false })
+    endGlide()
+    emitGlideEnd({ target: targetId, cancelled: false, seq })
     return Promise.resolve({ cancelled: false })
   }
 
-  setAutoScroll(true, targetId)
   const duration = glideDuration(destination() - from)
   const start = performance.now()
 
@@ -52,8 +49,8 @@ export function glideTo(el, targetId = null) {
       cancelAnimationFrame(frame)
       stopEvents.forEach((type) => window.removeEventListener(type, onUser))
       cancelCurrent = null
-      setAutoScroll(false)
-      emitGlideEnd({ target: targetId, cancelled })
+      endGlide()
+      emitGlideEnd({ target: targetId, cancelled, seq })
       resolve({ cancelled })
     }
     const onUser = () => finish(true)
@@ -62,9 +59,7 @@ export function glideTo(el, targetId = null) {
 
     const step = (now) => {
       const t = clamp((now - start) / duration)
-      // Re-read the destination each frame, so late layout shifts (fonts) are absorbed.
-      const to = destination()
-      window.scrollTo({ top: from + (to - from) * easeInOut(t), left: 0, behavior: 'instant' })
+      window.scrollTo({ top: from + (destination() - from) * easeInOut(t), left: 0, behavior: 'instant' })
       if (t < 1) frame = requestAnimationFrame(step)
       else finish(false)
     }

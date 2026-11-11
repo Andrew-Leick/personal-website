@@ -4,36 +4,29 @@
 //   [data-part="ball"]     the ball (wobbles, then fades)
 //   [data-part="top"]      top half of the sprite (flips open on its hinge)
 //   [data-part="flash"]    white burst
-//   [data-part="pokemon"]  the Pokémon (optional; pops out of the ball)
+//   [data-part="pokemon"]  the Pokémon (optional: section headers have one, rail balls do not)
 // Every function resolves when its sequence ends. None rejects.
 
 import { prefersReducedMotion } from '../motion.js'
+import { cancelAnimations, part, settled } from './anim.js'
 
-export const OPEN_DURATION = 600
+const OPEN_DURATION = 600
+const CLOSE_DURATION = 220
 /** When the flash peaks: a hero click hands over to the page glide here. */
 export const OPEN_HANDOFF = 300
 /** When the Pokémon starts to appear (section intros sync the title to this). */
 export const OPEN_POP_AT = 270
-export const CLOSE_DURATION = 220
 
 const PARTS = ['ball', 'top', 'flash', 'pokemon']
-const part = (root, name) => root.querySelector(`[data-part="${name}"]`)
 
 function run(el, keyframes, options) {
   if (!el || typeof el.animate !== 'function') return null
   return el.animate(keyframes, { duration: OPEN_DURATION, fill: 'forwards', ...options })
 }
 
-function settled(animations) {
-  const list = animations.filter(Boolean)
-  if (list.length === 0) return Promise.resolve()
-  return Promise.all(list.map((a) => a.finished.catch(() => undefined))).then(() => undefined)
-}
-
 /** Cancel every sequence so the ball shows its CSS (closed or resting) state again. */
 export function resetBall(root) {
-  if (!root) return
-  for (const name of PARTS) part(root, name)?.getAnimations?.().forEach((animation) => animation.cancel())
+  if (root) PARTS.forEach((name) => cancelAnimations(part(root, name)))
 }
 
 export function openBall(root) {
@@ -74,25 +67,23 @@ export function openBall(root) {
 }
 
 /**
- * Reverse of openBall: the Pokémon shrinks back in while the ball fades in closed, then the
- * animations are cancelled so CSS takes over with no jump.
+ * Reverse of openBall for a rail ball: the ball fades back in closed, then the animations
+ * are cancelled so CSS takes over with no jump.
  * `keepBallHidden`: the ball is out (its rail slot shows a dot), so it does not fade back in.
  */
 export function closeBall(root, { keepBallHidden = false } = {}) {
   if (!root) return Promise.resolve()
-  if (prefersReducedMotion()) {
+  if (prefersReducedMotion() || keepBallHidden) {
     resetBall(root)
     return Promise.resolve()
   }
-  const options = { duration: CLOSE_DURATION, fill: 'forwards' }
-  const done = settled([
-    run(part(root, 'top'), [{ transform: 'none' }, { transform: 'none' }], options),
-    keepBallHidden
-      ? null
-      : run(part(root, 'ball'), [{ opacity: 0, transform: 'none' }, { opacity: 1, transform: 'none' }], { ...options, easing: 'steps(4, end)' }),
-    run(part(root, 'pokemon'), [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0)' }], { ...options, easing: 'steps(4, end)' }),
-  ])
-  return done.then(() => resetBall(root))
+  return settled([
+    run(part(root, 'top'), [{ transform: 'none' }, { transform: 'none' }], { duration: CLOSE_DURATION }),
+    run(part(root, 'ball'), [{ opacity: 0, transform: 'none' }, { opacity: 1, transform: 'none' }], {
+      duration: CLOSE_DURATION,
+      easing: 'steps(4, end)',
+    }),
+  ]).then(() => resetBall(root))
 }
 
 /** Short landing bounce for a part that is already showing (2 pixel steps). */

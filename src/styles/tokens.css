@@ -124,7 +124,8 @@
   --rail-ball-size: 60px;   /* right rail (>= 768px) */
   --dock-ball-size: 60px;   /* bottom dock (< 768px) */
   --dock-height: 72px;
-  --rail-pokemon: 96px;     /* the Pokémon popping out of a rail ball on a hero click */
+  /* White burst when a ball opens (rail balls and section headers) */
+  --ball-flash: radial-gradient(circle, rgb(255 255 255 / 0.95) 0 22%, rgb(255 255 255 / 0.35) 40%, transparent 62%);
 
   /* Layers */
   --z-header: 10;

@@ -13,7 +13,7 @@ import {
 } from '../lib/journey/geometry.js'
 import { hop } from '../lib/journey/openBall.js'
 import { setCurrentIntro, tickIntros } from '../lib/journey/intros.js'
-import { autoScrollTarget, isAutoScrolling, onNextGlideEnd } from '../lib/journey/state.js'
+import { autoScrollTarget, isAutoScrolling, onGlideEnd } from '../lib/journey/state.js'
 import { prefersReducedMotion } from '../lib/motion.js'
 import { replaceFromScroll } from '../router/history.js'
 
@@ -48,6 +48,16 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
     const query = (attr, id) => document.querySelector(`[${attr}="${id}"]`)
 
     let disposed = false
+    let ready = false
+    // Rail custom properties are only written when they change (3 decimals is sub-pixel),
+    // so a scroll frame with nothing new does not restyle the rail.
+    const written = new Map()
+    const writeVar = (name, value) => {
+      const text = value.toFixed(3)
+      if (written.get(name) === text) return
+      written.set(name, text)
+      rail.style.setProperty(name, text)
+    }
     let frame = 0
     let docked = null
     let active = null
@@ -177,13 +187,15 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
         docked = isDocked
         rail.toggleAttribute('data-docked', isDocked)
         rail.inert = !isDocked
+        // The hero links are gone: no ball keeps wiggling from a hover the page scrolled away.
+        if (isDocked) m.balls.forEach((b) => b.mover?.removeAttribute('data-hover'))
       }
-      rail.style.setProperty('--journey-p', String(p))
+      writeVar('--journey-p', p)
 
       const line = vh * ACTIVE_LINE
       const atBottom = max > 0 && scrollY >= max - 2
       const fill = atBottom ? 1 : trackProgress(tops.map((s) => s.top), line)
-      rail.style.setProperty('--journey-progress', String(clamp(fill)))
+      writeVar('--journey-progress', clamp(fill))
 
       // During a link glide the rail shows the destination at once, instead of flashing every
       // section passed on the way.
@@ -210,7 +222,10 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
       // Throws the current section's ball once its header slot is fully on screen.
       tickIntros()
       if (!gliding) replaceFromScroll(hrefOf.get(active))
-      rail.setAttribute('data-ready', '')
+      if (!ready) {
+        ready = true
+        rail.setAttribute('data-ready', '')
+      }
     }
 
     const schedule = () => {
@@ -234,15 +249,7 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
     motionQuery?.addEventListener?.('change', remeasure)
     document.fonts?.ready.then(remeasure).catch(() => undefined)
     // A glide that ends where it started fires no scroll event; run a frame anyway.
-    let stopGlideListen = () => undefined
-    const listenGlides = () => {
-      stopGlideListen = onNextGlideEnd(() => {
-        if (disposed) return
-        schedule()
-        listenGlides()
-      })
-    }
-    listenGlides()
+    const stopGlideListen = onGlideEnd(schedule)
     schedule()
 
     return () => {

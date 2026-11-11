@@ -118,3 +118,16 @@ Still to do by hand: a real trackpad in Chrome, Safari and Firefox (Firefox uses
 | V4-34 | Async steps carry a per-section generation number, so scrolling quickly back and forth cancels half-finished sequences cleanly. |
 
 This replaces V4-18's rule that an intro plays once per page load.
+
+## 10. v4.4: edge cases and the hero-click Pokémon
+
+I reviewed this in headless Chrome at 1280×800 and 390×844. A scripted suite checks that the page settles consistently after each scenario: only the active section is out, its slot is a dot and its header shows the Pokémon, every other section is a ball with an empty header, nothing is left in the air, and no ball is stuck wiggling. Scenarios: a fast flick to the bottom and back, ping-pong between sections (120ms and 60ms), a hero double click, a hero click cancelled by the wheel, a hero click followed by a header-nav click during the glide, back to top after a hero click, back/forward, the same rail link twice, and reduced motion. All pass. With realistic scrolling (flicks starting at 80px per frame, 40px-per-frame wheel reversals), at most one ball is ever in the air, and no ball vanishes mid-air.
+
+| ID | Requirement |
+| :- | :- |
+| V4-35 | Hero click (`intros.js` `heroOpen`): the ball opens. At the flash, the Pokémon pops out as a fixed sprite above the ball and bobs while the page glides (`heroBuddy.js`), and the ball's rail slot becomes the dot. When *this click's own* glide ends (glides are numbered, so an earlier glide ending is ignored), the Pokémon flies into the section header's slot as that section's tracked flight: it can turn around if the reader leaves, and it is cleaned up if the journey stops. The header then shows it with a landing hop. A cancelled glide shrinks it away and brings the ball back. Rail balls have no Pokémon of their own. |
+| V4-36 | A second plain hero click while one is opening or gliding is ignored (no restarted animation, one history entry). Modified clicks (new tab or window) are left to the browser. The "busy" state lives in the intro controller and clears at the end of that click's glide; there is no timer. A cancelled hero glide puts the section back to `home`, so it gets its normal throw on the next visit. |
+| V4-37 | Reversing mid-flight: a send-out or recall still in the air turns around from where it is (the new flight starts from the old copy, which is removed in the same frame). Nothing vanishes or jumps. |
+| V4-38 | Flight time grows with distance (`clamp(320 + d × 0.25, 380, 650)` ms), so long desktop throws stay readable. |
+| V4-39 | A throw starts once at least half of the header's ball slot is on screen. |
+| V4-40 | The hover wiggle is cleared on click and when the rail docks, so no ball keeps wiggling in the rail. |

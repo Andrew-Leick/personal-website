@@ -41,11 +41,6 @@ const BallRail = forwardRef(function BallRail({ pages, fanArt }, ref) {
                     )}
                     {guide && <span className={styles.dot} aria-hidden="true" />}
                     <span className={styles.flash} data-part="flash" aria-hidden="true" />
-                    {guide && (
-                      <span className={styles.pokemon} data-part="pokemon" aria-hidden="true">
-                        <PixelSprite name={guide} className={styles.pokemonImg} />
-                      </span>
-                    )}
                   </span>
                 </span>
                 <span className={styles.tip}>{page.label}</span>

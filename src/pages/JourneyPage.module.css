@@ -69,7 +69,7 @@
   position: absolute;
   inset: 0;
   border-radius: var(--radius-full);
-  background: radial-gradient(circle, rgb(255 255 255 / 0.95) 0 22%, rgb(255 255 255 / 0.35) 40%, transparent 62%);
+  background: var(--ball-flash);
   opacity: 0;
   pointer-events: none;
 }
