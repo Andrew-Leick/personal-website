@@ -50,18 +50,18 @@
   transition: opacity var(--duration-base) var(--ease-standard);
 }
 
-/* Intro: 96px box (the Pokémon's native size); the 60px ball sits in its center. */
+/* Intro: a box the size of the Pokémon (--header-pokemon-size); the ball sits in its center. */
 .intro {
   position: relative;
   flex: none;
-  width: 96px;
-  height: 96px;
+  width: var(--header-pokemon-size);
+  height: var(--header-pokemon-size);
 }
 
 .introBall {
   --ball-size: var(--header-ball-size);
   position: absolute;
-  inset: calc((96px - var(--header-ball-size)) / 2);
+  inset: calc((var(--header-pokemon-size) - var(--header-ball-size)) / 2);
   display: none;
 }
 
@@ -82,8 +82,8 @@
 }
 
 .pokemonImg {
-  width: 96px;
-  height: 96px;
+  width: var(--header-pokemon-size);
+  height: var(--header-pokemon-size);
   image-rendering: pixelated;
 }
 

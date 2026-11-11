@@ -123,7 +123,8 @@
   --hero-ball-size: 40px;   /* >= 768: 56px */
   --rail-ball-size: 40px;   /* right rail (>= 768px) */
   --dock-ball-size: 40px;   /* bottom dock (< 768px) */
-  --header-ball-size: 32px; /* section header slot: about the visible size of the 96px Pokémon sprites */
+  --header-ball-size: 32px; /* section header slot: about the visible size of the Pokémon */
+  --header-pokemon-size: 120px; /* section header Pokémon: the 96px sprites at 1.25x */
   --dock-height: 72px;
   /* White burst when a ball opens (rail balls and section headers) */
   --ball-flash: radial-gradient(circle, rgb(255 255 255 / 0.95) 0 22%, rgb(255 255 255 / 0.35) 40%, transparent 62%);
