@@ -24,6 +24,7 @@
  * ball fades in and the label dims, so the slot never looks empty. Both reverse on scroll up.
  */
 .slot {
+  --ball-size: var(--hero-ball-size);
   display: block;
   width: var(--hero-ball-size);
   height: var(--hero-ball-size);
@@ -33,7 +34,6 @@
   display: block;
   width: 100%;
   height: 100%;
-  image-rendering: pixelated;
   filter: grayscale(1);
   opacity: calc(var(--leave, 0) * 0.2);
 }

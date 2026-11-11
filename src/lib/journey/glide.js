@@ -30,12 +30,12 @@ export function glideTo(el, targetId = null) {
       (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0)
     : 0
   const destination = () => (el ? clamp(el.getBoundingClientRect().top + window.scrollY - offset, 0, maxScroll()) : 0)
-  const seq = beginGlide(targetId)
+  beginGlide(targetId)
 
   if (prefersReducedMotion() || Math.abs(destination() - from) < 2) {
     window.scrollTo({ top: destination(), left: 0, behavior: 'instant' })
     endGlide()
-    emitGlideEnd({ target: targetId, cancelled: false, seq })
+    emitGlideEnd({ target: targetId, cancelled: false })
     return Promise.resolve({ cancelled: false })
   }
 
@@ -50,7 +50,7 @@ export function glideTo(el, targetId = null) {
       stopEvents.forEach((type) => window.removeEventListener(type, onUser))
       cancelCurrent = null
       endGlide()
-      emitGlideEnd({ target: targetId, cancelled, seq })
+      emitGlideEnd({ target: targetId, cancelled })
       resolve({ cancelled })
     }
     const onUser = () => finish(true)

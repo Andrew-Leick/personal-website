@@ -2,7 +2,6 @@
 //
 // throwBall: a copy of a Poké Ball arcs from one element to another, spinning in quarter
 // turns. Used rail → section header (send out) and header → rail (recall).
-// flyElement: the same flight for a sprite copy that already exists (the hero Pokémon).
 //
 // - The target is re-measured on every frame, so the arc always ends exactly on it, however
 //   the page scrolls meanwhile.
@@ -10,8 +9,6 @@
 //   from another flight's copy (fromEl = flight.copy) and abort that flight in the same
 //   frame: the ball turns around in mid-air instead of jumping.
 
-import { BALL_SPRITE } from '../../components/PixelSprite/sprites.js'
-import { BASE_URL } from '../content/paths.js'
 import { prefersReducedMotion } from '../motion.js'
 import { arcLift, arcPoint, lerp } from './geometry.js'
 
@@ -32,39 +29,49 @@ function landedFlight() {
 }
 
 /**
- * A fixed-position pixel sprite copy at `rect` (viewport), on top of the page and the rail.
- * Marked [data-flight] so tests and cleanups can find every copy in the air.
+ * A fixed-position copy of the Poké Ball `art` (a PokeBall element) at `rect` (viewport), on
+ * top of the page and the rail. Marked [data-flight] so tests and cleanups can find every
+ * copy in the air. Context styles (rail dot, hidden header ball) do not follow it to <body>.
  */
-export function makeCopy(src, rect) {
-  const copy = document.createElement('img')
-  copy.src = src
-  copy.alt = ''
-  copy.setAttribute('aria-hidden', 'true')
+function makeCopy(art, rect) {
+  const copy = art.cloneNode(true)
+  copy.removeAttribute('data-hover')
   copy.setAttribute('data-flight', '')
   Object.assign(copy.style, {
+    // The source can be a header ball whose own class defaults to display: none (it is
+    // shown there by its heading's state); the copy in <body> must always draw.
+    display: 'block',
     position: 'fixed',
+    inset: 'auto',
     left: '0px',
     top: '0px',
+    margin: '0',
     width: `${rect.width}px`,
     height: `${rect.height}px`,
     transform: `translate(${rect.x}px, ${rect.y}px)`,
-    imageRendering: 'pixelated',
+    scale: 'none',
+    translate: 'none',
+    opacity: '1',
+    visibility: 'visible',
+    animation: 'none',
+    transition: 'none',
     pointerEvents: 'none',
     zIndex: '16',
     willChange: 'transform',
   })
+  copy.querySelectorAll('[style]').forEach((el) => el.style.removeProperty('transform'))
   document.body.appendChild(copy)
   return copy
 }
 
 /**
  * Fly the existing fixed copy `copy` onto `toEl`, ending at toEl's size. `spin`: quarter
- * turns (a thrown ball) or none (a Pokémon). `onLand` runs in the frame the flight ends;
+ * turns or none. `onLand` runs in the frame the flight ends;
  * the copy is removed then (also on abort, which skips onLand). If either end measures 0
  * wide (not laid out), it lands at once.
  * @returns {Promise<void> & { copy: HTMLElement|null, abort: () => void }}
  */
-export function flyElement(copy, toEl, { onLand, spin = true } = {}) {
+function flyElement(copy, toEl, { onLand, spin = true } = {}) {
   const from = copy.getBoundingClientRect()
   const first = toEl?.getBoundingClientRect()
   if (!(from.width > 0) || !(first?.width > 0)) {
@@ -140,7 +147,13 @@ export function throwBall(fromEl, toEl, onLand) {
     onLand?.()
     return landedFlight()
   }
-  const copy = makeCopy(`${BASE_URL}sprites/${BALL_SPRITE}.png`, from)
+  // The art to copy: the PokeBall inside a rail mover or header slot, or a previous flight.
+  const art = fromEl.matches?.('[data-part="ball"]') ? fromEl : fromEl.querySelector?.('[data-part="ball"]')
+  if (!art) {
+    onLand?.()
+    return landedFlight()
+  }
+  const copy = makeCopy(art, from)
   copy.dataset.turn = fromEl.dataset?.turn ?? '0'
   // A small recoil on the rail ball as it throws.
   fromEl.querySelector?.('[data-part="ball"]')?.animate?.(

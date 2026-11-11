@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GUIDE_IDS } from '../../../lib/content/index.js'
-import { BALL_SPRITE, GUIDE_NAMES, GUIDE_SPRITES, GUIDE_TYPES, IMAGE_SIZES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
+import { BALL_HINGE, BALL_SEAM, BALL_SPRITE, ballClip, GUIDE_NAMES, GUIDE_SPRITES, GUIDE_TYPES, IMAGE_SIZES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
 
 // SPEC-v3 5.2 expected table.
 const EXPECTED = {
@@ -69,9 +69,32 @@ describe('sprites', () => {
     for (const id of GUIDE_IDS) expect(SPRITES[id]).toBeUndefined()
   })
 
-  it('the Poké Ball is a 30px PNG and every PNG sprite has a size', () => {
+  it('the Poké Ball is a 90px PNG and every PNG sprite has a size', () => {
     expect(IMAGE_SPRITES).toEqual([...GUIDE_IDS, BALL_SPRITE])
-    expect(IMAGE_SIZES[BALL_SPRITE]).toBe(30)
+    expect(IMAGE_SIZES[BALL_SPRITE]).toBe(90)
     for (const id of IMAGE_SPRITES) expect(IMAGE_SIZES[id]).toBeGreaterThan(0)
+  })
+
+  it('the Poké Ball seam covers every column, curves between rows 49 and 60, and rises around the button', () => {
+    expect(BALL_SEAM).toHaveLength(IMAGE_SIZES[BALL_SPRITE])
+    expect(Math.min(...BALL_SEAM)).toBe(49)
+    expect(Math.max(...BALL_SEAM)).toBe(60)
+    // The bite: over the button (columns 27-34) the seam sits higher than on either side.
+    expect(BALL_SEAM[30]).toBeLessThan(BALL_SEAM[16])
+    expect(BALL_SEAM[30]).toBeLessThan(BALL_SEAM[45])
+    expect(BALL_HINGE).toEqual({ x: 88, y: 50 })
+  })
+
+  it('ballClip cuts the two pieces along the same smooth seam (one point per column)', () => {
+    const top = ballClip('top')
+    const bottom = ballClip('bottom')
+    expect(top.startsWith('polygon(0% 0%, 100% 0%, 100% ')).toBe(true)
+    expect(bottom.startsWith('polygon(0% ')).toBe(true)
+    expect(bottom.endsWith('100% 100%, 0% 100%)')).toBe(true)
+    const points = (clip) => clip.slice(8, -1).split(', ')
+    const seamTop = points(top).slice(2)
+    const seamBottom = points(bottom).slice(0, -2)
+    expect(seamTop).toEqual([...seamBottom].reverse())
+    expect(seamBottom).toHaveLength(IMAGE_SIZES[BALL_SPRITE] + 2)
   })
 })

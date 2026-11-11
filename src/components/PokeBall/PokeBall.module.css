@@ -6,21 +6,18 @@
   transform-origin: 50% 85%;
 }
 
+/* The lid's rotating wrapper: same box as the ball, holds the clipped top image. */
+.lid {
+  position: absolute;
+  inset: 0;
+}
+
+/* Both pieces are the full art, clipped along its seam (inline clip-path from PokeBall.jsx).
+ * Smooth art: scaled with normal smoothing, not pixelated. */
 .half {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  image-rendering: pixelated;
   user-select: none;
-}
-
-/* Split at the middle row, where the sprite's seam is. */
-.top {
-  clip-path: inset(0 0 50% 0);
-  transform-origin: 85% 50%;
-}
-
-.bottom {
-  clip-path: inset(50% 0 0 0);
 }

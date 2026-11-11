@@ -119,10 +119,11 @@
   --sprite-hop-duration: 600ms;
   --sprite-stagger: 250ms;
 
-  /* v4 journey: Poké Ball sizes are multiples of the 30px sprite */
-  --hero-ball-size: 60px;   /* >= 768: 90px */
-  --rail-ball-size: 60px;   /* right rail (>= 768px) */
-  --dock-ball-size: 60px;   /* bottom dock (< 768px) */
+  /* v4 journey: Poké Ball sizes (smooth 90px Dream World art, drawn edge to edge) */
+  --hero-ball-size: 40px;   /* >= 768: 56px */
+  --rail-ball-size: 40px;   /* right rail (>= 768px) */
+  --dock-ball-size: 40px;   /* bottom dock (< 768px) */
+  --header-ball-size: 32px; /* section header slot: about the visible size of the 96px Pokémon sprites */
   --dock-height: 72px;
   /* White burst when a ball opens (rail balls and section headers) */
   --ball-flash: radial-gradient(circle, rgb(255 255 255 / 0.95) 0 22%, rgb(255 255 255 / 0.35) 40%, transparent 62%);
@@ -152,7 +153,7 @@
     --text-display: 3rem;
     --text-page-title: 2rem;
     --sprite-px: 6px;
-    --hero-ball-size: 90px;
+    --hero-ball-size: 56px;
   }
 }
 

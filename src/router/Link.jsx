@@ -11,7 +11,7 @@ function isModified(event) {
  * primary-button click on a same-origin URL that resolveRoute() recognizes,
  * when the link has no target or download attribute.
  */
-export default function Link({ href, onClick, beforeNavigate, children, ...rest }) {
+export default function Link({ href, onClick, children, ...rest }) {
   function handleClick(event) {
     onClick?.(event)
     if (event.defaultPrevented || event.button !== 0 || isModified(event)) return
@@ -27,15 +27,7 @@ export default function Link({ href, onClick, beforeNavigate, children, ...rest 
     if (resolveRoute(url.pathname).kind === 'not-found') return
 
     event.preventDefault()
-    // v4: let the caller finish a short animation (the Poké Ball opening) first.
-    if (beforeNavigate) {
-      Promise.resolve()
-        .then(beforeNavigate)
-        .catch(() => undefined)
-        .then(() => navigate(url.href))
-    } else {
-      navigate(url.href)
-    }
+    navigate(url.href)
   }
 
   return (

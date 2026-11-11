@@ -131,3 +131,31 @@ I reviewed this in headless Chrome at 1280×800 and 390×844. A scripted suite c
 | V4-38 | Flight time grows with distance (`clamp(320 + d × 0.25, 380, 650)` ms), so long desktop throws stay readable. |
 | V4-39 | A throw starts once at least half of the header's ball slot is on screen. |
 | V4-40 | The hover wiggle is cleared on click and when the rail docks, so no ball keeps wiggling in the rail. |
+
+## 11. v4.5: hero clicks use the regular intro
+
+This replaces V4-33, V4-35 and V4-36: there is no longer a special hero-click animation.
+
+| ID | Requirement |
+| :- | :- |
+| V4-41 | A hero ball is an ordinary journey link. The click gives a small hop and the page glides at once. The ball rides into its rail slot with the scroll, like any other scroll. When the glide ends, the destination gets the regular intro (V4-31): the slot becomes a dot, the ball is thrown from the rail to the header, it opens, and the Pokémon appears. |
+| V4-42 | Removed with it: `heroBuddy.js`, the hero phase and busy guard in `intros.js`, `closeBall`/`OPEN_HANDOFF` in `openBall.js`, the glide sequence numbers in `state.js`, and the `beforeNavigate` prop of `Link`. A double click navigates to the same URL twice, which only re-runs the same glide (one history entry). |
+
+## 12. v4.6: the opening, piece by piece
+
+| ID | Requirement |
+| :- | :- |
+| V4-43 | The Poké Ball sprite splits along its real seam (`BALL_SEAM` in `sprites.js`, read off the 30×30 PNG). The top piece is the orange half only, including its darker shading. The bottom piece is the dark divider band, the button and the white half. The seam is stepped (rows 16–18) because the ball is drawn at a slight angle. |
+| V4-44 | Opening order (700ms, `openBall.js`): (1) the lid swings up and to the right in 5 pixel steps to 90°, rotating clockwise around its hinge at the right end of the seam (`BALL_HINGE`, sprite pixel 24, 16), while the bottom piece never moves; at rest it stands upright beside the ball, and a quarter turn keeps the pixels crisp; (2) a white flash; (3) the Pokémon pops out of the opening (it grows from the seam, the header slot's center); (4) the empty ball fades, leaving the Pokémon. There is no longer a wobble. |
+
+## 13. v4.8: the official 90×90 art
+
+This replaces V4-43 and V4-02's use of the 30px item sprite. A vector redraw (v4.7) was tried and dropped: too smooth, and wrong to the eye.
+
+| ID | Requirement |
+| :- | :- |
+| V4-45 | The Poké Ball is the official Dream World item art (`public/sprites/poke-ball.png`, 90×90, smooth), shown without pixelation. |
+| V4-46 | It splits along its measured seam (`BALL_SEAM`, one row per column, smoothed into a polyline). The lid is the orange top and takes a round bite where the button sits, as on the real ball. The bottom is the black band, the whole button and the white half. The lid swings up and to the right around the right end of the seam (`BALL_HINGE` = art pixel 88, 50). |
+| V4-47 | Sizes: 40px in the rail, the dock and the phone hero, 56px in the desktop hero, 32px in the section headers (`--header-ball-size`, about the visible size of the 96px Pokémon sprites). Thrown copies clone the PokeBall element. The hero ghost slots use it in grey. |
+| V4-48 | The lid's rotation is applied to a wrapper (`data-part="top"`), never to the clip-pathed image. An element that is both clipped and transform-animated gets a composited layer plus a mask layer, and some browsers stop drawing it mid-animation, which made the top half vanish. |
+| V4-49 | Flying copies are always `display: block`. A copy cloned from a section header's ball inherited that ball's default `display: none`, measured 0px, and was dropped, so a ball flying home from an on-screen header simply vanished. |

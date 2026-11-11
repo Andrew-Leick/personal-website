@@ -47,7 +47,7 @@ npm run dev        # http://localhost:5173
 
 ## Sprites
 
-`public/sprites/` holds the guide Pokémon (96×96) and the Poké Ball item sprite (`poke-ball.png`, 30×30, from the PokeAPI sprites repository). They are Nintendo / Creatures / GAME FREAK artwork used as fan art; the footer carries the trademark notice and `site.fanArt: false` hides them all. Show them at whole-number scales only (`image-rendering: pixelated`).
+`public/sprites/` holds the guide Pokémon (96×96 pixel art) and the Poké Ball (`poke-ball.png`, the 90×90 Dream World item art), both from the PokeAPI sprites repository. They are Nintendo / Creatures / GAME FREAK artwork used as fan art; the footer carries the trademark notice and `site.fanArt: false` hides them all. Show the Pokémon at whole-number scales only (`image-rendering: pixelated`); the Poké Ball is smooth art and scales freely.
 
 ## Deploy (GitHub Pages)
 

@@ -1,21 +1,23 @@
-// Poké Ball open and close sequences (spec v4 / v4.1), built on the Web Animations API.
+// Poké Ball opening sequence (spec v4.6), built on the Web Animations API.
 //
 // Expects, inside `root`:
-//   [data-part="ball"]     the ball (wobbles, then fades)
-//   [data-part="top"]      top half of the sprite (flips open on its hinge)
+//   [data-part="ball"]     the whole ball (stays put; fades once the Pokémon is out)
+//   [data-part="top"]      the lid: a wrapper around the orange top piece (PokeBall.jsx clips the image inside on the seam)
 //   [data-part="flash"]    white burst
 //   [data-part="pokemon"]  the Pokémon (optional: section headers have one, rail balls do not)
-// Every function resolves when its sequence ends. None rejects.
+//
+// Order: the lid swings up and right on its hinge (the right end of the seam) while the
+// bottom stays still, then the white flash, then the Pokémon pops out. Every function resolves when its sequence ends. None rejects.
 
 import { prefersReducedMotion } from '../motion.js'
 import { cancelAnimations, part, settled } from './anim.js'
 
-const OPEN_DURATION = 600
-const CLOSE_DURATION = 220
-/** When the flash peaks: a hero click hands over to the page glide here. */
-export const OPEN_HANDOFF = 300
+const OPEN_DURATION = 700
+/** How far the lid swings open, clockwise. 90°: it stands upright beside the ball (and a
+ * quarter turn keeps the pixel art crisp at rest). */
+const LID_ANGLE = 90
 /** When the Pokémon starts to appear (section intros sync the title to this). */
-export const OPEN_POP_AT = 270
+export const OPEN_POP_AT = Math.round(OPEN_DURATION * 0.45)
 
 const PARTS = ['ball', 'top', 'flash', 'pokemon']
 
@@ -33,57 +35,37 @@ export function openBall(root) {
   if (!root || prefersReducedMotion()) return Promise.resolve()
   resetBall(root)
   return settled([
-    run(part(root, 'ball'), [
-      { transform: 'rotate(0deg)', opacity: 1, offset: 0 },
-      { transform: 'rotate(-14deg)', offset: 0.08 },
-      { transform: 'rotate(12deg)', offset: 0.16 },
-      { transform: 'rotate(-6deg)', offset: 0.24 },
-      { transform: 'rotate(0deg)', opacity: 1, offset: 0.3 },
-      { transform: 'rotate(0deg)', opacity: 1, offset: 0.6 },
-      { transform: 'rotate(0deg)', opacity: 0, offset: 0.85 },
-      { transform: 'rotate(0deg)', opacity: 0, offset: 1 },
-    ], { easing: 'steps(15, end)' }),
+    // 1. The lid swings up and right on its hinge (pixel steps); the bottom never moves.
     run(part(root, 'top'), [
-      { transform: 'translateY(0) rotate(0deg)', offset: 0 },
-      { transform: 'translateY(0) rotate(0deg)', offset: 0.3 },
-      { transform: 'translateY(-18%) rotate(-55deg)', offset: 0.45 },
-      { transform: 'translateY(-18%) rotate(-55deg)', offset: 1 },
-    ], { easing: 'steps(10, end)' }),
+      { transform: 'rotate(0deg)', offset: 0, easing: 'steps(5, end)' },
+      { transform: `rotate(${LID_ANGLE}deg)`, offset: 0.35 },
+      { transform: `rotate(${LID_ANGLE}deg)`, offset: 1 },
+    ]),
+    // 2. White flash out of the open ball.
     run(part(root, 'flash'), [
       { opacity: 0, transform: 'scale(0.2)', offset: 0 },
-      { opacity: 0, transform: 'scale(0.2)', offset: 0.38 },
-      { opacity: 1, transform: 'scale(1)', offset: 0.5 },
-      { opacity: 0, transform: 'scale(1.4)', offset: 0.7 },
+      { opacity: 0, transform: 'scale(0.2)', offset: 0.33 },
+      { opacity: 1, transform: 'scale(1)', offset: 0.45 },
+      { opacity: 0, transform: 'scale(1.4)', offset: 0.62 },
       { opacity: 0, transform: 'scale(1.4)', offset: 1 },
     ], { easing: 'steps(10, end)' }),
+    // 3. The Pokémon pops out.
     run(part(root, 'pokemon'), [
       { opacity: 0, transform: 'scale(0)', offset: 0 },
       { opacity: 0, transform: 'scale(0)', offset: 0.45 },
-      { opacity: 1, transform: 'scale(0.5)', offset: 0.58 },
-      { opacity: 1, transform: 'scale(1.15)', offset: 0.8 },
+      { opacity: 1, transform: 'scale(0.5)', offset: 0.55 },
+      { opacity: 1, transform: 'scale(1.15)', offset: 0.72 },
+      { opacity: 1, transform: 'scale(1)', offset: 0.82 },
       { opacity: 1, transform: 'scale(1)', offset: 1 },
     ], { easing: 'steps(8, end)' }),
+    // 4. Then the empty ball fades, leaving the Pokémon.
+    run(part(root, 'ball'), [
+      { opacity: 1, offset: 0 },
+      { opacity: 1, offset: 0.75 },
+      { opacity: 0, offset: 0.92 },
+      { opacity: 0, offset: 1 },
+    ], { easing: 'steps(6, end)' }),
   ])
-}
-
-/**
- * Reverse of openBall for a rail ball: the ball fades back in closed, then the animations
- * are cancelled so CSS takes over with no jump.
- * `keepBallHidden`: the ball is out (its rail slot shows a dot), so it does not fade back in.
- */
-export function closeBall(root, { keepBallHidden = false } = {}) {
-  if (!root) return Promise.resolve()
-  if (prefersReducedMotion() || keepBallHidden) {
-    resetBall(root)
-    return Promise.resolve()
-  }
-  return settled([
-    run(part(root, 'top'), [{ transform: 'none' }, { transform: 'none' }], { duration: CLOSE_DURATION }),
-    run(part(root, 'ball'), [{ opacity: 0, transform: 'none' }, { opacity: 1, transform: 'none' }], {
-      duration: CLOSE_DURATION,
-      easing: 'steps(4, end)',
-    }),
-  ]).then(() => resetBall(root))
 }
 
 /** Short landing bounce for a part that is already showing (2 pixel steps). */

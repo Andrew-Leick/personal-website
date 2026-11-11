@@ -59,9 +59,9 @@
 }
 
 .introBall {
-  --ball-size: 60px;
+  --ball-size: var(--header-ball-size);
   position: absolute;
-  inset: 18px;
+  inset: calc((96px - var(--header-ball-size)) / 2);
   display: none;
 }
 
@@ -74,10 +74,11 @@
   pointer-events: none;
 }
 
+/* Grows out of (and shrinks back into) the ball's opening: the seam, at the slot's center. */
 .pokemon {
   position: absolute;
   inset: 0;
-  transform-origin: 50% 100%;
+  transform-origin: 50% 52%;
 }
 
 .pokemonImg {

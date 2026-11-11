@@ -80,14 +80,63 @@ export const SPRITES = Object.fromEntries(
 /** Guide Pokémon rendered from PNG files in public/sprites/{id}.png (96x96, Black/White style). */
 export const GUIDE_SPRITES = ['charmander', 'bulbasaur', 'squirtle']
 
-/** Official item sprite (30x30) used for the v4 journey: hero slots, rail and section intros. */
+/** Official Poké Ball art (Dream World, 90x90, smooth) for the v4 journey: hero slots, rail, section intros. */
 export const BALL_SPRITE = 'poke-ball'
 
 /** Every sprite served as a PNG from public/sprites/{id}.png. */
 export const IMAGE_SPRITES = [...GUIDE_SPRITES, BALL_SPRITE]
 
-/** Native pixel size of each PNG sprite. Show them at integer multiples only. */
-export const IMAGE_SIZES = { charmander: 96, bulbasaur: 96, squirtle: 96, [BALL_SPRITE]: 30 }
+/**
+ * Native pixel size of each PNG sprite. The Pokémon are pixel art: show them at integer
+ * multiples only. The Poké Ball is smooth art and scales freely.
+ */
+export const IMAGE_SIZES = { charmander: 96, bulbasaur: 96, squirtle: 96, [BALL_SPRITE]: 90 }
+
+/*
+ * Where the Poké Ball art splits into its two pieces (spec v4.8), measured on the 90x90 PNG:
+ * for each pixel column, the first row below the orange top (where the black band, the
+ * button ring or the white half begins). Above it is the lid. The ball is drawn at a slight
+ * angle, so the seam curves (rows 49-60), and it rises around the button on the left: the
+ * lid takes a round bite where the button sits, as on the real ball. Edge columns with no
+ * orange copy their neighbour.
+ */
+export const BALL_SEAM = [
+  51, 51, 51, 51, 51, 51, 52, 52, 53, 53, 54, 54, 54, 55, 55, 56, 56, 56, 56, 55,
+  54, 53, 52, 51, 50, 50, 50, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 51, 52,
+  53, 54, 55, 57, 59, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 59, 59,
+  59, 59, 59, 59, 58, 58, 58, 58, 58, 57, 57, 57, 56, 56, 56, 55, 55, 55, 54, 54,
+  53, 53, 52, 52, 51, 50, 50, 50, 50, 50,
+]
+
+/**
+ * The lid's hinge, in art pixels: the right end of the seam, on the outline. The lid swings
+ * up and right around it.
+ */
+export const BALL_HINGE = { x: 88, y: 50 }
+
+const pct = (v) => `${+((v / BALL_SEAM.length) * 100).toFixed(3)}%`
+
+/** BALL_SEAM smoothed (3-column average): the cut follows the curve, not pixel noise. */
+const SMOOTH_SEAM = BALL_SEAM.map((_, x, seam) => {
+  const near = [seam[x - 1], seam[x], seam[x + 1]].filter((v) => v !== undefined)
+  return near.reduce((a, b) => a + b, 0) / near.length
+})
+
+/**
+ * clip-path polygon that keeps only the top piece ('top') or the bottom piece ('bottom') of
+ * the Poké Ball art. The cut is a polyline through each column's center along the smoothed
+ * seam, so both edges are smooth curves, not stair steps.
+ * @param {'top'|'bottom'} piece
+ */
+export function ballClip(piece) {
+  const n = SMOOTH_SEAM.length
+  const seam = [`0% ${pct(SMOOTH_SEAM[0])}`]
+  for (let x = 0; x < n; x += 1) seam.push(`${pct(x + 0.5)} ${pct(SMOOTH_SEAM[x])}`)
+  seam.push(`100% ${pct(SMOOTH_SEAM[n - 1])}`)
+  return piece === 'top'
+    ? `polygon(0% 0%, 100% 0%, ${seam.reverse().join(', ')})`
+    : `polygon(${seam.join(', ')}, 100% 100%, 0% 100%)`
+}
 
 /** Guide id (site.json pages[].guide) -> caption shown under the sprite. */
 export const GUIDE_NAMES = { charmander: 'Charmander', bulbasaur: 'Bulbasaur', squirtle: 'Squirtle' }
