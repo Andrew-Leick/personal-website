@@ -1,7 +1,8 @@
 // Flying sprites (spec v4.1–v4.4).
 //
-// throwBall: a copy of a Poké Ball arcs from one element to another, spinning in quarter
-// turns. Used rail → section header (send out) and header → rail (recall).
+// throwBall: a copy of a Poké Ball arcs from one element to another, spinning once on the
+// way (upright before it arrives). Used rail → section header (send out) and header → rail
+// (recall).
 //
 // - The target is re-measured on every frame, so the arc always ends exactly on it, however
 //   the page scrolls meanwhile.
@@ -10,7 +11,7 @@
 //   frame: the ball turns around in mid-air instead of jumping.
 
 import { prefersReducedMotion } from '../motion.js'
-import { arcLift, arcPoint, lerp } from './geometry.js'
+import { arcLift, arcPoint, lerp, spinAngle } from './geometry.js'
 
 /** Flight time grows with distance, so long desktop throws never blur across the screen. */
 export function throwDuration(distance) {
@@ -65,8 +66,8 @@ function makeCopy(art, rect) {
 }
 
 /**
- * Fly the existing fixed copy `copy` onto `toEl`, ending at toEl's size. `spin`: quarter
- * turns or none. `onLand` runs in the frame the flight ends;
+ * Fly the existing fixed copy `copy` onto `toEl`, ending at toEl's size. `spin`: one smooth
+ * turn, upright before the final approach (or none). `onLand` runs in the frame the flight ends;
  * the copy is removed then (also on abort, which skips onLand). If either end measures 0
  * wide (not laid out), it lands at once.
  * @returns {Promise<void> & { copy: HTMLElement|null, abort: () => void }}
@@ -95,7 +96,9 @@ function flyElement(copy, toEl, { onLand, spin = true } = {}) {
     const e = easeOut(t)
     const point = arcPoint(start, center(to), lift, e)
     const scale = lerp(from.width, size, e) / size
-    const turn = spin ? startTurn + Math.min(4, Math.floor(t * 4)) * 90 : 0
+    // One smooth turn over the first 60% of the flight, easing into upright before the slow
+    // final approach: visible, and it lands upright.
+    const turn = spin ? spinAngle(t, startTurn) : 0
     if (spin) copy.dataset.turn = String(turn % 360)
     if (size !== shownSize) {
       shownSize = size

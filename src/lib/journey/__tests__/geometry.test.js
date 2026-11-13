@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { arcLift, arcPoint, ballTransform, clamp, easeInOut, heroProgress, lerp, pickActive, staggered, staggerOrder, tilt, trackProgress } from '../geometry.js'
+import { arcLift, arcPoint, spinAngle, ballTransform, clamp, easeInOut, heroProgress, lerp, pickActive, staggered, staggerOrder, tilt, trackProgress } from '../geometry.js'
 
 describe('basics', () => {
   test('clamp and lerp', () => {
@@ -127,5 +127,21 @@ describe('trackProgress', () => {
   test('edge cases', () => {
     expect(trackProgress([], 100)).toBe(0)
     expect(trackProgress([50], 100)).toBe(1)
+  })
+})
+
+describe('spinAngle', () => {
+  test('one full turn over the first 60% of the flight, easing into upright', () => {
+    expect(spinAngle(0)).toBe(0)
+    expect(spinAngle(0.3)).toBe(270)
+    expect(spinAngle(0.6)).toBe(360)
+    expect(spinAngle(0.9)).toBe(360)
+    expect(spinAngle(1)).toBe(360)
+    expect(spinAngle(0.15)).toBeGreaterThan(spinAngle(0.45) - spinAngle(0.3)) // fast, then slowing
+  })
+  test('a turn-around keeps going forward to the next upright angle', () => {
+    expect(spinAngle(0, 270)).toBe(270)
+    expect(spinAngle(0.6, 270)).toBe(360)
+    expect(spinAngle(1, 90) % 360).toBe(0)
   })
 })

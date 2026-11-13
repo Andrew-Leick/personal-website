@@ -14,7 +14,14 @@
   margin: 0;
 }
 
+/*
+ * Fluid root size: 1x up to a 1440px window, growing to 1.5x at 2560px (capped at 1.625x),
+ * so everything sized in rem (text, spacing, the content column, the Poké Balls) scales
+ * up and the page fills large monitors instead of sitting in a narrow column. It is a
+ * percentage, so the reader's own browser font size still applies.
+ */
 html {
+  font-size: clamp(100%, calc(100% + (100vw - 1440px) * 0.00714), 162.5%);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-top: var(--space-4);
@@ -183,6 +190,22 @@ time {
   max-width: var(--container-max);
   margin-inline: auto;
   padding-inline: var(--gutter);
+}
+
+/*
+ * v4 journey: header, sections and footer share one centered column, as wide as an
+ * Experience entry. From 768px the right rail's width is kept clear on both sides, so the
+ * column is centered between an empty left margin and the rail.
+ */
+body:has([data-rail-slot]) .container {
+  max-width: calc(var(--journey-column) + 2 * var(--gutter));
+}
+
+@media (min-width: 768px) {
+  body:has([data-rail-slot]) .container {
+    max-width: calc(var(--journey-column) + 2 * var(--rail-space));
+    padding-inline: var(--rail-space);
+  }
 }
 
 /* Pokémon-style dialog box: thick outer border, gap, thin inner line. */

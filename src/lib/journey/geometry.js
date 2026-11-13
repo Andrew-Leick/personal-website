@@ -68,6 +68,19 @@ export function tilt(t, max = 12, steps = 3) {
 }
 
 /**
+ * Spin of a thrown ball, in degrees, at flight time `t` (0 to 1). It turns forward from
+ * `start` to the next full turn over the first `share` of the flight, slowing smoothly into
+ * upright (ease-out), so the spin is easy to see and the ball is upright (a multiple of
+ * 360°) for the slow final approach: it lands upright, never snapping at the slot.
+ */
+export function spinAngle(t, start = 0, share = 0.6) {
+  const from = ((start % 360) + 360) % 360
+  const remaining = from === 0 ? 360 : 360 - from
+  const x = clamp(t / share)
+  return from + remaining * (1 - (1 - x) ** 2)
+}
+
+/**
  * Launch order for the balls: the shortest path leaves first, so the balls never bunch.
  * Returns each ball's rank (0 = first) in input order. Ties keep input order.
  * @param {number[]} distances

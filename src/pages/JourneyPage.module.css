@@ -43,7 +43,7 @@
 /* Empty slot waiting for the throw: dashed ring in the page's type color. */
 .slotRing {
   position: absolute;
-  inset: 14px;
+  inset: 0.875rem;
   border: var(--border-width-pixel) dashed var(--page-accent, var(--color-border-strong));
   border-radius: var(--radius-full);
   opacity: 0;
@@ -65,6 +65,8 @@
   display: none;
 }
 
+/* The white burst as the ball opens: a bright glow plus a ring that bursts outward with it
+ * (both scale with the element; src/lib/journey/openBall.js animates it). */
 .flash {
   position: absolute;
   inset: 0;
@@ -72,6 +74,15 @@
   background: var(--ball-flash);
   opacity: 0;
   pointer-events: none;
+}
+
+.flash::after {
+  position: absolute;
+  inset: 14%;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 10px rgb(255 255 255 / 0.7);
+  content: "";
 }
 
 /* Grows out of (and shrinks back into) the ball's opening: the seam, at the slot's center. */
@@ -82,10 +93,93 @@
 }
 
 .pokemonImg {
+  /* One pixel of the 96px sprite art at its header size, so idle moves stay on the art's grid. */
+  --px: calc(var(--header-pokemon-size) / 96);
   width: var(--header-pokemon-size);
   height: var(--header-pokemon-size);
+  transform-origin: 50% 78%;
   image-rendering: pixelated;
 }
+
+/*
+ * Idle animations once the Pokémon is out (the header is no longer data-pending; with no JS
+ * they simply run at rest). On the image, not on .pokemon, so they never fight the pop-out
+ * and recall animations (openBall.js). Each type has its own, in pixel steps:
+ *   fire   Charmander bobs on a two-frame idle while a warm glow flickers around it.
+ *   grass  Bulbasaur breathes (squashes a little from its feet) and now and then shakes.
+ *   water  Squirtle sways side to side and every few seconds does a little double hop.
+ * Two properties per type (translate, scale, rotate, transform or filter), never the same
+ * one twice, so both loops run together.
+ */
+/* Only for readers who have not asked for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  /* (Written out per type: CSS Modules renames keyframes only inside `animation` itself.) */
+  .section[data-type="fire"] .title:not([data-pending]) .pokemonImg {
+    animation:
+      idle-bob 900ms steps(1, end) infinite,
+      idle-glow 1400ms steps(3, end) infinite alternate;
+  }
+
+  .section[data-type="grass"] .title:not([data-pending]) .pokemonImg {
+    animation:
+      idle-breathe 1800ms steps(3, end) infinite,
+      idle-shake 4200ms steps(1, end) infinite;
+  }
+
+  .section[data-type="water"] .title:not([data-pending]) .pokemonImg {
+    animation:
+      idle-sway 1600ms steps(1, end) infinite,
+      idle-hop 3800ms steps(1, end) infinite;
+  }
+}
+
+@keyframes idle-bob {
+  0%,
+  50% { translate: 0 0; }
+  50.01%,
+  100% { translate: 0 calc(var(--px) * -2); }
+}
+
+@keyframes idle-glow {
+  from { filter: drop-shadow(0 0 calc(var(--px) * 2) rgb(255 140 66 / 0.25)); }
+  to { filter: drop-shadow(0 0 calc(var(--px) * 7) rgb(255 140 66 / 0.7)); }
+}
+
+@keyframes idle-breathe {
+  0%,
+  100% { scale: 1 1; }
+  50% { scale: 1.04 0.96; }
+}
+
+@keyframes idle-shake {
+  0%,
+  84% { rotate: 0deg; }
+  86% { rotate: -4deg; }
+  89% { rotate: 4deg; }
+  92% { rotate: -3deg; }
+  95% { rotate: 2deg; }
+  98% { rotate: 0deg; }
+}
+
+@keyframes idle-sway {
+  0%,
+  100% { translate: 0 0; }
+  25% { translate: calc(var(--px) * 2) 0; }
+  50% { translate: 0 0; }
+  75% { translate: calc(var(--px) * -2) 0; }
+}
+
+@keyframes idle-hop {
+  0%,
+  82% { transform: none; }
+  84% { transform: translateY(calc(var(--px) * -6)); }
+  87% { transform: translateY(calc(var(--px) * -2)); }
+  89% { transform: none; }
+  91% { transform: translateY(calc(var(--px) * -4)); }
+  94%,
+  100% { transform: none; }
+}
+
 
 /*
  * Waiting for the reader (data-pending on the h2, set by useSectionReveal only): empty
@@ -124,11 +218,20 @@
 }
 
 /*
- * 768 to 1279px: the fixed rail would cover the right edge of the content, so the
- * journey's containers keep clear of it. Wider screens have room beside the 64rem column.
+ * Centered column (base.css): text and boxes fill it instead of stopping at the measure, so
+ * nothing hugs the left with an empty band on the right. The column itself keeps lines a
+ * readable length.
  */
-@media (min-width: 768px) and (max-width: 1279px) {
-  .journey :global(.container) {
-    padding-inline-end: calc(var(--rail-ball-size) + var(--space-5) * 2);
-  }
+.section {
+  --measure: none;
+}
+
+/* Hero: name, role, the "Choose your starter" box and the links sit centered. */
+.hero :global(.container) {
+  justify-items: center;
+  text-align: center;
+}
+
+.hero :global(.container) > :last-child {
+  justify-content: center;
 }

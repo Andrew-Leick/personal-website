@@ -75,7 +75,7 @@ export default function JourneyPage({ content }) {
           {pages.length > 0 && (
             <DialogBox as="nav" aria-labelledby="party-heading" className={homeStyles.party} more>
               <h2 id="party-heading" className={homeStyles.prompt}>
-                Where to next?
+                Choose your starter
               </h2>
               <ul className={homeStyles.partyList}>
                 {pages.map((page) => (

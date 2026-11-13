@@ -18,7 +18,7 @@ export default function HomePage({ content }) {
         {pages.length > 0 && (
           <DialogBox as="nav" aria-labelledby="party-heading" className={styles.party} more>
             <h2 id="party-heading" className={styles.prompt}>
-              Where to next?
+              Choose your starter
             </h2>
             <ul className={styles.partyList}>
               {pages.map((page, index) => (

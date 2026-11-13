@@ -69,3 +69,10 @@
     padding-block: var(--space-20) var(--space-16);
   }
 }
+
+/* Wide screens: the "Choose your starter" box grows with the content column. */
+@media (min-width: 1600px) {
+  .party {
+    max-width: 56rem;
+  }
+}

@@ -86,7 +86,8 @@
   --space-12: 3rem;    --space-16: 4rem;   --space-20: 5rem;   --space-24: 6rem;
 
   /* Layout */
-  --container-max: 64rem;
+  /* 64rem on laptops; on wide screens about 72% of the window (see the fluid root size in base.css) */
+  --container-max: clamp(64rem, 72vw, 110rem);
   --measure: 68ch;
   --gutter: clamp(1rem, 0.5rem + 2.5vw, 2rem);
   --header-height: 3.5rem;
@@ -106,9 +107,9 @@
   --focus-ring-offset: 2px;
 
   /* Pixel scales (integers only) */
-  --sprite-px: 4px;        /* Home sprites: 64px; >=768: 6px = 96px */
-  --sprite-px-title: 2px;  /* subpage title sprite: 32px */
-  --cursor-px: 2px;        /* ▶ 8x14px, ▼ 14x8px */
+  --sprite-px: 0.25rem;    /* Home sprites: 64px; >=768: 6px = 96px (at a 16px root) */
+  --sprite-px-title: 0.125rem; /* subpage title sprite: 32px */
+  --cursor-px: 0.125rem;   /* ▶ 8x14px, ▼ 14x8px */
 
   /* Motion */
   --duration-fast: 120ms;
@@ -119,15 +120,22 @@
   --sprite-hop-duration: 600ms;
   --sprite-stagger: 250ms;
 
-  /* v4 journey: Poké Ball sizes (smooth 90px Dream World art, drawn edge to edge) */
-  --hero-ball-size: 40px;   /* >= 768: 56px */
-  --rail-ball-size: 40px;   /* right rail (>= 768px) */
-  --dock-ball-size: 40px;   /* bottom dock (< 768px) */
-  --header-ball-size: 32px; /* section header slot: about the visible size of the Pokémon */
-  --header-pokemon-size: 120px; /* section header Pokémon: the 96px sprites at 1.25x */
-  --dock-height: 72px;
-  /* White burst when a ball opens (rail balls and section headers) */
-  --ball-flash: radial-gradient(circle, rgb(255 255 255 / 0.95) 0 22%, rgb(255 255 255 / 0.35) 40%, transparent 62%);
+  /* v4 journey: Poké Ball sizes (smooth 90px Dream World art, drawn edge to edge).
+     In rem so they grow with the page on wide screens; px values at a 16px root. */
+  --hero-ball-size: 2.5rem;       /* 40px; >= 768: 56px */
+  --rail-ball-size: 2.5rem;       /* 40px, right rail (>= 768px) */
+  --dock-ball-size: 2.5rem;       /* 40px, bottom dock (< 768px) */
+  --header-ball-size: 2rem;       /* 32px, section header slot: about the visible size of the Pokémon */
+  --header-pokemon-size: 7.5rem;  /* 120px, section header Pokémon: the 96px sprites at 1.25x */
+  --dock-height: 4.5rem;          /* 72px */
+  /* Room the right rail takes (ball plus a gap each side); the journey reserves the same
+     on the left so the content column sits centered between them. */
+  --rail-space: calc(var(--rail-ball-size) + 2 * var(--space-5));
+  /* Journey content column: as wide as an Experience entry (date column, gap, text measure).
+     `ch` resolves at the body text size where it is used. */
+  --journey-column: calc(var(--date-column) + var(--space-8) + var(--measure));
+  /* White burst when a section header's ball opens: solid core, strong glow */
+  --ball-flash: radial-gradient(circle, #fff 0 26%, rgb(255 255 255 / 0.9) 34%, rgb(255 255 255 / 0.45) 50%, rgb(255 255 255 / 0.12) 62%, transparent 70%);
 
   /* Layers */
   --z-header: 10;
@@ -136,7 +144,7 @@
   --z-skip-link: 100;
 
   /* Hit area */
-  --target-min: 44px;
+  --target-min: 2.75rem; /* 44px */
 
   /* Component sizes */
   --icon-size: 1.125rem;
@@ -153,9 +161,18 @@
   :root {
     --text-display: 3rem;
     --text-page-title: 2rem;
-    --sprite-px: 6px;
-    --hero-ball-size: 56px;
+    --sprite-px: 0.375rem;
+    --hero-ball-size: 3.5rem;
   }
+}
+
+/* Wide screens: longer text lines, so prose and entries use the wider content column. */
+@media (min-width: 1600px) {
+  :root { --measure: 84ch; }
+}
+
+@media (min-width: 2200px) {
+  :root { --measure: 100ch; }
 }
 
 @media (prefers-reduced-motion: reduce) {
