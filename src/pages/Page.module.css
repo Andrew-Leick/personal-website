@@ -1,4 +1,4 @@
-/* Shared subpage layout (ContentPage, NotFoundPage). */
+/* Shared page layout (journey sections, NotFoundPage). */
 
 .page {
   min-width: 0;
@@ -16,19 +16,6 @@
   font-weight: var(--weight-regular);
   line-height: var(--leading-display);
   letter-spacing: 0;
-}
-
-.titleSprite {
-  flex: none;
-  width: calc(16 * var(--sprite-px-title));
-  height: calc(16 * var(--sprite-px-title));
-}
-
-/* Guide PNGs are 96x96, shown 1:1 so the pixels stay crisp. */
-.titleSprite[data-kind="image"] {
-  width: 96px;
-  height: 96px;
-  image-rendering: pixelated;
 }
 
 .page[data-type="fire"] { --page-accent: var(--color-type-fire); }

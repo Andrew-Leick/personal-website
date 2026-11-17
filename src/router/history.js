@@ -55,15 +55,18 @@ function makeSnapshot(type) {
   }
 }
 
-/** REQ-906: replace a non-canonical path (no trailing slash, index.html) in place. */
+/**
+ * REQ-906: replace a non-canonical path (no trailing slash, index.html) in place.
+ * V5-07: an alias path ("/projects/") also gains its route hash when the URL has none.
+ */
 function normalizeCurrentPath() {
-  const { canonicalPath } = resolveRoute(window.location.pathname)
+  const { canonicalPath, hash } = resolveRoute(window.location.pathname)
   if (canonicalPath && canonicalPath !== window.location.pathname) {
     try {
       window.history.replaceState(
         window.history.state,
         '',
-        canonicalPath + window.location.search + window.location.hash,
+        canonicalPath + window.location.search + (window.location.hash || hash || ''),
       )
     } catch {
       // Ignore: the page still renders from the original path.
@@ -111,7 +114,8 @@ export function getSavedScroll(key) {
  * Route effects only sync the head for this type; they never scroll or move focus.
  */
 export function replaceFromScroll(path) {
-  if (!path || (path === window.location.pathname && !window.location.hash)) return
+  // V5-07/V5-17: a #pokedex-* hash names a view, not a scroll target, so it stays while on its page.
+  if (!path || (path === window.location.pathname && /^(#pokedex-.*)?$/.test(window.location.hash))) return
   try {
     window.history.replaceState(window.history.state, '', path + window.location.search)
   } catch {
@@ -126,8 +130,8 @@ export function replaceFromScroll(path) {
  */
 export function navigate(href, { replace = false } = {}) {
   const url = new URL(href, window.location.href)
-  const { canonicalPath } = resolveRoute(url.pathname)
-  const target = (canonicalPath ?? url.pathname) + url.search + url.hash
+  const { canonicalPath, hash } = resolveRoute(url.pathname)
+  const target = (canonicalPath ?? url.pathname) + url.search + (url.hash || hash || '')
   const current = window.location.pathname + window.location.search + window.location.hash
 
   if (target === current && !replace) {

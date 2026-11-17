@@ -65,12 +65,21 @@ export function checkRoutes(distDir, content, base) {
     }
     expectHead(file, readFileSync(full, 'utf8'), headFor({ kind: 'page', page, canonicalPath: base + page.path }, content))
   }
+  // V5-08: each alias is a copy of its target page (same title and canonical).
+  for (const page of content.pages) {
+    for (const alias of page.aliases) {
+      const file = `${alias.id}/index.html`
+      const full = join(distDir, alias.id, 'index.html')
+      if (!existsSync(full)) problems.push(`${file}: missing (alias of page "${page.id}")`)
+      else expectHead(file, readFileSync(full, 'utf8'), headFor({ kind: 'page', page, canonicalPath: base + page.path }, content))
+    }
+  }
   const nfPath = join(distDir, '404.html')
   if (!existsSync(nfPath)) problems.push('404.html: missing')
   else expectHead('404.html', readFileSync(nfPath, 'utf8'), headFor(NOT_FOUND_ROUTE, content))
 
   // Route folders for pages that are not shown (hidden or empty) must not exist.
-  const shown = new Set(content.pages.map((p) => p.id))
+  const shown = new Set(content.pages.flatMap((p) => [p.id, ...p.aliases.map((a) => a.id)]))
   for (const name of readdirSync(distDir)) {
     if (name !== 'assets' && !shown.has(name) && existsSync(join(distDir, name, 'index.html'))) {
       problems.push(`${name}/index.html: emitted, but "${name}" is not a shown page`)
@@ -93,6 +102,10 @@ export function checkRoutes(distDir, content, base) {
     const got = [...readFileSync(smPath, 'utf8').matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]).sort()
     const want = sitemapUrls(content).map(escapeHtml).sort()
     if (JSON.stringify(got) !== JSON.stringify(want)) problems.push(`sitemap.xml: lists ${JSON.stringify(got)}, expected ${JSON.stringify(want)}`)
+    for (const alias of content.pages.flatMap((p) => p.aliases)) {
+      const url = escapeHtml(`${content.site.siteUrl}${alias.path}`)
+      if (got.includes(url)) problems.push(`sitemap.xml: lists alias ${JSON.stringify(url)} (aliases redirect, so they stay out of the sitemap)`)
+    }
     checked.push('sitemap.xml')
   }
   return { problems, checked }

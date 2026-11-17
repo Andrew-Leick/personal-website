@@ -23,12 +23,13 @@ const routes = checkRoutes(distDir, content, base)
 const fonts = checkFonts(distDir)
 const problems = [...routes.problems, ...fonts.problems]
 const checked = [...routes.checked, ...fonts.checked]
+const aliasCount = content.pages.reduce((n, p) => n + p.aliases.length, 0)
 
 for (const f of checked) console.log(`✓ ${f}`)
 for (const p of problems) console.log(`✖ ${p}`)
 console.log(
   problems.length
     ? `\nRoutes failed: ${problems.length} problem${problems.length === 1 ? '' : 's'}`
-    : `\nRoutes OK: home + ${content.pages.length} page${content.pages.length === 1 ? '' : 's'} + 404.html, sitemap matches, ${fonts.checked.length} font files OK (base "${base}")`,
+    : `\nRoutes OK: home + ${content.pages.length} page${content.pages.length === 1 ? '' : 's'} + ${aliasCount} alias${aliasCount === 1 ? '' : 'es'} + 404.html, sitemap matches, ${fonts.checked.length} font files OK (base "${base}")`,
 )
 process.exit(problems.length ? 1 : 0)

@@ -3,7 +3,7 @@
 // Expects, inside `root`:
 //   [data-part="ball"]     the whole ball (stays put; washes out to white, fades once the Pokémon is out)
 //   [data-part="top"]      the lid: a wrapper around the orange top piece (PokeBall.jsx clips the image inside on the seam)
-//   [data-part="flash"]    white burst
+//   [data-part="flash"]    white burst (section headers only; rail balls never open)
 //   [data-part="pokemon"]  the Pokémon (optional: section headers have one, rail balls do not)
 //
 // Order: the lid swings up and right on its hinge (the right end of the seam) while the
@@ -127,13 +127,15 @@ export function openBall(root) {
       { opacity: 1, transform: 'scale(1)', offset: 0.82 },
       { opacity: 1, transform: 'scale(1)', offset: 1 },
     ], { easing: 'steps(8, end)' }),
-    // 4. Then the empty ball fades, leaving the Pokémon.
+    // 4. The whitened ball fades behind the flash while it is at full strength (0.4 to
+    // 0.55), so it is gone before the flash fades and never shows again. Steps on this one
+    // segment only: steps over the whole effect delayed the fade until after the flash.
     run(part(root, 'ball'), [
       { opacity: 1, offset: 0 },
-      { opacity: 1, offset: 0.75 },
-      { opacity: 0, offset: 0.92 },
+      { opacity: 1, offset: 0.4, easing: 'steps(3, end)' },
+      { opacity: 0, offset: 0.52 },
       { opacity: 0, offset: 1 },
-    ], { easing: 'steps(6, end)' }),
+    ]),
   ])
   return Promise.all([swung, rest]).then(() => undefined)
 }

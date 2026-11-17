@@ -103,7 +103,7 @@ async function throwOut(s) {
     settled([
       underline?.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { ...timing, duration: 320, easing: 'steps(8, end)' }),
       label?.animate(
-        [{ transform: 'translateX(-16px)', opacity: 0.35 }, { transform: 'none', opacity: 1 }],
+        [{ transform: 'translateX(-16px)' }, { transform: 'none' }],
         { ...timing, duration: 200, easing: 'steps(4, end)' },
       ),
     ]),
@@ -141,7 +141,7 @@ async function goHome(s) {
     await settled([
       part(s.intro, 'pokemon')?.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], timing),
       underline?.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], timing),
-      label?.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateX(-16px)', opacity: 0.35 }], timing),
+      label?.animate([{ transform: 'none' }, { transform: 'translateX(-16px)' }], timing),
     ])
     if (!alive()) return
   }

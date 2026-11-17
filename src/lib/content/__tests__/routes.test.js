@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import { normalizeContent } from '../normalize.js'
-import { resolveRouteWithBase, sectionHrefOf, allRoutes } from '../routes.js'
+import { resolveRouteWithBase, sectionHrefOf, allRoutes, NOT_FOUND_ROUTE } from '../routes.js'
 import { headFor } from '../head.js'
 
 const raw = (siteUrl = 'https://example.github.io/') => ({
   site: {
     siteUrl, title: 'Jane Doe', description: 'Site description.', locale: 'en_US', ogImage: null, ogImageAlt: null, defaultTheme: 'system', themeToggle: true,
     pages: [
-      { id: 'experience', label: 'Experience', blurb: 'b', description: 'Experience description.', sections: [{ id: 'experience', label: 'Experience' }] },
+      { id: 'experience', label: 'Experience', blurb: 'b', description: 'Experience description.', aliases: [{ id: 'projects', hash: 'pokedex-projects' }, { id: 'work', hash: null }], sections: [{ id: 'experience', label: 'Experience' }] },
       { id: 'about', label: 'About', blurb: 'b', description: 'About description.', sections: [{ id: 'about', label: 'About' }, { id: 'contact', label: 'Contact' }, { id: 'skills', label: 'Skills' }] },
       { id: 'hidden', label: 'Hidden', blurb: 'b', description: 'Hidden description.', visible: false, sections: [{ id: 'education', label: 'Education' }] },
     ],
@@ -30,16 +30,25 @@ describe.each([
 
   test('home: base, base + index.html, base without trailing slash', () => {
     for (const p of [base, `${base}index.html`, base.replace(/\/$/, '') || '/']) {
-      expect(r(p)).toEqual({ kind: 'home', page: null, canonicalPath: base })
+      expect(r(p)).toEqual({ kind: 'home', page: null, canonicalPath: base, hash: null })
     }
   })
   test('page: with and without slash, with index.html', () => {
     for (const p of [`${base}experience/`, `${base}experience`, `${base}experience/index.html`]) {
-      expect(r(p)).toEqual({ kind: 'page', page: page('experience'), canonicalPath: `${base}experience/` })
+      expect(r(p)).toEqual({ kind: 'page', page: page('experience'), canonicalPath: `${base}experience/`, hash: null })
     }
   })
+  test('alias: resolves to its page with the alias hash (V5-06)', () => {
+    for (const p of [`${base}projects/`, `${base}projects`, `${base}projects/index.html`]) {
+      expect(r(p), p).toEqual({ kind: 'page', page: page('experience'), canonicalPath: `${base}experience/`, hash: '#pokedex-projects' })
+    }
+    expect(r(`${base}work`)).toEqual({ kind: 'page', page: page('experience'), canonicalPath: `${base}experience/`, hash: null })
+    expect(page('experience').aliases).toEqual([{ id: 'projects', path: 'projects/', hash: 'pokedex-projects' }, { id: 'work', path: 'work/', hash: null }])
+    expect(page('about').aliases).toEqual([])
+    expect(r(`${base}projects/foo/`).kind).toBe('not-found')
+  })
   test('not-found: unknown, deeper, hidden page, case mismatch, outside base, odd forms', () => {
-    const nf = { kind: 'not-found', page: null, canonicalPath: null }
+    const nf = { kind: 'not-found', page: null, canonicalPath: null, hash: null }
     for (const p of [`${base}nope/`, `${base}experience/foo/`, `${base}hidden/`, `${base}Experience/`, `${base}experience//`, `${base}404.html`, `${base}skills/`, '/elsewhere/experience/'.replace(/^\/elsewhere/, base === '/' ? '/elsewhere' : '')]) {
       expect(r(p), p).toEqual(nf)
     }
@@ -52,8 +61,9 @@ describe.each([
     expect(sectionHrefOf('skills', c)).toBeNull() // no content
     expect(sectionHrefOf('projects', c)).toBeNull() // on no page
   })
-  test('allRoutes: home plus shown pages', () => {
+  test('allRoutes: home plus shown pages, no aliases', () => {
     expect(allRoutes(base, c).map((x) => x.canonicalPath)).toEqual([base, `${base}experience/`, `${base}about/`])
+    expect(allRoutes(base, c).every((x) => x.hash === null)).toBe(true)
   })
   test('head per route kind', () => {
     expect(headFor(r(base), c)).toEqual({
@@ -75,4 +85,8 @@ test('home title falls back to site.title when the headline is a placeholder', (
   const h = headFor({ kind: 'home', page: null, canonicalPath: '/' }, c)
   expect(h.title).toBe('Jane Doe')
   expect(h.jsonLd.jobTitle).toBeUndefined()
+})
+
+test('NOT_FOUND_ROUTE has hash null', () => {
+  expect(NOT_FOUND_ROUTE).toEqual({ kind: 'not-found', page: null, canonicalPath: null, hash: null })
 })

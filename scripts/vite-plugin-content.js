@@ -3,9 +3,9 @@
 //   comments) and <!-- content:noscript --> in index.html. In dev the head follows the request URL.
 // - Validates content at build start (fails the build on errors) and on every data edit in dev
 //   (errors go to the Vite error overlay; the page reloads once fixed).
-// - After the build, writes dist/{pageId}/index.html per shown page and dist/404.html: copies of
-//   dist/index.html with only the head block swapped.
-// - Emits robots.txt, sitemap.xml (home + every page) and, for a custom domain, CNAME.
+// - After the build, writes dist/{pageId}/index.html per shown page (and dist/{aliasId}/index.html
+//   with the same page's head) and dist/404.html: copies of dist/index.html with only the head block swapped.
+// - Emits robots.txt, sitemap.xml (home + every page; no aliases) and, for a custom domain, CNAME.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative, sep, resolve } from 'node:path'
@@ -287,9 +287,12 @@ export function contentPlugin() {
       if (!existsSync(indexPath)) return
       const html = readFileSync(indexPath, 'utf8')
       for (const page of content.pages) {
-        const route = { kind: 'page', page, canonicalPath: null }
-        mkdirSync(join(dir, page.id), { recursive: true })
-        writeFileSync(join(dir, page.id, 'index.html'), swapHead(html, renderHead(content, route)))
+        const pageHtml = swapHead(html, renderHead(content, { kind: 'page', page, canonicalPath: null }))
+        // V5-08: aliases get the target page's HTML so the host serves them with a 200.
+        for (const id of [page.id, ...page.aliases.map((a) => a.id)]) {
+          mkdirSync(join(dir, id), { recursive: true })
+          writeFileSync(join(dir, id, 'index.html'), pageHtml)
+        }
       }
       writeFileSync(join(dir, '404.html'), swapHead(html, renderHead(content, NOT_FOUND_ROUTE)))
     },

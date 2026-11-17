@@ -3,14 +3,12 @@ import SiteFooter from './components/SiteFooter/SiteFooter.jsx'
 import SiteHeader from './components/SiteHeader/SiteHeader.jsx'
 import SkipLink from './components/SkipLink/SkipLink.jsx'
 import useTheme from './hooks/useTheme.js'
-import ContentPage from './pages/ContentPage.jsx'
-import HomePage from './pages/HomePage.jsx'
 import JourneyPage from './pages/JourneyPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import useRoute from './router/useRoute.js'
 import useRouteEffects from './router/useRouteEffects.js'
 
-/** Route switch (SPEC-v2 5.1, v4): skip link, header, main (journey or page), footer. */
+/** Route switch (SPEC-v2 5.1, v4): skip link, header, main (the journey or Not found), footer. */
 export default function App() {
   const content = getSiteContent()
   const { site, profile, links, pages } = content
@@ -23,15 +21,9 @@ export default function App() {
   const navItems = [{ id: 'home', href: homeHref, label: 'Home' }, ...pageItems]
   const currentId = route.kind === 'home' ? 'home' : route.kind === 'page' ? route.page.id : null
 
-  // v4 journey: Home and every page are one document. It must stay mounted while the
-  // scroll spy moves the URL, so <main> is keyed by layout, not by page.
-  const journey = site.layout === 'journey' && route.kind !== 'not-found'
-  let body
-  if (journey) body = <JourneyPage content={content} />
-  else if (route.kind === 'home') body = <HomePage content={content} />
-  else if (route.kind === 'page') body = <ContentPage page={route.page} content={content} />
-  else body = <NotFoundPage navItems={navItems} />
-  const mainKey = journey ? 'journey' : (currentId ?? 'not-found')
+  // The journey: Home and every page are one document. It must stay mounted while the
+  // scroll spy moves the URL, so <main> is keyed by journey vs not-found, not by page.
+  const notFound = route.kind === 'not-found'
 
   return (
     <>
@@ -45,8 +37,8 @@ export default function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-      <main id="main" tabIndex={-1} key={mainKey}>
-        {body}
+      <main id="main" tabIndex={-1} key={notFound ? 'not-found' : 'journey'}>
+        {notFound ? <NotFoundPage navItems={navItems} /> : <JourneyPage content={content} />}
       </main>
       <SiteFooter
         name={profile.name}

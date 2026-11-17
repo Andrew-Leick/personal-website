@@ -39,7 +39,8 @@
 }
 
 .label {
-  opacity: calc(1 - var(--leave, 0) * 0.4);
+  /* Floor of 0.7 keeps the label at 4.5:1 on the dialog (0.6 measured 4.46:1). */
+  opacity: calc(1 - var(--leave, 0) * 0.3);
 }
 
 .link:hover .label,

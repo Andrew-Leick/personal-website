@@ -5,14 +5,16 @@ import styles from './Projects.module.css'
 
 const MAX_CARD_HIGHLIGHTS = 4
 
-const LINK_LABELS = [
+// Shared with the Pokédex detail (SPEC-v5 4.3); a constant, so Fast Refresh is unaffected in practice.
+// oxlint-disable-next-line react/only-export-components
+export const LINK_LABELS = [
   ['repo', 'Code', 'github'],
   ['demo', 'Live demo', 'external'],
   ['writeup', 'Write-up', 'file'],
 ]
 
 /** Context line: backend contextLabel plus GitHub stars/language when present. */
-function ContextLine({ project }) {
+export function ContextLine({ project }) {
   const stats = project.githubStats
   const parts = []
   if (project.contextLabel) parts.push(<span key="context">{project.contextLabel}</span>)

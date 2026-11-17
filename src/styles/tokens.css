@@ -44,6 +44,23 @@
   --sprite-outline: #202028;
   --sprite-egg-shell: #F4F0DC;
   --sprite-egg-spot: #78C850;
+
+  /* Pokédex device (same in every theme: it is an object, like the sprites). Only the screens
+     follow the theme. White on body 5.88:1, white on key 6.90:1, white on key hover 5.62:1. */
+  --dex-body: #C8102E;
+  --dex-body-light: #E8384E;
+  --dex-body-dark: #8C0A1F;
+  --dex-bezel: #DCDCE4;
+  --dex-ink: #FFFFFF;
+  --dex-key: #2050C8;
+  --dex-key-light: #2C5FD8;
+  --dex-key-dark: #143680;
+  --dex-lens: #3A8EF0;
+  --dex-lens-light: #BFE3FF;
+  --dex-lens-dark: #1A4FB0;
+  --dex-led-red: #FF4A4A;
+  --dex-led-yellow: #FFD23F;
+  --dex-led-green: #3DDC5A;
 }
 
 :root {
@@ -106,10 +123,10 @@
   --focus-ring-width: 3px;
   --focus-ring-offset: 2px;
 
-  /* Pixel scales (integers only) */
-  --sprite-px: 0.25rem;    /* Home sprites: 64px; >=768: 6px = 96px (at a 16px root) */
-  --sprite-px-title: 0.125rem; /* subpage title sprite: 32px */
-  --cursor-px: 0.125rem;   /* ▶ 8x14px, ▼ 14x8px */
+  /* Pixel scales (integers only: rounded down to whole px, since the root size is fluid) */
+  --sprite-px: round(down, 0.25rem, 1px);    /* Home sprites: 64px; >=768: 6px = 96px (at a 16px root) */
+  --sprite-px-title: round(down, 0.125rem, 1px); /* subpage title sprite: 32px */
+  --cursor-px: round(down, 0.125rem, 1px);   /* ▶ 8x14px, ▼ 14x8px */
 
   /* Motion */
   --duration-fast: 120ms;
@@ -117,8 +134,6 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --sprite-bob-duration: 1000ms;
   --sprite-bob-iterations: 4;
-  --sprite-hop-duration: 600ms;
-  --sprite-stagger: 250ms;
 
   /* v4 journey: Poké Ball sizes (smooth 90px Dream World art, drawn edge to edge).
      In rem so they grow with the page on wide screens; px values at a 16px root. */
@@ -151,6 +166,15 @@
   --photo-size: 120px;
   --photo-size-md: 160px;
   --date-column: 11rem;
+  /* Pokédex screen and closed cover: the same height, so opening never jumps. Sized from the
+     device's width (cqi, resolved inside the .dex container) so the whole device matches the real
+     one's proportions (Kanto Pokédex replica: 4.35in wide, 4.9in tall), less the top bar and
+     padding. 20rem is the floor, so phones still have room for the start screen. */
+  --dex-screen-min: max(20rem, calc(100cqi * 490 / 435 - var(--dex-lens-size) - var(--space-8)));
+  --dex-lens-size: 3.5rem;      /* big blue lens, border included */
+  --dex-led-size: 0.875rem;     /* the three status lights */
+  --dex-bezel-width: 0.75rem;   /* grey frame around each screen */
+  --dex-hinge-width: 1.25rem;   /* the hinge band on the closed cover and the swinging lid */
 }
 
 @media (min-width: 480px) {
@@ -161,7 +185,7 @@
   :root {
     --text-display: 3rem;
     --text-page-title: 2rem;
-    --sprite-px: 0.375rem;
+    --sprite-px: round(down, 0.375rem, 1px);
     --hero-ball-size: 3.5rem;
   }
 }

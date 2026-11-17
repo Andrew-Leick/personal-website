@@ -3,7 +3,7 @@ import { SECTION_BODIES } from '../../pages/sectionBodies.jsx'
 import styles from '../../pages/Page.module.css'
 
 /**
- * The sections of one page (SPEC-v2 5.3 to 5.6), shared by ContentPage and the v4 journey.
+ * The sections of one page (SPEC-v2 5.3 to 5.6), used by the journey.
  * - The lead section (id === page id) renders first, without a heading; its entry titles
  *   are one level below the page title (`level`).
  * - Every other section gets a heading at `level` and entries one below.

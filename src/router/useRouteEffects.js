@@ -1,7 +1,6 @@
 import { useLayoutEffect } from 'react'
-import { getHead, getSite } from '../lib/content/index.js'
+import { getHead } from '../lib/content/index.js'
 import { glideTo as glide } from '../lib/journey/glide.js'
-import { prefersReducedMotion } from '../lib/motion.js'
 import { getSavedScroll } from './history.js'
 import { syncHead } from './syncHead.js'
 
@@ -16,7 +15,7 @@ function hashTarget(hash) {
   return document.getElementById(id)
 }
 
-/** The page h1: #page-heading on subpages and Not found, #hero-name on Home. */
+/** The page h1: #page-heading on Not found, #hero-name in the journey. */
 function pageHeading() {
   return document.getElementById('page-heading') ?? document.getElementById('hero-name')
 }
@@ -87,47 +86,15 @@ function journeyEffects(route, nav) {
   }
 }
 
-function pagesEffects(nav) {
-  const target = hashTarget(nav.hash)
-
-  switch (nav.type) {
-    case 'initial':
-      // REQ-900: never move focus on load; jump to a hash target instantly.
-      if (target) target.scrollIntoView({ behavior: 'instant', block: 'start' })
-      return
-    case 'hash': {
-      // Native in-page anchor (or back/forward between hashes on one page).
-      // Only a section with its own heading gets focus; anything else (e.g.
-      // "Back to top" -> header#top) keeps the browser's native behavior,
-      // which moves the sequential focus start point to the target.
-      if (!target) return
-      target.scrollIntoView({
-        behavior: prefersReducedMotion() ? 'instant' : 'smooth',
-        block: 'start',
-      })
-      const heading = document.getElementById(`${target.id}-heading`)
-      // Next frame: the browser's own fragment focus handling runs after popstate.
-      if (heading) requestAnimationFrame(() => focusWithoutScroll(heading))
-      return
-    }
-    case 'pop': {
-      // REQ-902: restore the saved position (top if unknown), focus the h1.
-      const y = getSavedScroll(nav.key)
-      window.scrollTo({ top: y ?? 0, left: 0, behavior: 'instant' })
-      focusWithoutScroll(pageHeading())
-      return
-    }
-    case 'scroll':
-      return
-    default:
-      // 'push' and 'same' (REQ-901, REQ-904): never smooth (REQ-905).
-      if (target) {
-        target.scrollIntoView({ behavior: 'instant', block: 'start' })
-      } else {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-      }
-      focusWithoutScroll(headingFor(target))
-  }
+/**
+ * Not found, the only route outside the journey. On load nothing moves (REQ-900). Back/forward
+ * restores the saved position (REQ-902); a push starts at the top. Both focus the h1.
+ */
+function notFoundEffects(nav) {
+  if (nav.type === 'initial' || nav.type === 'hash' || nav.type === 'scroll') return
+  const y = nav.type === 'pop' ? getSavedScroll(nav.key) : null
+  window.scrollTo({ top: y ?? 0, left: 0, behavior: 'instant' })
+  focusWithoutScroll(pageHeading())
 }
 
 /**
@@ -138,9 +105,8 @@ export default function useRouteEffects(route, nav) {
   useLayoutEffect(() => {
     // 1. Head first, so screen readers have the new title when focus moves.
     syncHead(getHead(route))
-    const journey = getSite().layout === 'journey' && route.kind !== 'not-found'
-    if (journey) journeyEffects(route, nav)
-    else pagesEffects(nav)
+    if (route.kind === 'not-found') notFoundEffects(nav)
+    else journeyEffects(route, nav)
     // nav.id changes on every navigation, including 'same'.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nav.id])

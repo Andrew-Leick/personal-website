@@ -17,6 +17,7 @@
       "Built an MCP server exposing the platform’s search and filtering tools to AI agents, enabling automated agent-driven investigations."
     ],
     "technologies": ["Node.js", "TypeScript", "AWS Lambda", "S3", "DynamoDB", "API Gateway", "Athena", "MCP"],
+    "pokemon": "porygon2",
     "visible": true
   },
   {
@@ -34,6 +35,7 @@
       "Built Amazon QuickSight dashboards giving engineers and leadership a real-time view of contract status, ownership, and key metadata."
     ],
     "technologies": ["Node.js", "AWS Lambda", "Redshift", "QuickSight"],
+    "pokemon": "porygon",
     "visible": true
   },
   {
@@ -51,6 +53,7 @@
       "Presented results to an audience of 200."
     ],
     "technologies": ["Python", "ROS"],
+    "pokemon": "magnemite",
     "visible": true
   },
   {
@@ -69,6 +72,7 @@
       "Led CAD design for the team using Fusion360."
     ],
     "technologies": ["Java", "Fusion360"],
+    "pokemon": "pikachu",
     "visible": true
   }
 ]

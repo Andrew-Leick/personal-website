@@ -325,17 +325,11 @@ describe('validator: site.pages (v2 10.2)', () => {
   })
 })
 
-describe('validator: layout (v4)', () => {
-  test('layout may be omitted, journey or pages', () => {
-    expect(run().errors).toEqual([])
-    expect(run((r) => { r.site.layout = 'journey' }).errors).toEqual([])
-    expect(run((r) => { r.site.layout = 'pages' }).errors).toEqual([])
-  })
-  test('unknown layout is an error naming the allowed values', () => {
-    const { errors } = run((r) => { r.site.layout = 'scroll' })
+describe('validator: layout (removed in v5.1)', () => {
+  test('the old layout field is now an unknown field', () => {
+    const { errors } = run((r) => { r.site.layout = 'journey' })
     expect(errors).toHaveLength(1)
     expect(errors[0].path).toBe('layout')
-    expect(errors[0].hint).toContain('"journey", "pages"')
   })
 })
 
@@ -369,5 +363,51 @@ describe('validator: fanArt and guides (v3 8.2)', () => {
   test('page id "fonts" clashes with public/fonts', () => {
     const { errors } = run((r) => { r.site.pages[0].id = 'fonts' }, { listDir: () => ['fonts', 'content'] })
     expect(errors.map((e) => e.message)).toEqual(['page id "fonts" clashes with public/fonts'])
+  })
+})
+
+describe('validator: Pokédex and aliases (v5)', () => {
+  // The fixture's "work" page lists experience and projects; with the Pokédex on, projects must go.
+  const dexOn = (r) => {
+    r.site.pokedex = true
+    r.site.pages[0].sections = [{ id: 'experience', label: 'Experience' }]
+  }
+  test('pokedex must be a boolean; valid with projects removed and no unplaced warning (V5-04)', () => {
+    expect(run((r) => { r.site.pokedex = 'yes' }).errors.map((e) => `${e.path}: ${e.message}`)).toEqual(['pokedex: expected true or false, got "yes"'])
+    expect(run(dexOn)).toEqual({ errors: [], warnings: [] })
+  })
+  test('projects placed while pokedex is true: error with hint (V5-04)', () => {
+    const { errors } = run((r) => { r.site.pokedex = true })
+    expect(lines(errors)).toEqual([
+      '✖ src/data/site.json → pages[0] (id "work").sections[1] (id "projects").id: section "projects" is placed on a page, but the projects already show in the Pokédex. Hint: remove this section, or set "pokedex" to false to show project cards.',
+    ])
+  })
+  test('experience not placed while pokedex is true: Pokédex warning (V5-04)', () => {
+    const { errors, warnings } = run((r) => { dexOn(r); r.site.pages[0].sections = [{ id: 'skills', label: 'Skills' }]; r.site.pages[1].sections.splice(2, 1) })
+    expect(errors).toEqual([])
+    expect(lines(warnings, 'warning')).toEqual([
+      '⚠ src/data/site.json → pages: "pokedex" is true but section "experience" is not on any page, so the Pokédex has nowhere to show. Hint: add { "id": "experience", "label": "..." } to a page\'s "sections".',
+    ])
+  })
+  test('pokedex false keeps the v4 rules: projects unplaced warns', () => {
+    const { warnings } = run((r) => { r.site.pokedex = false; r.site.pages[0].sections.pop() })
+    expect(warnings.map((w) => w.message)).toEqual(['section "projects" is not on any page, so it will not be shown'])
+  })
+  test('valid aliases; hash may be null or omitted (V5-05)', () => {
+    expect(run((r) => { dexOn(r); r.site.pages[0].aliases = [{ id: 'projects', hash: 'pokedex-projects' }, { id: 'jobs', hash: null }, { id: 'cv' }] })).toEqual({ errors: [], warnings: [] })
+  })
+  test('alias errors: reserved, equals a page id, repeated across pages, malformed, too many (V5-05)', () => {
+    const { errors } = run((r) => {
+      r.site.pages[0].aliases = [{ id: 'assets' }, { id: 'about' }, { id: 'old' }, { id: 'x' }]
+      r.site.pages[1].aliases = [{ id: 'old' }, { id: 'Bad Id' }, { id: 'y', hash: '#top' }]
+    })
+    expect(lines(errors)).toEqual([
+      '✖ src/data/site.json → pages[0] (id "work").aliases: has 4 items, the limit is 3. Hint: remove 1 item(s).',
+      '✖ src/data/site.json → pages[1] (id "about").aliases[1].id: id "Bad Id" is not kebab-case. Hint: use lowercase letters, digits and single hyphens, e.g. "bad-id".',
+      '✖ src/data/site.json → pages[1] (id "about").aliases[2] (id "y").hash: id "#top" is not kebab-case. Hint: use lowercase letters, digits and single hyphens, e.g. "top".',
+      '✖ src/data/site.json → pages[0] (id "work").aliases[0] (id "assets").id: alias "assets" is reserved. Hint: choose another id; "assets", "content", "index", "404" are used by the build.',
+      '✖ src/data/site.json → pages[0] (id "work").aliases[1] (id "about").id: alias "about" is also a page id (pages[1]). Hint: remove the alias or rename it; the page already has that URL.',
+      '✖ src/data/site.json → pages[1] (id "about").aliases[0] (id "old").id: duplicate alias "old" (also at pages[0] (id "work").aliases[2] (id "old").id). Hint: an alias can point to only one page; remove one of them.',
+    ])
   })
 })

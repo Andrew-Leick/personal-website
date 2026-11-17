@@ -2,6 +2,7 @@ import About from '../components/About/About.jsx'
 import Contact from '../components/Contact/Contact.jsx'
 import Education from '../components/Education/Education.jsx'
 import Experience from '../components/Experience/Experience.jsx'
+import Pokedex from '../components/Pokedex/Pokedex.jsx'
 import Projects from '../components/Projects/Projects.jsx'
 import Skills from '../components/Skills/Skills.jsx'
 
@@ -11,7 +12,12 @@ import Skills from '../components/Skills/Skills.jsx'
  */
 export const SECTION_BODIES = {
   about: (c) => <About profile={c.profile} />,
-  experience: (c, level) => <Experience experience={c.experience} headingLevel={level} />,
+  experience: (c, level) =>
+    c.dex ? (
+      <Pokedex dex={c.dex} fanArt={c.site.fanArt} headingLevel={level} />
+    ) : (
+      <Experience experience={c.experience} headingLevel={level} />
+    ),
   projects: (c, level) => <Projects projects={c.projects} headingLevel={level} />,
   education: (c, level) => <Education education={c.education} headingLevel={level} />,
   skills: (c, level) => <Skills skills={c.skills} headingLevel={level} />,

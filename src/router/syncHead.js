@@ -4,38 +4,22 @@
  * (canonical, og:url, robots) and never creates duplicates.
  */
 
-function upsertMeta(attr, name, content) {
-  const selector = `meta[${attr}="${name}"]`
-  const existing = document.head.querySelectorAll(selector)
-  if (content == null) {
-    existing.forEach((el) => el.remove())
-    return
-  }
-  existing.forEach((el, i) => i > 0 && el.remove())
+/** One `<tag key="name">` in the head with `valueAttr` set to `value`; none when value is null. */
+function upsert(tag, key, name, valueAttr, value) {
+  const existing = document.head.querySelectorAll(`${tag}[${key}="${name}"]`)
+  existing.forEach((el, i) => (value == null || i > 0) && el.remove())
+  if (value == null) return
   let el = existing[0]
   if (!el) {
-    el = document.createElement('meta')
-    el.setAttribute(attr, name)
+    el = document.createElement(tag)
+    el.setAttribute(key, name)
     document.head.appendChild(el)
   }
-  el.setAttribute('content', content)
+  el.setAttribute(valueAttr, value)
 }
 
-function upsertCanonical(href) {
-  const existing = document.head.querySelectorAll('link[rel="canonical"]')
-  if (href == null) {
-    existing.forEach((el) => el.remove())
-    return
-  }
-  existing.forEach((el, i) => i > 0 && el.remove())
-  let el = existing[0]
-  if (!el) {
-    el = document.createElement('link')
-    el.setAttribute('rel', 'canonical')
-    document.head.appendChild(el)
-  }
-  el.setAttribute('href', href)
-}
+const upsertMeta = (attr, name, content) => upsert('meta', attr, name, 'content', content)
+const upsertCanonical = (href) => upsert('link', 'rel', 'canonical', 'href', href)
 
 /** @param {import('../lib/content/types.js').Head} head */
 export function syncHead(head) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Check gzip sizes of the production build against REQ-402.
 // Usage: npm run build && node scripts/check-size.mjs
-// Budgets: JS <= 90 KB gzip total, CSS <= 15 KB gzip total, and
+// Budgets: JS <= 95 KB gzip total (90 until v5.1, raised for the Pokédex flow), CSS <= 15 KB gzip total, and
 // fonts <= 32 KB raw (woff2 is already compressed), initial transfer (index.html + JS + CSS + fonts, excluding images and the resume PDF) <= 150 KB gzip.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
@@ -10,7 +10,7 @@ import { gzipSync } from 'node:zlib'
 import { ROOT } from './lib/content-files.mjs'
 
 const KB = 1024
-export const BUDGETS = { js: 90 * KB, css: 15 * KB, font: 32 * KB, total: 150 * KB }
+export const BUDGETS = { js: 95 * KB, css: 15 * KB, font: 32 * KB, total: 150 * KB }
 
 const DIST = join(ROOT, process.argv[2] ?? 'dist')
 const gz = (file) => gzipSync(readFileSync(file), { level: 9 }).length

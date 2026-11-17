@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach } from 'vitest'
-import { escapeHtml, renderHead, renderNoscript, renderRobots, renderSitemap, customDomainOf, swapHead, requestPath, HEAD_START, HEAD_END } from '../vite-plugin-content.js'
+import { contentPlugin, escapeHtml, renderHead, renderNoscript, renderRobots, renderSitemap, customDomainOf, swapHead, requestPath, HEAD_START, HEAD_END } from '../vite-plugin-content.js'
 import { normalizeContent } from '../../src/lib/content/normalize.js'
 import { NOT_FOUND_ROUTE, resolveRouteWithBase } from '../../src/lib/content/routes.js'
 import { checkRoutes } from '../lib/routes-check.mjs'
@@ -139,8 +139,10 @@ describe('check:routes (REQ-945)', () => {
     const index = shell(renderHead(c))
     writeFileSync(join(dir, 'index.html'), index)
     for (const p of c.pages) {
-      mkdirSync(join(dir, p.id))
-      writeFileSync(join(dir, p.id, 'index.html'), swapHead(index, renderHead(c, { kind: 'page', page: p, canonicalPath: null })))
+      for (const id of [p.id, ...p.aliases.map((a) => a.id)]) {
+        mkdirSync(join(dir, id))
+        writeFileSync(join(dir, id, 'index.html'), swapHead(index, renderHead(c, { kind: 'page', page: p, canonicalPath: null })))
+      }
     }
     writeFileSync(join(dir, '404.html'), swapHead(index, renderHead(c, NOT_FOUND_ROUTE)))
     writeFileSync(join(dir, 'sitemap.xml'), renderSitemap(c))
@@ -175,6 +177,33 @@ describe('check:routes (REQ-945)', () => {
       'work/index.html: unexpanded marker <!-- content:noscript -->',
       'sitemap.xml: lists ["https://example.github.io/"], expected ["https://example.github.io/","https://example.github.io/about/","https://example.github.io/work/"]',
     ])
+  })
+  test('aliases (V5-08): copies of the target page pass; missing, wrong head or listed in the sitemap fail', () => {
+    const r = raw()
+    r.site.pages[0].aliases = [{ id: 'projects', hash: 'pokedex-projects' }]
+    const c = normalizeContent(r)
+    const d = makeDist(c)
+    expect(readFileSync(join(d, 'projects', 'index.html'), 'utf8')).toContain('<link rel="canonical" href="https://example.github.io/work/" />')
+    expect(checkRoutes(d, c, '/').problems).toEqual([])
+    expect(renderSitemap(c)).not.toContain('/projects/')
+    writeFileSync(join(d, 'projects', 'index.html'), readFileSync(join(d, 'about', 'index.html'), 'utf8'))
+    writeFileSync(join(d, 'sitemap.xml'), `${renderSitemap(c)}<loc>https://example.github.io/projects/</loc>`)
+    expect(checkRoutes(d, c, '/').problems).toEqual([
+      'projects/index.html: <title> is "About | Jane &lt;Doe&gt;", expected "Work | Jane &lt;Doe&gt;"',
+      'projects/index.html: canonical is "https://example.github.io/about/", expected "https://example.github.io/work/"',
+      'sitemap.xml: lists ["https://example.github.io/","https://example.github.io/about/","https://example.github.io/projects/","https://example.github.io/work/"], expected ["https://example.github.io/","https://example.github.io/about/","https://example.github.io/work/"]',
+      'sitemap.xml: lists alias "https://example.github.io/projects/" (aliases redirect, so they stay out of the sitemap)',
+    ])
+    rmSync(join(d, 'projects'), { recursive: true })
+    expect(checkRoutes(d, c, '/').problems).toContain('projects/index.html: missing (alias of page "work")')
+  })
+  test('writeBundle writes each alias with its target page head (real data)', () => {
+    dir = mkdtempSync(join(tmpdir(), 'bundle-'))
+    const plugin = contentPlugin()
+    plugin.configResolved({ base: '/', command: 'build', root: dir, build: { outDir: 'dist' } })
+    writeFileSync(join(dir, 'index.html'), `<html><head>${HEAD_START}x${HEAD_END}</head><body></body></html>`)
+    plugin.writeBundle({ dir })
+    expect(readFileSync(join(dir, 'projects', 'index.html'), 'utf8')).toBe(readFileSync(join(dir, 'experience', 'index.html'), 'utf8'))
   })
   test('wrong title and asset base are reported', () => {
     const c = normalizeContent(raw())

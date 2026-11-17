@@ -7,7 +7,7 @@ import styles from './SiteFooter.module.css'
 const YEAR = new Date().getFullYear()
 
 const DISCLAIMER =
-  'Pokémon, Poké Ball, Charmander, Bulbasaur and Squirtle are trademarks of Nintendo, Creatures Inc. and GAME FREAK inc. The Pokémon sprites shown here are fan use of Nintendo, Creatures Inc. and GAME FREAK inc. artwork on this non-commercial site, which is not affiliated with or endorsed by them.'
+  'Pokémon, Pokédex, Poké Ball, Charmander, Bulbasaur, Squirtle, Pikachu, Magnemite, Porygon, Porygon2 and Noctowl are trademarks of Nintendo, Creatures Inc. and GAME FREAK inc. The Pokémon sprites shown here are fan use of Nintendo, Creatures Inc. and GAME FREAK inc. artwork on this non-commercial site, which is not affiliated with or endorsed by them.'
 
 /**
  * Footer on every page (REQ-843): footer nav (Home + pages), contact links,

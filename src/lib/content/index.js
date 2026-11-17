@@ -77,6 +77,11 @@ export function getPage(id) {
   return content.pages.find((p) => p.id === id) ?? null
 }
 
+/** @returns {import('./types.js').Dex|null} null unless site.pokedex is true */
+export function getDex() {
+  return content.dex
+}
+
 /** @returns {string} the Home href: BASE_URL, e.g. "/" or "/personal-website/" */
 export function getHomeHref() {
   return BASE_URL
@@ -111,6 +116,6 @@ export function getSiteContent() {
   return content
 }
 
-export { GUIDE_IDS } from './normalize.js'
+export { DEX_POKEMON, GUIDE_IDS } from './normalize.js'
 export { isPlaceholder } from './placeholders.js'
-export { formatDateRange, formatMonth } from './format.js'
+export { formatDateRange, formatMonth, formatDexNumber } from './format.js'

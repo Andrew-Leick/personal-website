@@ -38,7 +38,7 @@ While `npm run dev` runs, a broken data file shows a red error overlay in the br
 
 ## Pages and navigation
 
-The site has a Home page (`/`) plus the pages listed under `"pages"` in `src/data/site.json`. Each page gets its own URL (`/experience/`, `/projects/`, `/about/`), a link in the header and footer, and a sprite guide on Home. The list order is the order everywhere. (Since v3 the Home page no longer shows each page's `blurb` or `teaser`. They stay in the data and are still validated.)
+The site has a Home page (`/`) plus the pages listed under `"pages"` in `src/data/site.json`. Each page gets its own URL (`/experience/`, `/education/`, `/about/`), a link in the header and footer, and a sprite guide on Home. The list order is the order everywhere. (Since v3 the Home page no longer shows each page's `blurb` or `teaser`. They stay in the data and are still validated.)
 
 Today's setup:
 
@@ -47,16 +47,18 @@ Today's setup:
   {
     "id": "experience",
     "label": "Experience",
-    "blurb": "Internships, research and leadership.",
-    "description": "Andrew Leick's experience: two Software Development Engineer internships at Amazon, research at Georgia Tech Research Institute, and FIRST Robotics.",
+    "blurb": "Internships, research, leadership and projects.",
+    "description": "Andrew Leick's experience and projects: two Software Development Engineer internships at Amazon, research at Georgia Tech Research Institute, and more.",
     "visible": true,
+    "aliases": [{ "id": "projects", "hash": "pokedex-projects" }],
     "sections": [{ "id": "experience", "label": "Experience" }]
   },
-  { "id": "projects", "...": "..." },
+  { "id": "education", "...": "...", "sections": [
+    { "id": "education", "label": "Education" },
+    { "id": "skills", "label": "Skills" }
+  ] },
   { "id": "about", "...": "...", "sections": [
     { "id": "about", "label": "About" },
-    { "id": "education", "label": "Education" },
-    { "id": "skills", "label": "Skills" },
     { "id": "contact", "label": "Contact" }
   ] }
 ]
@@ -69,12 +71,13 @@ Today's setup:
 | `blurb` | 100 | Kept in the data and validated; not shown on Home since v3 |
 | `description` | 50 to 160 | The search-engine and link-preview description for that page |
 | `teaser` | 100, optional | The small line under the blurb on Home. Leave it out (or `null`) and it is filled in from the data: the newest role, the featured projects, the degree, or the first few skills. |
+| `aliases` | up to 3, optional | Extra URLs that open this page. See [Page aliases](#page-aliases). |
 | `visible` | optional | `false` hides the page everywhere: its nav link, Explore row, URL (it shows "Page not found") and sitemap entry |
 | `sections` | 1 or more | What the page shows, in order. Each is `{ "id": ..., "label": ... }` with `id` one of `about`, `experience`, `projects`, `education`, `skills`, `contact`. Add `"visible": false` to hide one. |
 
 Rules:
 - **Each section can be on only one page.** Listing `skills` on two pages is an error.
-- A section that is on no page is not shown. `npm run validate` warns about it, in case that was a mistake.
+- A section that is on no page is not shown. `npm run validate` warns about it, in case that was a mistake. (With the [Pokédex](#pokédex) on, `projects` must be on no page, so there is no warning for it.)
 - A section with no data (for example an empty `skills.json`) is skipped, and a page left with nothing to show disappears.
 - When a section's `id` matches the page `id` (like `experience` on the `experience` page), it is the page's main content and sits right under the page heading. Every other section gets its own heading, using its `label`.
 - Up to 6 pages.
@@ -97,11 +100,11 @@ Move the whole `{ ... }` page object up or down in the `pages` list. The header,
 Add `"visible": false`:
 
 ```json
-{ "id": "projects", "label": "Projects", "visible": false, "...": "..." }
+{ "id": "education", "label": "Education", "visible": false, "...": "..." }
 ```
 
 ### Move Skills to its own `/skills/` page
-1. Delete the `{ "id": "skills", "label": "Skills" }` line from the `about` page's `sections`.
+1. Delete the `{ "id": "skills", "label": "Skills" }` line from the `education` page's `sections`.
 2. Add a new page where you want it in the list:
 
 ```json
@@ -116,11 +119,23 @@ Add `"visible": false`:
 
 Remember the comma between page objects. `npm run build` then also writes `dist/skills/index.html` and adds `/skills/` to the sitemap.
 
+### Page aliases
+An alias is an extra URL that opens a page. When Projects moved into the Pokédex, `/projects/` became an alias of the Experience page so old links keep working:
+
+```json
+{ "id": "experience", "aliases": [{ "id": "projects", "hash": "pokedex-projects" }], "...": "..." }
+```
+
+- `id` is the alias URL (`/projects/`), with the same rules as a page `id`. It can't be a reserved id, any page's `id`, or an alias on another page. Up to 3 per page.
+- `hash` (optional, or `null`) is added to the address when someone opens the alias. `"pokedex-projects"` opens the Pokédex on the Projects view. Write it without the `#`.
+- Opening `/projects/` shows `/experience/#pokedex-projects` in the address bar, with no extra Back step.
+- `npm run build` writes `dist/projects/index.html` with the Experience page's title, description and canonical, so the URL returns 200. Aliases are not in the sitemap.
+
 ### Change a Home blurb or teaser
 Edit `blurb` for the muted line. To replace the automatic teaser, set `teaser`:
 
 ```json
-{ "id": "projects", "label": "Projects", "blurb": "Things I have built.", "teaser": "Code links and my role on each project", "...": "..." }
+{ "id": "education", "label": "Education", "blurb": "Stanford coursework and technical skills.", "teaser": "Electrical Engineering at Stanford", "...": "..." }
 ```
 
 Remove `teaser` (or set it to `null`) to go back to the automatic one. The automatic teaser skips anything that still has a `TODO:` placeholder.
@@ -155,18 +170,28 @@ With `fanArt` set to `false`, every Pokémon character sprite and name disappear
 
 With fan art off, the scrolling layout (below) still works: the rail shows eggs and no ball opens.
 
-### Layout: one scrolling page or separate pages
+### Layout: one scrolling page
 
-`site.layout` in `src/data/site.json` picks how the pages are shown:
+Home and every page form one long scrolling page. Each page's Poké Ball sits in the Home menu, glides into a rail on the right (a dock at the bottom on phones) as you scroll, and opens to introduce its page's Pokémon when you reach that section. `/experience/`, `/education/` and `/about/` (and the `/projects/` alias) still work as links: each opens the same page at that section, and the address bar follows you as you scroll. People who ask their system for reduced motion get no gliding or opening animation.
+
+The older layout with a separate page per entry (`"layout": "pages"`) was removed in v5.1. A `layout` field left in `site.json` is now a validation error ("unknown field"); delete it.
+
+## Pokédex
+
+With this top-level field in `src/data/site.json`, the `experience` section shows a Pokédex that lists both your experience and your projects:
 
 ```json
-"layout": "journey"
+"pokedex": true
 ```
 
-- `"journey"` (the default when the field is missing): Home and every page form one long scrolling page. Each page's Poké Ball sits in the Home menu, glides into a rail on the right (a dock at the bottom on phones) as you scroll, and opens to introduce its page's Pokémon when you reach that section. `/experience/`, `/projects/` and `/about/` still work as links: each opens the same page at that section, and the address bar follows you as you scroll.
-- `"pages"`: the previous layout, with a separate page per entry in `pages`.
-
-Anything else is a validation error. People who ask their system for reduced motion get no gliding or opening animation in either layout.
+- The Pokédex starts closed. A visitor presses **Open Pokédex**, the lid swings open, and the start screen asks for **Experience** or **Projects**. Each shows a grid of Pokémon, one per entry; picking a Pokémon shows that entry in full. Back keys go up a level, the entry view has **Previous** and **Next**, and **Close** shuts the device again.
+- Each entry picks its Pokémon with an optional `"pokemon"` field in `experience.json` or `projects.json`, for example `"pokemon": "pikachu"`. The allowed values are the ids in `DEX_POKEMON` (`src/lib/content/normalize.js`): `porygon`, `porygon2`, `magnemite`, `pikachu` and `noctowl`. Anything else is a validation error. An entry without one (or every entry, with fan art off) shows the egg.
+- To use another Pokémon, save its 96×96 sprite from the PokeAPI sprites repository (`sprites/pokemon/{number}.png`) as `public/sprites/{id}.png`, then add the id to `DEX_POKEMON`. A test checks that every listed id has its file.
+- Numbering follows the usual sort order. Experience is numbered #001, #002, ... newest first (see [Experience](#experience)). Projects are numbered #001, ... featured first, then by `order` (see [Projects](#projects)).
+- You add experience in `experience.json` and projects in `projects.json` exactly as before. Hidden entries (`"visible": false`) are left out and the numbers close up. If one of the two has no entries, the start screen only offers the other.
+- The `projects` section must not be on any page while `pokedex` is `true`. `npm run validate` reports it as an error, because the projects already show in the Pokédex. If `experience` is on no page, you get a warning that the Pokédex has nowhere to show.
+- `/projects/` opens the Pokédex, already open, on the Projects grid through a [page alias](#page-aliases). Links ending in `#pokedex-experience` or `#pokedex-projects` do the same for that grid.
+- Set `"pokedex": false` (the default when the field is missing) to go back to the Experience timeline and project cards. Then also add the `projects` section back to a page, for example `{ "id": "projects", "label": "Projects" }`.
 
 ## Experience
 

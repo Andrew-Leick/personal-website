@@ -270,10 +270,58 @@ describe('v3 fanArt and guide (8.3)', () => {
   test('GUIDE_IDS', () => expect(GUIDE_IDS).toEqual(['charmander', 'bulbasaur', 'squirtle']))
 })
 
-describe('v4 layout', () => {
-  test('layout defaults to journey; pages is kept; unknown falls back to journey', () => {
-    expect(normalizeSite({}).layout).toBe('journey')
-    expect(normalizeSite({ layout: 'pages' }).layout).toBe('pages')
-    expect(normalizeSite({ layout: 'carousel' }).layout).toBe('journey')
+describe('v5 Pokédex (content.dex)', () => {
+  const dexRaw = (pokedex) => ({
+    site: { pokedex, pages: [] },
+    profile: {},
+    experience: [
+      exp('old', '2023-06', '2023-09', { organizationUrl: 'https://old.example', employmentType: 'internship', summary: 'S', highlights: ['H'], technologies: ['Go'], pokemon: 'pikachu' }),
+      exp('new', '2025-06', null),
+    ],
+    projects: [
+      proj('plain'),
+      proj('star', { featured: true, status: 'in-progress', role: 'Lead', teamSize: 3, links: { repo: 'https://github.com/x/star' }, githubRepo: 'x/star', pokemon: 'mewtwo' }),
+    ],
+    github: { repos: { 'x/star': { stars: 7, language: 'Go', updatedAt: '2025-01-01' } } },
+  })
+
+  test('pokedex defaults to false and dex is null when off', () => {
+    expect(normalizeSite({}).pokedex).toBe(false)
+    expect(normalizeSite({ pokedex: 'yes' }).pokedex).toBe(false)
+    expect(normalizeContent(dexRaw(false)).dex).toBeNull()
+    expect(normalizeContent(dexRaw(undefined)).dex).toBeNull()
+  })
+  test('numbering: 1-based within each dex; no combined list (v5.1)', () => {
+    const { dex } = normalizeContent(dexRaw(true))
+    expect(dex.work.map((e) => [e.key, e.number])).toEqual([['work:new', 1], ['work:old', 2]])
+    expect(dex.projects.map((e) => [e.key, e.number])).toEqual([['project:star', 1], ['project:plain', 2]])
+    expect(Object.keys(dex)).toEqual(['work', 'projects'])
+  })
+  test('pokemon: a DEX_POKEMON id passes through; anything else is null (the egg)', () => {
+    const { dex } = normalizeContent(dexRaw(true))
+    expect(dex.work.map((e) => e.pokemon)).toEqual([null, 'pikachu'])
+    expect(dex.projects.map((e) => e.pokemon)).toEqual([null, null])
+  })
+  test('mapping reuses the normalized experience and project fields', () => {
+    const c = normalizeContent(dexRaw(true))
+    expect(c.dex.work[1]).toEqual({
+      key: 'work:old', kind: 'work', id: 'old', number: 2,
+      name: 'Role', subtitle: 'Org', subtitleUrl: 'https://old.example', dateLabel: 'Jun 2023 – Sep 2023', start: '2023-06', end: '2023-09',
+      typeLabel: 'Work', tagLabel: 'Internship', featured: false, summary: 'S', role: null, highlights: ['H'], technologies: ['Go'],
+      links: null, primaryUrl: null, githubStats: null, image: null, pokemon: 'pikachu',
+    })
+    expect(c.dex.projects[0]).toEqual({
+      key: 'project:star', kind: 'project', id: 'star', number: 1,
+      name: 'star', subtitle: 'Team project · 3 contributors · Ongoing', subtitleUrl: null, dateLabel: null, start: null, end: null,
+      typeLabel: 'Project', tagLabel: 'In progress', featured: true, summary: 's', role: 'Lead', highlights: [], technologies: [],
+      links: { repo: 'https://github.com/x/star', demo: null, writeup: null }, primaryUrl: 'https://github.com/x/star',
+      githubStats: { stars: 7, language: 'Go', updatedAt: '2025-01-01' }, image: null, pokemon: null,
+    })
+  })
+  test('empty experience and projects give empty views', () => {
+    const r = dexRaw(true)
+    r.experience = []
+    r.projects = []
+    expect(normalizeContent(r).dex).toEqual({ work: [], projects: [] })
   })
 })

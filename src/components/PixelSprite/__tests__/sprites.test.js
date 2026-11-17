@@ -1,5 +1,6 @@
+import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { GUIDE_IDS } from '../../../lib/content/index.js'
+import { DEX_POKEMON, GUIDE_IDS } from '../../../lib/content/index.js'
 import { BALL_HINGE, BALL_SEAM, BALL_SPRITE, ballClip, GUIDE_NAMES, GUIDE_SPRITES, GUIDE_TYPES, IMAGE_SIZES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
 
 // SPEC-v3 5.2 expected table.
@@ -70,9 +71,14 @@ describe('sprites', () => {
   })
 
   it('the Poké Ball is a 90px PNG and every PNG sprite has a size', () => {
-    expect(IMAGE_SPRITES).toEqual([...GUIDE_IDS, BALL_SPRITE])
+    expect(IMAGE_SPRITES).toEqual([...GUIDE_IDS, BALL_SPRITE, ...DEX_POKEMON])
+    for (const id of DEX_POKEMON) expect(IMAGE_SIZES[id]).toBe(96)
     expect(IMAGE_SIZES[BALL_SPRITE]).toBe(90)
     for (const id of IMAGE_SPRITES) expect(IMAGE_SIZES[id]).toBeGreaterThan(0)
+  })
+
+  it('every PNG sprite has its file in public/sprites', () => {
+    for (const id of IMAGE_SPRITES) expect(existsSync(new URL(`../../../../public/sprites/${id}.png`, import.meta.url))).toBe(true)
   })
 
   it('the Poké Ball seam covers every column, curves between rows 49 and 60, and rises around the button', () => {

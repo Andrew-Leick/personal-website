@@ -9,7 +9,7 @@ export default defineConfig({
   base: process.env.BASE_PATH ?? '/',
   plugins: [react(), contentPlugin()],
   test: {
-    include: ['src/**/*.test.js', 'scripts/**/*.test.js'],
+    include: ['src/**/*.test.{js,jsx}', 'scripts/**/*.test.js'],
     environment: 'node',
   },
 })

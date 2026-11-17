@@ -2,6 +2,8 @@
 // project. The three guide Pokémon are PNG files in public/sprites/. The grids are the source
 // of truth: do not edit them without a spec change.
 
+import { DEX_POKEMON } from '../../lib/content/index.js'
+
 const OUTLINE = 'var(--sprite-outline)'
 
 const DEFS = {
@@ -83,14 +85,14 @@ export const GUIDE_SPRITES = ['charmander', 'bulbasaur', 'squirtle']
 /** Official Poké Ball art (Dream World, 90x90, smooth) for the v4 journey: hero slots, rail, section intros. */
 export const BALL_SPRITE = 'poke-ball'
 
-/** Every sprite served as a PNG from public/sprites/{id}.png. */
-export const IMAGE_SPRITES = [...GUIDE_SPRITES, BALL_SPRITE]
+/** Every sprite served as a PNG from public/sprites/{id}.png (the v5.1 Pokédex Pokémon included). */
+export const IMAGE_SPRITES = [...GUIDE_SPRITES, BALL_SPRITE, ...DEX_POKEMON]
 
 /**
  * Native pixel size of each PNG sprite. The Pokémon are pixel art: show them at integer
  * multiples only. The Poké Ball is smooth art and scales freely.
  */
-export const IMAGE_SIZES = { charmander: 96, bulbasaur: 96, squirtle: 96, [BALL_SPRITE]: 90 }
+export const IMAGE_SIZES = { [BALL_SPRITE]: 90, ...Object.fromEntries([...GUIDE_SPRITES, ...DEX_POKEMON].map((id) => [id, 96])) }
 
 /*
  * Where the Poké Ball art splits into its two pieces (spec v4.8), measured on the 90x90 PNG:
