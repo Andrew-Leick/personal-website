@@ -1,7 +1,7 @@
+/* The section gap alone separates sections; no rule line on top of it. */
 .section {
   margin-block-start: var(--section-gap);
   padding-block-start: var(--space-8);
-  border-block-start: var(--border-width-pixel) dashed var(--color-border);
 }
 
 .heading {

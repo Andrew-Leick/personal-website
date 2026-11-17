@@ -14,10 +14,13 @@ function ExperienceEntry({ job, headingLevel }) {
       <p className={styles.dateColumn}>{date}</p>
       <div className={styles.body}>
         <div className={styles.header}>
-          <Title className={styles.title}>{job.role}</Title>
-          <span className={styles.separator} aria-hidden="true">
-            ·
-          </span>
+          {/* The dot stays glued to the title (no-break space), so a wrap never starts a line with it. */}
+          <Title className={styles.title}>
+            {job.role}
+            <span className={styles.separator} aria-hidden="true">
+              {'\u00a0·'}
+            </span>
+          </Title>
           <p className={styles.org}>
             {job.organizationUrl ? (
               <ExternalLink href={job.organizationUrl}>{job.organization}</ExternalLink>

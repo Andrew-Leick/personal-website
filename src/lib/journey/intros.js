@@ -28,6 +28,9 @@ const RECALL_MS = 200
 let ctl = null
 
 const extras = (s) => [part(s.heading, 'underline'), part(s.heading, 'label')]
+// The title's pending offset points away from the slot (toward the trailing edge), so it never
+// crowds the dashed ring; it mirrors in RTL. Matches .title[data-pending] .label in the CSS.
+const labelShift = (label) => `translateX(${getComputedStyle(label).direction === 'rtl' ? -16 : 16}px)`
 const isOut = (s) => s.phase === 'out' || s.phase === 'throwing'
 
 function cancelAll(s) {
@@ -103,7 +106,7 @@ async function throwOut(s) {
     settled([
       underline?.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { ...timing, duration: 320, easing: 'steps(8, end)' }),
       label?.animate(
-        [{ transform: 'translateX(-16px)' }, { transform: 'none' }],
+        [{ transform: labelShift(label) }, { transform: 'none' }],
         { ...timing, duration: 200, easing: 'steps(4, end)' },
       ),
     ]),
@@ -141,7 +144,7 @@ async function goHome(s) {
     await settled([
       part(s.intro, 'pokemon')?.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], timing),
       underline?.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], timing),
-      label?.animate([{ transform: 'none' }, { transform: 'translateX(-16px)' }], timing),
+      label?.animate([{ transform: 'none' }, { transform: labelShift(label) }], timing),
     ])
     if (!alive()) return
   }

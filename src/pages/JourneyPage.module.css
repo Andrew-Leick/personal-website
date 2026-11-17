@@ -27,6 +27,15 @@
   }
 }
 
+/*
+ * The last section has no throw after it, and the footer brings its own --section-gap, so
+ * any padding here only stacks an empty band above the footer. (At the bottom of the page
+ * useJourneyScroll marks the last section active, so it needs no extra scroll room.)
+ */
+.section:last-of-type {
+  padding-block-end: 0;
+}
+
 /* The underline is its own element (not the border) so the intro can draw it across. */
 .section .title {
   position: relative;
@@ -44,14 +53,23 @@
   transform-origin: left center;
 }
 
+/* Draws in from the leading edge, which is the right in RTL. */
+:global([dir="rtl"]) .underline {
+  transform-origin: right center;
+}
+
 .label {
   display: inline-block;
 }
 
-/* Empty slot waiting for the throw: dashed ring in the page's type color. */
+/*
+ * Empty slot waiting for the throw: dashed ring in the page's type color. It frames the
+ * trimmed footprint (--intro-trim), the space the Pokémon's visible pixels take, so it starts
+ * on the content edge and keeps the title gap, just as the Pokémon that replaces it does.
+ */
 .slotRing {
   position: absolute;
-  inset: 0.875rem;
+  inset: var(--intro-trim);
   border: var(--border-width-pixel) dashed var(--page-accent, var(--color-border-strong));
   border-radius: var(--radius-full);
   opacity: 0;
@@ -60,15 +78,17 @@
 
 /*
  * Intro: a box the size of the Pokémon (--header-pokemon-size); the ball sits in its center.
- * Negative inline margins trim the sprite's transparent canvas (as `.tile .sprite` does in
- * Pokedex.module.css), so the visible art sits closer to the title; the box stays centered.
+ * Negative inline margins trim the sprite's transparent canvas, so the box takes only the
+ * space of the visible art (the starters' pixels span the middle ~40% of the 96px canvas):
+ * the Pokémon lines up with the content edge, and the title sits the heading gap from it.
  */
 .intro {
+  --intro-trim: calc(var(--header-pokemon-size) * 0.3);
   position: relative;
   flex: none;
   width: var(--header-pokemon-size);
   height: var(--header-pokemon-size);
-  margin-inline: calc(var(--header-pokemon-size) / -6);
+  margin-inline: calc(-1 * var(--intro-trim));
 }
 
 .introBall {
@@ -226,7 +246,16 @@
   transform: scaleX(0);
 }
 
+/*
+ * Offset away from the slot, so the waiting title never closes the gap to the dashed ring;
+ * it slides in beside the Pokémon as it appears. Mirrored in RTL, and in
+ * src/lib/journey/intros.js.
+ */
 .title[data-pending] .label {
+  transform: translateX(16px);
+}
+
+:global([dir="rtl"]) .title[data-pending] .label {
   transform: translateX(-16px);
 }
 

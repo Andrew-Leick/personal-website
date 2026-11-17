@@ -126,10 +126,11 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
       const z = balls[balls.length - 1]?.railRect
       if (a && z) {
         const vertical = Math.abs(z.y - a.y) >= Math.abs(z.x - a.x)
-        const start = vertical ? a.y + a.height / 2 - railBox.top : a.x + a.width / 2 - railBox.left
-        const end = vertical ? z.y + z.height / 2 - railBox.top : z.x + z.width / 2 - railBox.left
-        rail.style.setProperty('--track-start', `${start}px`)
-        rail.style.setProperty('--track-length', `${Math.max(0, end - start)}px`)
+        const from = vertical ? a.y + a.height / 2 - railBox.top : a.x + a.width / 2 - railBox.left
+        const to = vertical ? z.y + z.height / 2 - railBox.top : z.x + z.width / 2 - railBox.left
+        // In an RTL dock the first ball is on the right, so the track starts at the last one.
+        rail.style.setProperty('--track-start', `${Math.min(from, to)}px`)
+        rail.style.setProperty('--track-length', `${Math.abs(to - from)}px`)
       }
 
       m = { balls, travel }
