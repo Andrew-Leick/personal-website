@@ -8,9 +8,10 @@
  *                       (fades the dock and track in)
  *   --journey-progress  on .fill: 0 to 1, track fill: reaches ball i as section i becomes active
  *   --track-start       on .rail (measured once per layout, not per frame): px from the rail's
- *                       top (rail) or left (dock) to the first ball's center
- *   --track-length      on .rail (measured once per layout, not per frame): px from the first
- *                       ball's center to the last's
+ *                       top (rail) or left (dock) to the track's start: the first ball's
+ *                       center, or the last's in an RTL dock
+ *   --track-length      on .rail (measured once per layout, not per frame): px between the
+ *                       first and last ball centers
  */
 .rail {
   --rail-ball: var(--dock-ball-size);
@@ -18,8 +19,7 @@
   inset-inline: 0;
   inset-block-end: 0;
   z-index: var(--z-rail);
-  height: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
-  padding-block-end: env(safe-area-inset-bottom, 0px);
+  height: var(--dock-height);
   pointer-events: none;
 }
 
@@ -38,9 +38,10 @@
 }
 
 /* Track through the ball centers; the fill eats its way from ball to ball. */
+/* Physical `left`: --track-start is measured from the rail's left edge in both directions. */
 .track {
   position: absolute;
-  inset-inline-start: var(--track-start, 0);
+  left: var(--track-start, 0);
   inset-block-start: calc(var(--dock-height) / 2 - var(--border-width-thick) / 2);
   width: var(--track-length, 0);
   height: var(--border-width-thick);
@@ -55,6 +56,13 @@
   background-color: var(--color-accent);
   transform: scaleX(var(--journey-progress, 0));
   transform-origin: left center;
+}
+
+/* The fill starts at the first ball, which is on the right of an RTL dock. */
+@media (max-width: 767px) {
+  :global([dir="rtl"]) .fill {
+    transform-origin: right center;
+  }
 }
 
 .list {
@@ -118,7 +126,8 @@
   inset-block-start: 50%;
   width: 0.875rem;
   height: 0.875rem;
-  margin: -0.4375rem 0 0 -0.4375rem;
+  margin-block-start: -0.4375rem;
+  margin-inline-start: -0.4375rem;
   border: var(--border-width-pixel) solid var(--sprite-outline);
   border-radius: var(--radius-full);
   background-color: var(--item-accent);
@@ -193,7 +202,8 @@
 .tip {
   position: absolute;
   inset-block-end: calc(100% + var(--space-2));
-  inset-inline-start: 50%;
+  /* Physical: centered with translateX(-50%), which has no logical form. */
+  left: 50%;
   padding: var(--space-1) var(--space-2);
   border: var(--border-width-pixel) solid var(--item-accent);
   background-color: var(--color-bg);
@@ -238,7 +248,7 @@
 
   .track {
     inset-block-start: var(--track-start, 0);
-    inset-inline-start: calc(50% - var(--border-width-thick) / 2);
+    left: calc(50% - var(--border-width-thick) / 2);
     width: var(--border-width-thick);
     height: var(--track-length, 0);
   }

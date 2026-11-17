@@ -192,7 +192,7 @@ time {
    so a focused element scrolled into view never lands under it (WCAG 2.4.11). */
 @media (max-width: 767px) {
   body:has([data-rail-slot]) {
-    padding-block-end: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
+    padding-block-end: var(--dock-height);
   }
 
   html:has([data-rail-slot]) {
