@@ -27,6 +27,8 @@
   --color-type-grass: var(--pk-grass-light);
   --color-type-water: var(--pk-water-light);
   --color-type-normal: var(--pk-moon-2);
+  --color-kind-work: var(--pk-fire-light);
+  --color-kind-project: var(--pk-psychic-light);
   --color-scheme: dark;
 
   color-scheme: dark;

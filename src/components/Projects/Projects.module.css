@@ -20,12 +20,12 @@
 }
 
 .card:focus-within {
-  --color-dialog-border-inner: var(--color-type-grass);
+  --color-dialog-border-inner: var(--color-kind-project);
 }
 
 @media (hover: hover) {
   .card:hover {
-    --color-dialog-border-inner: var(--color-type-grass);
+    --color-dialog-border-inner: var(--color-kind-project);
   }
 }
 

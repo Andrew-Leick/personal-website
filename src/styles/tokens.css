@@ -22,7 +22,8 @@
   --pk-blue: #2050C8;
   --pk-fire: #C2410C;
   --pk-grass: #2E7D32;
-  --pk-water: #1D63B8;
+  --pk-water: #046D98;     /* OKLCH h 235: at least 15° from --pk-blue (focus), so they never read as one color */
+  --pk-psychic: #8C42AA;   /* Project kind: a hue no page uses */
 
   /* Palette primitives: night */
   --pk-night: #12121C;
@@ -38,7 +39,8 @@
   --pk-blue-light: #7AA8FF;
   --pk-fire-light: #FF8C42;
   --pk-grass-light: #6CCB5F;
-  --pk-water-light: #5AA9FF;
+  --pk-water-light: #1BB2F4;
+  --pk-psychic-light: #CE8CEB;
 
   /* Sprite art (same in every theme) */
   --sprite-outline: #202028;
@@ -150,6 +152,11 @@
      `ch` resolves at the body text size where it is used. */
   --journey-column: calc(var(--date-column) + var(--space-8) + var(--measure));
   /* White burst when a section header's ball opens: solid core, strong glow */
+  /* Its ring and the ring's glow, and Charmander's idle glow (--pk-fire-light at two strengths) */
+  --ball-flash-ring: rgb(255 255 255 / 0.9);
+  --ball-flash-ring-glow: rgb(255 255 255 / 0.7);
+  --sprite-glow-fire-soft: rgb(255 140 66 / 0.25);
+  --sprite-glow-fire: rgb(255 140 66 / 0.7);
   --ball-flash: radial-gradient(circle, #fff 0 26%, rgb(255 255 255 / 0.9) 34%, rgb(255 255 255 / 0.45) 50%, rgb(255 255 255 / 0.12) 62%, transparent 70%);
 
   /* Layers */

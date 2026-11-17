@@ -405,15 +405,15 @@
   font-size: var(--text-sm);
 }
 
-/* Type badge: type color on text and border, always with its label. */
+/* Kind badge (Work or Project): its own color on text and border, always with its label. */
 .detail .type[data-kind="work"] {
   border-color: currentColor;
-  color: var(--color-type-fire);
+  color: var(--color-kind-work);
 }
 
 .detail .type[data-kind="project"] {
   border-color: currentColor;
-  color: var(--color-type-grass);
+  color: var(--color-kind-project);
 }
 
 /* Print: no device, every entry of both dexes in full (the screen hides via data-print). */

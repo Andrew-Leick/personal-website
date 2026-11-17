@@ -92,9 +92,9 @@
 .flash::after {
   position: absolute;
   inset: 14%;
-  border: 3px solid rgb(255 255 255 / 0.9);
+  border: 3px solid var(--ball-flash-ring);
   border-radius: var(--radius-full);
-  box-shadow: 0 0 10px rgb(255 255 255 / 0.7);
+  box-shadow: 0 0 10px var(--ball-flash-ring-glow);
   content: "";
 }
 
@@ -155,8 +155,8 @@
 }
 
 @keyframes idle-glow {
-  from { filter: drop-shadow(0 0 calc(var(--px) * 2) rgb(255 140 66 / 0.25)); }
-  to { filter: drop-shadow(0 0 calc(var(--px) * 7) rgb(255 140 66 / 0.7)); }
+  from { filter: drop-shadow(0 0 calc(var(--px) * 2) var(--sprite-glow-fire-soft)); }
+  to { filter: drop-shadow(0 0 calc(var(--px) * 7) var(--sprite-glow-fire)); }
 }
 
 @keyframes idle-breathe {
