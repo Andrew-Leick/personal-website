@@ -87,8 +87,8 @@
   --leading-display:  1.5;
 
   --weight-regular: 400;
-  --weight-medium:  700;  /* VT323 ships 400 only; faux bold is disabled in base.css */
-  --weight-bold:    700;
+  --weight-medium:  400;  /* VT323 ships 400 only; faux bold is disabled in base.css */
+  --weight-bold:    400;
 
   --leading-tight:  1.2;
   --leading-snug:   1.35;
@@ -166,11 +166,6 @@
   --photo-size: 120px;
   --photo-size-md: 160px;
   --date-column: 11rem;
-  /* Pokédex screen and closed cover: the same height, so opening never jumps. Sized from the
-     device's width (cqi, resolved inside the .dex container) so the whole device matches the real
-     one's proportions (Kanto Pokédex replica: 4.35in wide, 4.9in tall), less the top bar and
-     padding. 20rem is the floor, so phones still have room for the start screen. */
-  --dex-screen-min: max(20rem, calc(100cqi * 490 / 435 - var(--dex-lens-size) - var(--space-8)));
   --dex-lens-size: 3.5rem;      /* big blue lens, border included */
   --dex-led-size: 0.875rem;     /* the three status lights */
   --dex-bezel-width: 0.75rem;   /* grey frame around each screen */
@@ -188,15 +183,6 @@
     --sprite-px: round(down, 0.375rem, 1px);
     --hero-ball-size: 3.5rem;
   }
-}
-
-/* Wide screens: longer text lines, so prose and entries use the wider content column. */
-@media (min-width: 1600px) {
-  :root { --measure: 84ch; }
-}
-
-@media (min-width: 2200px) {
-  :root { --measure: 100ch; }
 }
 
 @media (prefers-reduced-motion: reduce) {

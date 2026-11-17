@@ -51,6 +51,11 @@ export default function Contact({ profile, links }) {
             <Icon name="copy" />
             <span>{buttonText}</span>
           </button>
+          {status === 'failed' && (
+            <p className={styles.copyError} data-print="hide">
+              Copy failed. Use the email link instead.
+            </p>
+          )}
         </div>
       )}
       <p className="visually-hidden" aria-live="polite" aria-atomic="true">

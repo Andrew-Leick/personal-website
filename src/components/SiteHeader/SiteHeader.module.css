@@ -33,9 +33,11 @@
   text-overflow: ellipsis;
 }
 
-.name:hover {
-  color: var(--color-text);
-  text-decoration-line: underline;
+@media (hover: hover) {
+  .name:hover {
+    color: var(--color-text);
+    text-decoration-line: underline;
+  }
 }
 
 .nav {

@@ -17,8 +17,9 @@ import styles from './BallRail.module.css'
 const BallRail = forwardRef(function BallRail({ pages, fanArt }, ref) {
   return (
     <nav ref={ref} aria-label="Sections" className={styles.rail} data-print="hide" inert>
-      <div className={styles.track} aria-hidden="true">
-        <span className={styles.fill} />
+      <span className={styles.dock} data-rail-dock="" aria-hidden="true" />
+      <div className={styles.track} data-rail-track="" aria-hidden="true">
+        <span className={styles.fill} data-rail-fill="" />
       </div>
       <ul className={styles.list}>
         {pages.map((page) => {

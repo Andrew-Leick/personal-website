@@ -16,8 +16,15 @@
  * previous section's ball has gone home, so the animations never pile up.
  */
 .section {
-  padding-block-end: calc(var(--section-gap) + 20vh);
+  padding-block-end: var(--section-gap);
   scroll-margin-top: var(--space-4);
+}
+
+/* The extra room only spaces out the throws, which reduced-motion readers never see. */
+@media (prefers-reduced-motion: no-preference) {
+  .section {
+    padding-block-end: calc(var(--section-gap) + 20vh);
+  }
 }
 
 /* The underline is its own element (not the border) so the intro can draw it across. */
@@ -51,12 +58,17 @@
   transition: opacity var(--duration-base) var(--ease-standard);
 }
 
-/* Intro: a box the size of the Pokémon (--header-pokemon-size); the ball sits in its center. */
+/*
+ * Intro: a box the size of the Pokémon (--header-pokemon-size); the ball sits in its center.
+ * Negative inline margins trim the sprite's transparent canvas (as `.tile .sprite` does in
+ * Pokedex.module.css), so the visible art sits closer to the title; the box stays centered.
+ */
 .intro {
   position: relative;
   flex: none;
   width: var(--header-pokemon-size);
   height: var(--header-pokemon-size);
+  margin-inline: calc(var(--header-pokemon-size) / -6);
 }
 
 .introBall {

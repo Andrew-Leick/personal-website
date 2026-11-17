@@ -19,9 +19,14 @@
   padding: var(--space-6);
 }
 
-.card:hover,
 .card:focus-within {
   --color-dialog-border-inner: var(--color-type-grass);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    --color-dialog-border-inner: var(--color-type-grass);
+  }
 }
 
 .image {
@@ -45,8 +50,10 @@
   text-decoration-line: none;
 }
 
-.title a:hover {
-  text-decoration-line: underline;
+@media (hover: hover) {
+  .title a:hover {
+    text-decoration-line: underline;
+  }
 }
 
 .badges {

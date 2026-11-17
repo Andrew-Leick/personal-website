@@ -11,17 +11,21 @@ const DEXES = { experience: 'work', projects: 'projects' }
 const LABELS = { experience: 'Experience', projects: 'Projects' }
 const HASH = '#pokedex-'
 
+/** How long a lid swing may take before it finishes anyway (the swings are 700ms and 600ms). */
+const LID_FALLBACK_MS = 1000
+
 /**
- * The Pokédex (SPEC-v5.1): it starts closed; Open swings the lid and shows the start screen
- * (Experience or Projects); a dex is a grid of Pokémon, one per entry; a Pokémon opens that
- * entry's showcase. A back key steps up a level, and the showcase has previous and next.
+ * The Pokédex (SPEC-v5.1): it starts closed; Open swings the lid away and shows the start screen
+ * (Experience or Projects); Close swings it shut again. A dex is a grid of Pokémon, one per
+ * entry; a Pokémon opens that entry's showcase. A back key steps up a level, and the showcase has
+ * previous and next. The device has a fixed tall shape: anything longer scrolls inside the screen.
  * Focus moves to the new screen's heading on every step the reader takes, never on load.
  */
 export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
   const views = Object.keys(DEXES).filter((v) => dex[DEXES[v]].length > 0)
   const [screen, setScreen] = useState('closed') // 'closed' | 'start' | a view
   const [entry, setEntry] = useState(null) // index of the open entry in the view, or null
-  const [lid, setLid] = useState(false) // the lid is swinging open
+  const [lid, setLid] = useState(null) // null | 'open' (swinging away) | 'closing' (swinging shut)
   const [focusTo, setFocusTo] = useState(null) // { id } of the element to focus after a step
   const { nav } = useRoute()
 
@@ -37,17 +41,49 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
     }
   }
 
-  useEffect(() => {
-    if (focusTo) document.getElementById(focusTo.id)?.focus()
-  }, [focusTo])
-
-  if (views.length === 0) return null
-
   function go(nextScreen, nextEntry = null, focus = `pokedex-${nextEntry === null ? nextScreen : 'entry'}-heading`) {
     setFocusTo({ id: focus })
     setScreen(nextScreen)
     setEntry(nextEntry)
   }
+
+  function finishClose() {
+    setLid(null)
+    go('closed', null, 'pokedex-open')
+  }
+
+  function close() {
+    // Under reduced motion there is no lid, so it would never report an end: close at once.
+    if (prefersReducedMotion()) finishClose()
+    else setLid('closing') // a lid still opening keeps its element and turns around
+  }
+
+  /** The lid's swing ended (its transform transition; ignore the opacity one and children). */
+  function onLidEnd(event) {
+    if (event.target !== event.currentTarget || event.propertyName !== 'transform') return
+    if (lid === 'closing') finishClose()
+    else setLid(null)
+  }
+
+  // Each step starts its screen at the top (the heading leads it); going back to a tile scrolls
+  // only as far as needed to show that tile.
+  useEffect(() => {
+    const el = focusTo && document.getElementById(focusTo.id)
+    if (!el) return
+    el.focus({ preventScroll: true })
+    const view = el.closest('[role="region"]')
+    if (el.tagName.startsWith('H') && view) view.scrollTop = 0
+    else el.scrollIntoView?.({ block: 'nearest' })
+  }, [focusTo])
+
+  // If a swing never reports its end (a background tab, no @starting-style support), finish anyway.
+  useEffect(() => {
+    if (lid === null) return undefined
+    const timer = setTimeout(lid === 'closing' ? finishClose : () => setLid(null), LID_FALLBACK_MS)
+    return () => clearTimeout(timer)
+  })
+
+  if (views.length === 0) return null
 
   const Heading = `h${headingLevel}`
   const list = DEXES[screen] ? dex[DEXES[screen]] : []
@@ -63,7 +99,7 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
   let bar
   let body
   if (screen === 'start') {
-    bar = key('Close', () => go('closed', null, 'pokedex-open'))
+    bar = key('Close', close, { className: `${styles.key} ${styles.close}` })
     body = (
       <>
         <Heading id="pokedex-start-heading" tabIndex={-1} className={styles.heading}>
@@ -89,8 +125,8 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
       <>
         {key(<><span aria-hidden="true">◀ </span>{LABELS[screen]}</>, () => go(screen, null, `pokedex-tile-${entry}`))}
         <span className={styles.step}>
-          {key(<><span aria-hidden="true">◀ </span>Previous</>, () => go(screen, entry - 1), { disabled: entry === 0 })}
-          {key(<>Next<span aria-hidden="true"> ▶</span></>, () => go(screen, entry + 1), { disabled: entry === list.length - 1 })}
+          {key(<><span aria-hidden="true">◀ </span><span className={styles.stepText}>Previous</span></>, () => go(screen, entry - 1), { disabled: entry === 0 })}
+          {key(<><span className={styles.stepText}>Next</span><span aria-hidden="true"> ▶</span></>, () => go(screen, entry + 1), { disabled: entry === list.length - 1 })}
         </span>
       </>
     )
@@ -137,17 +173,28 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
       <p className={styles.title}>{fanArt ? 'Pokédex' : 'Index'}</p>
       {screen === 'closed' ? (
         <div className={styles.cover}>
-          {key(fanArt ? 'Open Pokédex' : 'Open index', () => {
-            // No lid at all under reduced motion: its animation would never run to remove it.
-            setLid(!prefersReducedMotion())
+          {key('View experience and projects', () => {
+            // No lid at all under reduced motion: it would never report an end.
+            setLid(prefersReducedMotion() ? null : 'open')
             go('start')
           }, { id: 'pokedex-open' })}
         </div>
       ) : (
         <div className={styles.screen} id={DEXES[screen] ? `pokedex-${screen}` : undefined} data-print="hide">
-          {lid && <span className={styles.lid} aria-hidden="true" onAnimationEnd={() => setLid(false)} />}
-          <div className={styles.bar}>{bar}</div>
-          {body}
+          {lid && <span className={styles.lid} aria-hidden="true" data-state={lid} onTransitionEnd={onLidEnd} />}
+          <div className={styles.bar} inert={lid === 'closing' || undefined}>
+            {bar}
+          </div>
+          {/* The fixed-height screen's scrolling part: focusable so keyboard users can scroll it. */}
+          <div
+            className={styles.view}
+            role="region"
+            aria-labelledby={shown ? 'pokedex-entry-heading' : `pokedex-${screen}-heading`}
+            tabIndex={0}
+            inert={lid === 'closing' || undefined}
+          >
+            {body}
+          </div>
         </div>
       )}
       {/* Print shows every entry of both dexes, under their dex's name, whatever screen is open. */}

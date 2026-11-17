@@ -14,11 +14,18 @@
   display: grid;
   /* minmax(0, 1fr) on the device and the screen: a long word wraps instead of widening them. */
   grid-template-columns: minmax(0, 1fr);
-  /* The cover and screen size their minimum height from this box's width (cqi), so the device
-     keeps the real proportions while a long entry can still make it taller. */
+  /* Top bar, then the cover or screen filling the rest. The device never changes height:
+     long content scrolls inside the screen (.view) instead. */
+  grid-template-rows: auto minmax(0, 1fr);
   container-type: inline-size;
   gap: var(--space-4);
+  /* A tall clamshell, like the anime's Kanto Pokédex (and a phone): 2 wide by 3 tall. As wide as
+     the column allows, up to 30rem, and never taller than most of the viewport. */
+  inline-size: min(100%, 30rem, calc(85svh * 2 / 3));
+  aspect-ratio: 2 / 3;
   min-width: 0;
+  min-block-size: 0;
+  margin-inline: auto;
   padding: var(--space-4);
   border: var(--border-width-thick) solid var(--sprite-outline);
   border-radius: var(--radius-dialog);
@@ -28,9 +35,11 @@
     inset 0 calc(-2 * var(--border-width-thick)) 0 var(--dex-body-dark);
 }
 
-/* Top bar: lens and lights on the left, the name on the right, a dark seam under it. */
+/* Top bar: lens and lights on the left, the name on the right, a dark seam under it. Too narrow
+   for both (320px), the name wraps under the lens instead of overflowing. */
 .title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
@@ -88,7 +97,6 @@
   --color-focus-ring: var(--dex-ink);
   display: grid;
   place-items: center;
-  min-block-size: var(--dex-screen-min);
   padding: var(--space-4);
 }
 
@@ -97,6 +105,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* Resting (open) end of the swing: turned away on its left hinge and faded out. Opening
+     transitions here: the turn takes 700ms, and the fade waits until 70% of it (490ms). */
   .lid {
     position: absolute;
     inset: calc(-1 * var(--dex-bezel-width));
@@ -104,15 +114,40 @@
     display: block;
     transform-origin: left center;
     pointer-events: none;
-    animation: lid-open 700ms var(--ease-standard) both;
+    transform: perspective(80rem) rotateY(-120deg);
+    opacity: 0;
+    transition:
+      transform 700ms var(--ease-standard),
+      opacity 210ms var(--ease-standard) 490ms;
   }
-}
 
-/* Swings open on its left hinge, toward the reader, and fades as it passes the edge. */
-@keyframes lid-open {
-  from { transform: perspective(80rem) rotateY(0deg); }
-  70% { opacity: 1; }
-  to { transform: perspective(80rem) rotateY(-120deg); opacity: 0; }
+  /* Opening starts flat over the screen. */
+  @starting-style {
+    .lid[data-state="open"] {
+      transform: perspective(80rem) rotateY(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* Closing: swings back flat over the screen (600ms), visible within the first 180ms, and
+     blocks clicks while it covers the screen. A transition, so a Close pressed mid-opening
+     turns the lid around from wherever it is. */
+  .lid[data-state="closing"] {
+    pointer-events: auto;
+    transform: perspective(80rem) rotateY(0deg);
+    opacity: 1;
+    transition:
+      transform 600ms var(--ease-standard),
+      opacity 180ms var(--ease-standard);
+  }
+
+  /* Closing from fully open (no lid mounted yet) starts at the open end. */
+  @starting-style {
+    .lid[data-state="closing"] {
+      transform: perspective(80rem) rotateY(-120deg);
+      opacity: 0;
+    }
+  }
 }
 
 /* The screen: a grey bezel with two red dots on top, a dark outline, the theme's surface inside. */
@@ -123,9 +158,9 @@
   container-type: inline-size;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  align-content: start;
+  /* The keys stay put; the view under them takes the rest of the fixed height and scrolls. */
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-4);
-  min-block-size: var(--dex-screen-min);
   padding: var(--space-4);
   /* The bezel is background, not border color: a border paints over the background, dots included. */
   border: var(--dex-bezel-width) solid transparent;
@@ -146,6 +181,34 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+}
+
+/* Close, the only key on the start screen, trails the bar. */
+.close {
+  margin-inline-start: auto;
+}
+
+/*
+ * The scrolling part of the screen. Padding (cancelled by a matching negative margin) keeps
+ * focus rings inside the scroll box, where they would otherwise be clipped. Shadows at the top
+ * and bottom edges show there is more to scroll: the "local" covers scroll with the content and
+ * hide each shadow once that edge is reached.
+ */
+.view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+  min-block-size: 0;
+  margin: calc(-1 * var(--space-2));
+  padding: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    linear-gradient(var(--color-dialog-bg) 30%, transparent) center top / 100% var(--space-8) no-repeat local,
+    linear-gradient(transparent, var(--color-dialog-bg) 70%) center bottom / 100% var(--space-8) no-repeat local,
+    radial-gradient(farthest-side at 50% 0, color-mix(in srgb, var(--color-text) 30%, transparent), transparent) center top / 100% var(--space-3) no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, color-mix(in srgb, var(--color-text) 30%, transparent), transparent) center bottom / 100% var(--space-3) no-repeat scroll;
 }
 
 /* Blue device keys: outlined, a hard drop shadow, pressed in while held. */
@@ -225,6 +288,11 @@
   transition:
     background-color var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard);
+}
+
+/* Pressed: drops 2px, like the device keys (instant, as every press on the site is). */
+.tile:active {
+  transform: translateY(var(--border-width-pixel));
 }
 
 @media (hover: hover) {
@@ -345,5 +413,49 @@
   .print {
     display: grid;
     gap: var(--space-8);
+  }
+}
+
+/*
+ * Phones: the device is only as wide as the column, and its fixed 2:3 shape leaves little room,
+ * so its frame tightens and Previous / Next show only their arrows (the words stay as their
+ * accessible names), keeping the keys on one row above the scrolling view.
+ */
+@media (max-width: 479px) {
+  .dex {
+    --dex-bezel-width: 0.5rem;
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .title {
+    padding-block-end: var(--space-2);
+  }
+
+  .screen {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .bar,
+  .step {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+  }
+
+  .bar .key {
+    min-width: var(--target-min);
+    padding-inline: var(--space-2);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .stepText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }

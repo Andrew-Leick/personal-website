@@ -2,15 +2,18 @@
  * v4 rail. Mobile (< 768px): bottom dock. >= 768px: column on the right edge.
  * Balls use integer multiples of the 30px sprite (60px in both).
  *
- * Variables written by useJourneyScroll:
- *   --journey-p         0 to 1, how far the balls have glided from the hero (fades the rail in)
- *   --journey-progress  0 to 1, track fill: reaches ball i as section i becomes active
- *   --track-start       px from the rail's top (rail) or left (dock) to the first ball's center
- *   --track-length      px from the first ball's center to the last's
+ * Variables written by useJourneyScroll. Per-frame ones are written on the element that reads
+ * them, so a change restyles that element only, not the whole rail subtree:
+ *   --journey-p         on .dock and .track: 0 to 1, how far the balls have glided from the hero
+ *                       (fades the dock and track in)
+ *   --journey-progress  on .fill: 0 to 1, track fill: reaches ball i as section i becomes active
+ *   --track-start       on .rail (measured once per layout, not per frame): px from the rail's
+ *                       top (rail) or left (dock) to the first ball's center
+ *   --track-length      on .rail (measured once per layout, not per frame): px from the first
+ *                       ball's center to the last's
  */
 .rail {
   --rail-ball: var(--dock-ball-size);
-  --rail-fade: clamp(0, calc((var(--journey-p, 0) - 0.5) * 2), 1);
   position: fixed;
   inset-inline: 0;
   inset-block-end: 0;
@@ -21,13 +24,12 @@
 }
 
 /* Dock background: forms while the balls arrive (second half of the glide). */
-.rail::before {
+.dock {
   position: absolute;
   inset: 0;
   border-block-start: var(--border-width-pixel) solid var(--color-border-strong);
   background-color: var(--color-bg);
-  content: "";
-  opacity: var(--rail-fade);
+  opacity: clamp(0, calc((var(--journey-p, 0) - 0.5) * 2), 1);
 }
 
 /* Hidden until the first frame has placed the balls, so they never flash in the dock. */
@@ -43,7 +45,7 @@
   width: var(--track-length, 0);
   height: var(--border-width-thick);
   background-color: var(--color-border);
-  opacity: var(--rail-fade);
+  opacity: clamp(0, calc((var(--journey-p, 0) - 0.5) * 2), 1);
 }
 
 .fill {
@@ -124,23 +126,27 @@
   transition: scale 200ms steps(4, end);
 }
 
+/* Out: shrinks away, then (once hidden) jumps up 16px, ready to drop back in. */
 .link[data-out] .ball {
   scale: 0;
   opacity: 0;
+  translate: 0 -16px;
+  transition:
+    scale 160ms steps(3, end),
+    opacity 160ms steps(3, end),
+    translate 0s 160ms;
 }
 
 .link[data-out] .dot {
   scale: 1;
 }
 
+/* Return: a transition (not keyframes) so a quick out-and-back retargets instead of restarting. */
 .link[data-return] .ball {
-  animation: ball-return 360ms steps(6, end);
-}
-
-@keyframes ball-return {
-  from { scale: 0; translate: 0 -16px; }
-  60% { scale: 1.15; translate: 0 0; }
-  to { scale: 1; translate: 0 0; }
+  transition:
+    scale 360ms steps(6, end),
+    opacity 160ms steps(3, end),
+    translate 360ms steps(6, end);
 }
 
 .egg {
@@ -148,24 +154,27 @@
   height: 100%;
 }
 
-/* Active section: type-colored ring that steps in. */
-.link[data-active] .slot::after {
+/* Active section: type-colored ring that steps in (a transition, so it can retarget). */
+.slot::after {
   position: absolute;
   inset: -0.375rem;
   border: var(--border-width-pixel) solid var(--item-accent);
   border-radius: var(--radius-full);
   content: "";
-  animation: ring-in 180ms steps(3, end);
+  opacity: 0;
+  scale: 0.6;
+  pointer-events: none;
+  transition: opacity 180ms steps(3, end), scale 180ms steps(3, end);
+}
+
+.link[data-active] .slot::after {
+  opacity: 1;
+  scale: 1;
 }
 
 /* Around a dot, the ring tightens to fit it. */
 .link[data-out] .slot::after {
   inset: calc(50% - 0.8125rem);
-}
-
-@keyframes ring-in {
-  from { opacity: 0; transform: scale(0.6); }
-  to { opacity: 1; transform: scale(1); }
 }
 
 /* Hover or focus on the hero slot wiggles its ball (BallLink sets data-hover). */
@@ -198,9 +207,14 @@
   transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
-.link:hover .tip,
 .link:focus-visible .tip {
   opacity: 1;
+}
+
+@media (hover: hover) {
+  .link:hover .tip {
+    opacity: 1;
+  }
 }
 
 .item[data-type="fire"] { --item-accent: var(--color-type-fire); }
@@ -218,7 +232,7 @@
     padding: 0;
   }
 
-  .rail::before {
+  .dock {
     display: none;
   }
 
@@ -249,12 +263,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ball,
-  .dot {
+  .dot,
+  .slot::after,
+  .link[data-out] .ball,
+  .link[data-return] .ball {
     transition: none;
   }
 
-  .link[data-active] .slot::after,
-  .link[data-return] .ball,
   .mover[data-hover] .ball {
     animation: none;
   }

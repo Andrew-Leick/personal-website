@@ -49,8 +49,16 @@ function syncThemeColorMeta() {
 }
 
 function applyTheme(theme) {
+  // Suppress transitions during the swap so controls do not cross-fade while
+  // the rest of the page snaps to the new colors.
+  const style = document.createElement('style')
+  style.textContent = '*, *::before, *::after { transition: none !important; }'
+  document.head.appendChild(style)
   document.documentElement.dataset.theme = theme
+  // Force a style flush so the new colors apply with transitions disabled.
+  void getComputedStyle(document.body).opacity
   syncThemeColorMeta()
+  requestAnimationFrame(() => style.remove())
 }
 
 /**

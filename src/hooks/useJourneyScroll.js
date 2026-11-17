@@ -30,9 +30,11 @@ const supportsScrollTimeline = () => typeof window !== 'undefined' && typeof win
  *   rail slot ([data-rail-slot]) on an arc, shortest path first. Where the browser has
  *   ScrollTimeline the glide is a scroll-linked WAAPI animation run by the compositor, so
  *   the balls never trail the page; otherwise one rAF per frame writes the transforms;
- * - fades the hero slot's ghost in and its label down as each ball leaves (--leave);
- * - writes --journey-p (glide progress, fades in the track and dock) and
- *   --journey-progress (piecewise: reaches ball i as section i becomes active);
+ * - fades the hero slot's ghost in and its label down as each ball leaves (--leave, written
+ *   on the ghost and label elements themselves);
+ * - writes --journey-p (glide progress, fades in the track and dock) on the dock and track
+ *   elements, and --journey-progress (piecewise: reaches ball i as section i becomes active)
+ *   on the fill element;
  * - docks the rail (data-docked, inert off) once the glide is done;
  * - marks the active section (ring, hop, aria-current) and moves the URL to it.
  * @param {{ pages: { id: string, href: string }[], homeHref: string, railRef: { current: HTMLElement|null } }} opts
@@ -49,15 +51,22 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
 
     let disposed = false
     let ready = false
-    // Rail custom properties are only written when they change (3 decimals is sub-pixel),
-    // so a scroll frame with nothing new does not restyle the rail.
-    const written = new Map()
-    const writeVar = (name, value) => {
+    // Scroll-driven custom properties are written on the element that reads them (so a change
+    // restyles that element only, not a whole subtree), and only when they change (3 decimals
+    // is sub-pixel).
+    const written = new WeakMap()
+    const writeVar = (el, name, value) => {
+      if (!el) return
       const text = value.toFixed(3)
-      if (written.get(name) === text) return
-      written.set(name, text)
-      rail.style.setProperty(name, text)
+      const seen = written.get(el) ?? new Map()
+      if (seen.get(name) === text) return
+      seen.set(name, text)
+      written.set(el, seen)
+      el.style.setProperty(name, text)
     }
+    const dock = rail.querySelector('[data-rail-dock]')
+    const track = rail.querySelector('[data-rail-track]')
+    const fillEl = rail.querySelector('[data-rail-fill]')
     let frame = 0
     let docked = null
     let active = null
@@ -90,6 +99,8 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
           railSlot,
           railRect: railSlot?.getBoundingClientRect() ?? null,
           heroLink: heroSlot?.closest('a') ?? null,
+          heroGhost: heroSlot?.firstElementChild ?? null,
+          heroLabel: heroSlot?.closest('a')?.querySelector('[data-leave-label]') ?? null,
           heroDoc: heroRect ? { x: heroRect.left, y: heroRect.top + scrollY, width: heroRect.width } : null,
           link: rail.querySelector(`[data-rail-link="${id}"]`),
           section: document.getElementById(id),
@@ -179,7 +190,8 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
           b.mover.style.transform = value === 'none' ? '' : value
           b.mover.style.willChange = t > 0 && t < 1 ? 'transform' : ''
         }
-        b.heroLink?.style.setProperty('--leave', String(t))
+        writeVar(b.heroGhost, '--leave', t)
+        writeVar(b.heroLabel, '--leave', t)
       }
 
       const isDocked = p >= 1
@@ -190,12 +202,13 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
         // The hero links are gone: no ball keeps wiggling from a hover the page scrolled away.
         if (isDocked) m.balls.forEach((b) => b.mover?.removeAttribute('data-hover'))
       }
-      writeVar('--journey-p', p)
+      writeVar(dock, '--journey-p', p)
+      writeVar(track, '--journey-p', p)
 
       const line = vh * ACTIVE_LINE
       const atBottom = max > 0 && scrollY >= max - 2
       const fill = atBottom ? 1 : trackProgress(tops.map((s) => s.top), line)
-      writeVar('--journey-progress', clamp(fill))
+      writeVar(fillEl, '--journey-progress', clamp(fill))
 
       // During a link glide the rail shows the destination at once, instead of flashing every
       // section passed on the way.

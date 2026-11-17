@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import Pokedex from '../Pokedex.jsx'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -66,11 +66,12 @@ const focused = () => document.activeElement
 const tiles = () => $$('[id^="pokedex-tile-"]')
 
 describe('Pokedex', () => {
-  it('starts closed: the title and one Open key, no screen', () => {
+  it('starts closed: the title and one key to view experience and projects, no screen', () => {
     render(makeDex(2, 1))
     expect($('#pokedex > p').textContent).toBe('Pokédex')
-    expect($('#pokedex-open').textContent).toBe('Open Pokédex')
+    expect($('#pokedex-open').textContent).toBe('View experience and projects')
     expect($('[id^="pokedex-"][id$="-heading"]')).toBeNull()
+    expect($('[class*="lid"]')).toBeNull() // no lid on first render
     expect(focused()).toBe(document.body) // nothing moves focus on load
   })
 
@@ -82,6 +83,17 @@ describe('Pokedex', () => {
     expect($('#pokedex-pick-experience').textContent).toBe('Experience 2')
     expect($('#pokedex-pick-projects').textContent).toBe('Projects 1')
     expect($('[aria-hidden="true"][class*="lid"]')).not.toBeNull() // the lid swings away
+  })
+
+  it('the screen scrolls: a focusable region named by the current heading', () => {
+    render(makeDex(2, 1))
+    click($('#pokedex-open'))
+    const view = $('[role="region"]')
+    expect(view.tabIndex).toBe(0)
+    expect(view.getAttribute('aria-labelledby')).toBe('pokedex-start-heading')
+    click($('#pokedex-pick-experience'))
+    click(tiles()[0])
+    expect($('[role="region"]').getAttribute('aria-labelledby')).toBe('pokedex-entry-heading')
   })
 
   it('a dex is a grid of Pokémon: sprite, number and a label naming the entry', () => {
@@ -118,15 +130,46 @@ describe('Pokedex', () => {
     expect(focused().id).toBe('pokedex-tile-0')
   })
 
-  it('Menu goes back to the start screen and Close shuts the device', () => {
+  it('Menu goes back to the start screen; Close swings the lid shut, then shows the cover', () => {
     render(makeDex(1, 1))
     click($('#pokedex-open'))
     click($('#pokedex-pick-projects'))
     click(button('Menu'))
     expect(focused().id).toBe('pokedex-pick-projects')
     click(button('Close'))
+    const closingLid = $('[data-state="closing"]')
+    expect(closingLid).not.toBeNull() // the closing animation plays over the screen
+    expect($('[role="region"]').inert).toBe(true) // nothing under the lid can be used meanwhile
+    const end = new Event('transitionend', { bubbles: true })
+    Object.defineProperty(end, 'propertyName', { value: 'transform' })
+    act(() => closingLid.dispatchEvent(end))
+    expect($('[data-state="closing"]')).toBeNull()
     expect(focused().id).toBe('pokedex-open')
     expect(tiles()).toHaveLength(0)
+  })
+
+  it('Close during the opening swing turns the same lid around instead of replacing it', () => {
+    render(makeDex(1, 1))
+    click($('#pokedex-open'))
+    const lid = $('[data-state="open"]')
+    expect(lid).not.toBeNull()
+    click(button('Close'))
+    expect($('[data-state="closing"]')).toBe(lid) // same element: the transition retargets
+    expect($$('[class*="lid"]')).toHaveLength(1)
+  })
+
+  it('closes even if the closing animation never reports its end', () => {
+    vi.useFakeTimers()
+    try {
+      render(makeDex(1, 1))
+      click($('#pokedex-open'))
+      click(button('Close'))
+      expect($('#pokedex-open')).toBeNull()
+      act(() => vi.advanceTimersByTime(1100))
+      expect($('#pokedex-open')).not.toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('#pokedex-{view} opens that dex directly, on load and on navigation', () => {

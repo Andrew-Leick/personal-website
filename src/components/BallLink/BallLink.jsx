@@ -41,7 +41,7 @@ export default function BallLink({ page, fanArt }) {
       <span className={styles.slot} data-ball-slot={page.id} aria-hidden="true">
         {fanArt ? <PokeBall className={styles.ghost} /> : <PixelSprite name="egg" className={styles.ghost} />}
       </span>
-      <span className={styles.label}>
+      <span className={styles.label} data-leave-label="">
         <MenuCursor className={styles.cursor} />
         <span className={styles.labelText}>{page.label}</span>
       </span>

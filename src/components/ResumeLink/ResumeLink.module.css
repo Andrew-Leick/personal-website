@@ -10,9 +10,11 @@
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.button:hover {
-  background-color: var(--color-link-hover);
-  color: var(--color-accent-contrast);
+@media (hover: hover) {
+  .button:hover {
+    background-color: var(--color-accent-hover);
+    color: var(--color-accent-contrast);
+  }
 }
 
 .external {

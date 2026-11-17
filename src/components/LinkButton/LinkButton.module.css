@@ -25,24 +25,26 @@
   background-color: var(--color-dialog-bg);
 }
 
-.outline:hover {
-  background-color: var(--color-bg-subtle);
-  color: var(--color-text);
-}
-
 .plain {
   padding-inline: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--text-sm);
 }
 
-.plain:hover {
-  color: var(--color-text);
-}
+@media (hover: hover) {
+  .outline:hover {
+    background-color: var(--color-bg-subtle);
+    color: var(--color-text);
+  }
 
-.link:hover .label {
-  text-decoration-line: underline;
-  text-underline-offset: 0.2em;
+  .plain:hover {
+    color: var(--color-text);
+  }
+
+  .link:hover .label {
+    text-decoration-line: underline;
+    text-underline-offset: 0.2em;
+  }
 }
 
 .externalIcon {

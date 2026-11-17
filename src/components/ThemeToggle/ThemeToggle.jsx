@@ -14,7 +14,7 @@ export default function ThemeToggle({ theme, onToggle }) {
   return (
     <button
       type="button"
-      className={styles.toggle}
+      className={`pixel-button ${styles.toggle}`}
       onClick={onToggle}
       aria-label={label}
       title={label}

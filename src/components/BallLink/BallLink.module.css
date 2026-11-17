@@ -12,10 +12,16 @@
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.link:hover,
 .link:focus-visible {
   background-color: var(--color-bg-subtle);
   color: var(--color-text);
+}
+
+@media (hover: hover) {
+  .link:hover {
+    background-color: var(--color-bg-subtle);
+    color: var(--color-text);
+  }
 }
 
 /*
@@ -43,9 +49,14 @@
   opacity: calc(1 - var(--leave, 0) * 0.3);
 }
 
-.link:hover .label,
 .link:focus-visible .label {
   opacity: 1;
+}
+
+@media (hover: hover) {
+  .link:hover .label {
+    opacity: 1;
+  }
 }
 
 .label {
@@ -68,17 +79,28 @@
   overflow-wrap: anywhere;
 }
 
-.link:hover .cursor,
 .link:focus-visible .cursor {
   visibility: visible;
 }
 
-.link:hover .labelText,
 .link:focus-visible .labelText {
   text-decoration-line: underline;
   text-decoration-thickness: var(--border-width-pixel);
   text-decoration-color: var(--link-accent);
   text-underline-offset: 0.25em;
+}
+
+@media (hover: hover) {
+  .link:hover .cursor {
+    visibility: visible;
+  }
+
+  .link:hover .labelText {
+    text-decoration-line: underline;
+    text-decoration-thickness: var(--border-width-pixel);
+    text-decoration-color: var(--link-accent);
+    text-underline-offset: 0.25em;
+  }
 }
 
 .link[data-type="fire"] { --link-accent: var(--color-type-fire); }
