@@ -21,7 +21,8 @@
   max-width: var(--measure);
   color: var(--color-text-muted);
   font-size: var(--text-xs);
-  line-height: var(--leading-snug);
+  /* Wraps to several lines (the disclaimer): body leading, not snug (>= 1.4 for 3+ lines). */
+  line-height: var(--leading-normal);
 }
 
 .copy {

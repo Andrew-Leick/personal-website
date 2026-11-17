@@ -341,7 +341,8 @@
 
 .label {
   font-weight: var(--weight-bold);
-  line-height: var(--leading-snug);
+  /* Long names wrap to 3 lines ("Georgia Tech Research Institute 2023"): body leading. */
+  line-height: var(--leading-normal);
   overflow-wrap: anywhere;
 }
 

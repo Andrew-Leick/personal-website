@@ -39,7 +39,9 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-synthesis: none;
+  /* VT323 and Press Start 2P ship 400 only: never fake a bold. (Every weight token is 400, and
+     the fallback monospace fonts have real bold and italic faces.) */
+  font-synthesis-weight: none;
   font-size: var(--text-base);
   font-weight: var(--weight-regular);
   line-height: var(--leading-normal);
@@ -90,6 +92,12 @@ h2,
 h3 {
   color: var(--color-text);
   text-wrap: balance;
+}
+
+/* Keep a lone word off the last line of paragraphs and list items. */
+p,
+li {
+  text-wrap: pretty;
 }
 
 h1 {
