@@ -46,6 +46,9 @@ export default function DexDetail({ entry, headingLevel = 3, headingId }) {
         {entry.featured && <span className={p.featured}>Featured</span>}
       </p>
 
+      {/* The Pokédex description (SPEC-v6 P-06): one flavor line in the games' voice. */}
+      {entry.dexText && <p className={styles.flavor}>{entry.dexText}</p>}
+
       {entry.summary && <p className={p.summary}>{entry.summary}</p>}
 
       {entry.role && (

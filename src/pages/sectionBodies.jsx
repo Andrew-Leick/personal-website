@@ -11,7 +11,7 @@ import Skills from '../components/Skills/Skills.jsx'
  * inside the body (2 under a lead section, 3 under a section h2).
  */
 export const SECTION_BODIES = {
-  about: (c) => <About profile={c.profile} />,
+  about: (c) => <About profile={c.profile} fanArt={c.site.fanArt} />,
   experience: (c, level) =>
     c.dex ? (
       <Pokedex dex={c.dex} fanArt={c.site.fanArt} headingLevel={level} />

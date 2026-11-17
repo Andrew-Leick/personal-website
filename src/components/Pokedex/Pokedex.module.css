@@ -283,6 +283,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Start screen progress (SPEC-v6 P-07): like the games' SEEN / OWN counter. */
+.tally {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* The one-time "Pokédex complete!" banner above the showcase that completed it. */
+.complete {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-pixel) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-tag-bg);
+  color: var(--color-tag-text);
+  font-family: var(--font-display);
+  font-size: var(--text-display-sm);
+  line-height: var(--leading-display);
+}
+
 /* A dex: one Pokémon per entry. */
 .grid {
   display: grid;
@@ -398,6 +418,19 @@
   align-content: start;
   gap: var(--space-3);
   min-width: 0;
+}
+
+/* The Pokédex description box (SPEC-v6 P-06): the games' flavor text, on the screen's subtle
+   surface inside a pixel border, in the body font. */
+.flavor {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-pixel) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text);
+  /* It can wrap to 3 lines on phones: body leading. */
+  line-height: var(--leading-normal);
+  text-wrap: pretty;
 }
 
 .sub {

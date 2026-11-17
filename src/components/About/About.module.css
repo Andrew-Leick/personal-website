@@ -4,11 +4,37 @@
   max-width: var(--measure);
 }
 
+/* The paragraphs and the Currently/Availability lines keep their own rhythm. */
+.text {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
 .photo {
   width: var(--photo-size);
   height: var(--photo-size);
   border-radius: var(--radius-full);
   object-fit: cover;
+}
+
+/*
+ * The pixel trainer (SPEC-v6 P-05): 36x65 cells at 3px a cell (108x195), whole pixels only, so it
+ * stays crisp. It sits beside the text from 480px and above it on
+ * the narrowest phones.
+ */
+.avatar {
+  width: calc(36 * 3px);
+  height: calc(65 * 3px);
+}
+
+@media (min-width: 480px) {
+  .withAvatar {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-6);
+    max-width: calc(var(--measure) + 108px + var(--space-6));
+  }
 }
 
 .currently {

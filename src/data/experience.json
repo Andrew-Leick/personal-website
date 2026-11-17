@@ -18,6 +18,7 @@
     ],
     "technologies": ["Node.js", "TypeScript", "AWS Lambda", "S3", "DynamoDB", "API Gateway", "Athena", "MCP"],
     "pokemon": "porygon2",
+    "dexText": "An upgrade from a second summer at Amazon. It turns up to an hour of on-call log digging into one search, and answers AI agents through MCP.",
     "visible": true
   },
   {
@@ -36,6 +37,7 @@
     ],
     "technologies": ["Node.js", "AWS Lambda", "Redshift", "QuickSight"],
     "pokemon": "porygon",
+    "dexText": "Built at Amazon to gather a team’s scattered contracts in one place. Its Lambdas read each contract and file the details in Redshift.",
     "visible": true
   },
   {
@@ -54,6 +56,7 @@
     ],
     "technologies": ["Python", "ROS"],
     "pokemon": "magnemite",
+    "dexText": "Chosen as 1 of 64 from 2,200 applicants. It steers itself through unknown rooms, mapping everything it senses with Python and ROS.",
     "visible": true
   },
   {
@@ -73,6 +76,7 @@
     ],
     "technologies": ["Java", "Fusion360"],
     "pokemon": "pikachu",
+    "dexText": "The team’s Electric type. It led 25 builders, raised $20,000 to power the season, and coded the robot’s paths in Java.",
     "visible": true
   }
 ]

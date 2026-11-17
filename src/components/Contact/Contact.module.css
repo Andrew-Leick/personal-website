@@ -4,8 +4,33 @@
   max-width: var(--measure);
 }
 
+/* The contact line is a dialog box, like the hero's prompt (SPEC-v6 P-09). */
+.blurbBox {
+  padding: var(--space-4) var(--space-5);
+}
+
 .blurb {
+  inline-size: fit-content;
   font-size: var(--text-lg);
+}
+
+/*
+ * It types itself out the first time it is seen: one step per character (--chars, set inline),
+ * 30ms a character. Clip-path only, so nothing shifts and screen readers get the text at once.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .blurb[data-type="wait"] {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .blurb[data-type="run"] {
+    animation: blurb-type calc(var(--chars) * 30ms) steps(var(--chars), end) both;
+  }
+}
+
+@keyframes blurb-type {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
 }
 
 .emailRow {
@@ -87,5 +112,13 @@
   .copyIcon {
     scale: 1;
     filter: none;
+  }
+}
+
+/* Paper always shows the whole line, typed or not. */
+@media print {
+  .blurb {
+    clip-path: none !important;
+    animation: none !important;
   }
 }

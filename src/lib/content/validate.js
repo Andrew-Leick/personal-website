@@ -5,7 +5,7 @@ import { existsSync, statSync, readdirSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { isValidDate, parseDate, DATE_PLACEHOLDER } from './format.js'
 import { isPlaceholder, isPlaceholderId } from './placeholders.js'
-import { SECTION_IDS, GUIDE_IDS, DEX_POKEMON } from './normalize.js'
+import { SECTION_IDS, GUIDE_IDS, DEX_POKEMON, AVATARS } from './normalize.js'
 import { RESERVED_PAGE_IDS } from './routes.js'
 
 /** @typedef {{ file: string, path: string, message: string, hint: string|null }} Issue */
@@ -107,6 +107,7 @@ const SCHEMAS = {
     contactBlurb: nul(s(200)),
     resumeUrl: nul({ type: 'localPath', exts: ['.pdf'] }),
     photo: nul(imageSpec(120, MAX_HEADSHOT_BYTES)),
+    avatar: nul({ type: 'enum', values: AVATARS }),
   },
   links: {
     id: req({ type: 'id' }),
@@ -129,6 +130,7 @@ const SCHEMAS = {
     highlights: strArr(0, 6, 240),
     technologies: strArr(0, 12, 30, { unique: true }),
     pokemon: nul({ type: 'enum', values: DEX_POKEMON }),
+    dexText: nul(s(160)),
     visible: { type: 'boolean' },
   },
   education: {
@@ -173,6 +175,7 @@ const SCHEMAS = {
     githubRepo: nul({ type: 'string', max: 140, pattern: REPO_RE, patternHint: 'use "owner/name", e.g. "Andrew-Leick/my-repo"' }),
     image: nul(imageSpec(160, MAX_PROJECT_IMAGE_BYTES)),
     pokemon: nul({ type: 'enum', values: DEX_POKEMON }),
+    dexText: nul(s(160)),
     visible: { type: 'boolean' },
   },
   skills: {

@@ -18,6 +18,9 @@ export const GUIDE_IDS = ['charmander', 'bulbasaur', 'squirtle']
  */
 export const DEX_POKEMON = ['porygon', 'porygon2', 'magnemite', 'pikachu', 'noctowl']
 
+/** Pixel avatars About can show in place of a photo (v6): the owner's trainer sprite. */
+export const AVATARS = ['trainer']
+
 export const SECTION_IDS =['about', 'experience', 'projects', 'education', 'skills', 'contact']
 
 export const EMPLOYMENT_TYPE_LABELS = {
@@ -99,6 +102,7 @@ export function normalizeProfile(raw, base) {
     contactBlurb: str(p.contactBlurb),
     resumeUrl: p.resumeUrl ? resolveAsset(p.resumeUrl, base) : null,
     photo: image(p.photo, base),
+    avatar: AVATARS.includes(p.avatar) ? p.avatar : null,
   }
 }
 
@@ -160,6 +164,7 @@ export function normalizeExperience(raw) {
       highlights: arr(e.highlights),
       technologies: arr(e.technologies),
       pokemon: DEX_POKEMON.includes(e.pokemon) ? e.pokemon : null,
+      dexText: str(e.dexText),
     }
   })
   return sorted(items, compareExperience)
@@ -284,6 +289,7 @@ export function normalizeProjects(raw, github, base) {
         : null,
       image: image(p.image, base),
       pokemon: DEX_POKEMON.includes(p.pokemon) ? p.pokemon : null,
+      dexText: str(p.dexText),
     }
   })
   return sorted(items, compareProjects)
@@ -435,6 +441,7 @@ export function buildDex(experience, projects) {
     githubStats: null,
     image: null,
     pokemon: e.pokemon,
+    dexText: e.dexText,
   }))
   const projectEntries = projects.map((p, i) => ({
     key: `project:${p.id}`,
@@ -459,6 +466,7 @@ export function buildDex(experience, projects) {
     githubStats: p.githubStats,
     image: p.image,
     pokemon: p.pokemon,
+    dexText: p.dexText,
   }))
   return { work, projects: projectEntries }
 }

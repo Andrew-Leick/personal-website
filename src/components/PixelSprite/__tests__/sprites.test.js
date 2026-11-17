@@ -20,7 +20,31 @@ function countKeys(grid) {
 
 describe('sprites', () => {
   it('defines exactly the expected sprites', () => {
-    expect(Object.keys(SPRITE_DEFS).sort()).toEqual(Object.keys(EXPECTED).sort())
+    expect(Object.keys(SPRITE_DEFS).sort()).toEqual([...Object.keys(EXPECTED), 'trainer'].sort())
+  })
+
+  // The trainer is the owner's to customize (SPEC-v6 P-05), so it is checked by shape, not by exact counts.
+  describe('trainer', () => {
+    const def = SPRITE_DEFS.trainer
+    const filled = def.grid.join('').replace(/\./g, '').length
+
+    it('is 36x65 with uniform rows (About shows it at 3x: 108x195)', () => {
+      for (const row of def.grid) expect(row.length).toBe(36)
+      expect(def.grid.length).toBe(65)
+      expect(SPRITES.trainer.width).toBe(36)
+      expect(SPRITES.trainer.height).toBe(65)
+    })
+
+    it('uses only palette keys, all sprite tokens', () => {
+      for (const key of Object.keys(countKeys(def.grid))) expect(def.palette).toHaveProperty(key)
+      for (const value of Object.values(def.palette)) expect(/^var\(--sprite-[a-z-]+\)$/.test(value)).toBe(true)
+    })
+
+    it('toPaths covers exactly the filled cells', () => {
+      let area = 0
+      for (const { d } of toPaths(def)) for (const m of d.matchAll(/h(\d+)v1/g)) area += Number(m[1])
+      expect(area).toBe(filled)
+    })
   })
 
   for (const [name, exp] of Object.entries(EXPECTED)) {

@@ -38,6 +38,12 @@ const run = (mutate, extra) => {
 const lines = (issues, level = 'error') => issues.map((i) => formatIssue(i, level))
 
 describe('validator', () => {
+  test('v6 fields: avatar must be a known pixel avatar; dexText at most 160 characters', () => {
+    expect(run((r) => { r.profile.avatar = 'trainer'; r.experience[0].dexText = 'It studies hard.'; r.projects[0].dexText = 'It plays chess.' }).errors).toEqual([])
+    expect(run((r) => { r.profile.avatar = 'wizard' }).errors.length).toBeGreaterThan(0)
+    expect(run((r) => { r.experience[0].dexText = 'x'.repeat(161) }).errors.length).toBeGreaterThan(0)
+    expect(run((r) => { r.projects[0].dexText = 'x'.repeat(161) }).errors.length).toBeGreaterThan(0)
+  })
   test('valid fixture has no errors or warnings', () => {
     expect(run()).toEqual({ errors: [], warnings: [] })
   })

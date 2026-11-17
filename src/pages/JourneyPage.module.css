@@ -286,3 +286,66 @@
 .hero :global(.container) > :last-child {
   justify-content: center;
 }
+
+/*
+ * Emote (SPEC-v6 P-10): click a hatched Pokémon and a pixel speech bubble with "!" pops up over
+ * its head (the games' emote) while it hops. It pops in and out in steps over 900ms; under reduced
+ * motion it simply shows for that time, with no hop.
+ */
+.title:not([data-pending]) .pokemon {
+  cursor: pointer;
+}
+
+.emote {
+  position: absolute;
+  inset-block-start: calc(var(--intro-trim) - 1.5rem);
+  inset-inline-end: calc(var(--intro-trim) - 1rem);
+  z-index: 1;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width-pixel) solid var(--color-dialog-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-dialog-bg);
+  color: var(--color-cursor);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  line-height: 1;
+  opacity: 0;
+  scale: 0.5;
+  pointer-events: none;
+}
+
+/* The bubble's tail, pointing down at the Pokémon. */
+.emote::after {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: var(--space-1);
+  border: var(--space-1) solid transparent;
+  border-block-start-color: var(--color-dialog-border);
+  content: "";
+}
+
+.intro[data-emote] .emote {
+  animation: emote-pop 900ms steps(6, end) both;
+}
+
+@keyframes emote-pop {
+  0% { opacity: 0; scale: 0.5; translate: 0 4px; }
+  15% { opacity: 1; scale: 1.1; translate: 0 0; }
+  25% { scale: 1; }
+  80% { opacity: 1; scale: 1; }
+  100% { opacity: 0; scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro[data-emote] .emote {
+    animation: none;
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@media print {
+  .emote {
+    display: none;
+  }
+}

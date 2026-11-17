@@ -4,6 +4,7 @@ import { prefersReducedMotion } from '../../lib/motion.js'
 import useRoute from '../../router/useRoute.js'
 import PixelSprite from '../PixelSprite/PixelSprite.jsx'
 import DexDetail from './DexDetail.jsx'
+import { loadProgress, record, tally } from './progress.js'
 import styles from './Pokedex.module.css'
 
 /** The two dexes the start screen offers, in order, and the content list each one reads. */
@@ -27,6 +28,9 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
   const [entry, setEntry] = useState(null) // index of the open entry in the view, or null
   const [lid, setLid] = useState(null) // null | 'open' (swinging away) | 'closing' (swinging shut)
   const [focusTo, setFocusTo] = useState(null) // { id } of the element to focus after a step
+  // Seen and caught entries (SPEC-v6 P-07), kept across visits; completion is announced once.
+  const [progress, setProgress] = useState(loadProgress)
+  const [completedBy, setCompletedBy] = useState(null) // key of the entry whose catch completed the dex
   const { nav } = useRoute()
 
   // #pokedex-{view} (load, in-page links, back/forward) opens that dex directly, lid already open.
@@ -76,6 +80,23 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
     else el.scrollIntoView?.({ block: 'nearest' })
   }, [focusTo])
 
+  // An open list marks its entries seen; an open showcase catches its entry. Catching the last
+  // uncaught entry completes the dex (once, ever).
+  const listKeys = DEXES[screen] ? dex[DEXES[screen]].map((e) => e.key) : []
+  const caughtKey = entry !== null && listKeys[entry] ? listKeys[entry] : null
+  const allKeys = [...dex.work, ...dex.projects].map((e) => e.key)
+  const seenSignature = listKeys.join('|')
+  useEffect(() => {
+    if (!seenSignature && !caughtKey) return
+    setProgress((current) => {
+      const { progress: next, justCompleted } = record(current, { seen: seenSignature ? seenSignature.split('|') : [], caught: caughtKey ? [caughtKey] : [] }, allKeys)
+      if (justCompleted) setCompletedBy(caughtKey)
+      return next
+    })
+    // allKeys is derived from dex, which never changes while mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seenSignature, caughtKey])
+
   // If a swing never reports its end (a background tab, no @starting-style support), finish anyway.
   useEffect(() => {
     if (lid === null) return undefined
@@ -105,6 +126,7 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
         <Heading id="pokedex-start-heading" tabIndex={-1} className={styles.heading}>
           What would you like to see?
         </Heading>
+        <Tally {...tally(progress, allKeys)} />
         <ul className={styles.choices}>
           {views.map((v) => (
             <li key={v}>
@@ -182,6 +204,10 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
       ) : (
         <div className={styles.screen} id={DEXES[screen] ? `pokedex-${screen}` : undefined} data-print="hide">
           {lid && <span className={styles.lid} aria-hidden="true" data-state={lid} onTransitionEnd={onLidEnd} />}
+          {/* Announces the completion once (rendered empty first, so screen readers pick the text up). */}
+          <p className="visually-hidden" role="status">
+            {completedBy ? `Pokédex complete! You caught all ${allKeys.length}.` : ''}
+          </p>
           <div className={styles.bar} inert={lid === 'closing' || undefined}>
             {bar}
           </div>
@@ -195,6 +221,11 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
           >
             {/* A new page per step, so each screen change gets the refresh (Pokedex.module.css .page). */}
             <div key={`${screen}:${entry ?? ''}`} className={styles.page}>
+              {completedBy && shown?.key === completedBy && (
+                <p className={styles.complete}>
+                  ★ Pokédex complete! You caught all {allKeys.length}.
+                </p>
+              )}
               {body}
             </div>
           </div>
@@ -212,5 +243,21 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
         ))}
       </div>
     </div>
+  )
+}
+
+/** The start screen's progress line: SEEN n OF N · CAUGHT n OF N (★ COMPLETE once caught all). */
+function Tally({ seen, caught, total, complete }) {
+  return (
+    <p className={styles.tally}>
+      Seen <span className={styles.count}>{seen}</span> of {total}
+      <span aria-hidden="true"> · </span>
+      Caught <span className={styles.count}>{caught}</span> of {total}
+      {complete && (
+        <>
+          <span aria-hidden="true"> · </span>★ Complete
+        </>
+      )}
+    </p>
   )
 }

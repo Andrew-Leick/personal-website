@@ -235,8 +235,8 @@ test('reduced motion: the ball lands at once, so the ring never shows', async ()
   frame()
   expect(flights()).toBe(0)
   expect(ringOn('a')).toBe(false)
-  await wait()
-  expect(heading('a').hasAttribute('data-pending')).toBe(false)
+  // It finishes after two animation frames (nextPaint), which can take longer than a fixed wait.
+  await vi.waitFor(() => expect(heading('a').hasAttribute('data-pending')).toBe(false), { timeout: 3000 })
 })
 
 test('reduced motion turning on mid-visit stops the intros (useSectionReveal)', async () => {

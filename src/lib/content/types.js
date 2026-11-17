@@ -34,8 +34,9 @@
 
 /** @typedef {{ name: string, headline: string, summary: string, about: string[],
  *   currently: string|null, location: string|null, availability: string|null,
- *   email: string, contactBlurb: string|null, resumeUrl: string|null, photo: Image|null }} Profile
- *   // resumeUrl resolved with BASE_URL */
+ *   email: string, contactBlurb: string|null, resumeUrl: string|null, photo: Image|null,
+ *   avatar: 'trainer'|null }} Profile
+ *   // resumeUrl resolved with BASE_URL; avatar: the pixel trainer About shows when there is no photo (v6) */
 
 /** @typedef {{ id: string, kind: 'github'|'linkedin'|'email'|'website'|'scholar'|'other',
  *   label: string, url: string, showInHero: boolean, isExternal: boolean }} Link */
@@ -45,7 +46,7 @@
  *   location: string|null, start: string, end: string|null,
  *   dateLabel: string,                     // formatDateRange(start, end)
  *   summary: string|null, highlights: string[], technologies: string[],
- *   pokemon: string|null }} Experience     // pokemon: one of DEX_POKEMON (v5.1 Pokédex sprite) */
+ *   pokemon: string|null, dexText: string|null }} Experience   // pokemon: one of DEX_POKEMON (v5.1); dexText: Pokédex flavor line (v6) */
 
 /** @typedef {{ id: string, institution: string, institutionUrl: string|null,
  *   degree: string, field: string, minor: string|null,
@@ -66,7 +67,7 @@
  *   links: { repo: string|null, demo: string|null, writeup: string|null },
  *   primaryUrl: string|null,               // demo ?? repo ?? writeup ?? null
  *   githubStats: GithubStats|null, image: Image|null,
- *   pokemon: string|null }} Project        // pokemon: one of DEX_POKEMON (v5.1 Pokédex sprite) */
+ *   pokemon: string|null, dexText: string|null }} Project      // pokemon: one of DEX_POKEMON (v5.1); dexText: Pokédex flavor line (v6) */
 
 /** @typedef {{ id: string, name: string, items: string[] }} SkillGroup */
 
@@ -84,7 +85,7 @@
  *   highlights: string[], technologies: string[],
  *   links: { repo: string|null, demo: string|null, writeup: string|null }|null,  // null for work
  *   primaryUrl: string|null, githubStats: GithubStats|null, image: Image|null,
- *   pokemon: string|null }} DexEntry       // pokemon: the sprite; null shows the egg */
+ *   pokemon: string|null, dexText: string|null }} DexEntry   // pokemon: the sprite (null shows the egg); dexText: flavor line (v6) */
 
 /** @typedef {{ work: DexEntry[], projects: DexEntry[] }} Dex */
 

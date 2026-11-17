@@ -102,5 +102,12 @@ export default function useTheme(defaultTheme) {
     })
   }, [])
 
-  return { theme, toggleTheme }
+  /** Switch to a named theme (one of THEMES) and save the choice, e.g. the Konami Game Boy theme. */
+  const chooseTheme = useCallback((next) => {
+    if (!THEMES.includes(next)) return
+    writeSaved(next)
+    setTheme(next)
+  }, [])
+
+  return { theme, toggleTheme, setTheme: chooseTheme }
 }

@@ -308,15 +308,29 @@ describe('v5 Pokédex (content.dex)', () => {
       key: 'work:old', kind: 'work', id: 'old', number: 2,
       name: 'Role', subtitle: 'Org', subtitleUrl: 'https://old.example', dateLabel: 'Jun 2023 – Sep 2023', start: '2023-06', end: '2023-09',
       typeLabel: 'Work', tagLabel: 'Internship', featured: false, summary: 'S', role: null, highlights: ['H'], technologies: ['Go'],
-      links: null, primaryUrl: null, githubStats: null, image: null, pokemon: 'pikachu',
+      links: null, primaryUrl: null, githubStats: null, image: null, pokemon: 'pikachu', dexText: null,
     })
     expect(c.dex.projects[0]).toEqual({
       key: 'project:star', kind: 'project', id: 'star', number: 1,
       name: 'star', subtitle: 'Team project · 3 contributors · Ongoing', subtitleUrl: null, dateLabel: null, start: null, end: null,
       typeLabel: 'Project', tagLabel: 'In progress', featured: true, summary: 's', role: 'Lead', highlights: [], technologies: [],
       links: { repo: 'https://github.com/x/star', demo: null, writeup: null }, primaryUrl: 'https://github.com/x/star',
-      githubStats: { stars: 7, language: 'Go', updatedAt: '2025-01-01' }, image: null, pokemon: null,
+      githubStats: { stars: 7, language: 'Go', updatedAt: '2025-01-01' }, image: null, pokemon: null, dexText: null,
     })
+  })
+  test('dexText (v6): a string passes through to the dex entry; missing is null', () => {
+    const r = dexRaw(true)
+    r.experience[0].dexText = 'It studies hard.'
+    const { dex } = normalizeContent(r)
+    expect(dex.work.map((e) => e.dexText).filter(Boolean)).toEqual(['It studies hard.'])
+    expect(dex.projects.every((e) => e.dexText === null)).toBe(true)
+  })
+  test('avatar (v6): only a known pixel avatar passes; anything else is null', () => {
+    const r = dexRaw(true)
+    r.profile.avatar = 'trainer'
+    expect(normalizeContent(r).profile.avatar).toBe('trainer')
+    r.profile.avatar = 'wizard'
+    expect(normalizeContent(r).profile.avatar).toBe(null)
   })
   test('empty experience and projects give empty views', () => {
     const r = dexRaw(true)

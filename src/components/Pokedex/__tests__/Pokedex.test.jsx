@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Pokedex from '../Pokedex.jsx'
+import { resetProgressMemory } from '../progress.js'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -53,6 +54,8 @@ function render(dex, fanArt = true) {
 afterEach(() => {
   act(() => root.unmount())
   container.remove()
+  window.localStorage.clear()
+  resetProgressMemory()
   // Reset the router too (it keeps the last navigation's hash), so no test opens a dex by hash.
   window.history.replaceState(null, '', '/')
   act(() => window.dispatchEvent(new PopStateEvent('popstate')))
@@ -211,5 +214,78 @@ describe('Pokedex', () => {
     expect(print.hidden).toBe(true)
     const outline = [...print.querySelectorAll('h3, h4')].map((h) => `${h.tagName} ${h.textContent}`)
     expect(outline).toEqual(['H3 Experience', 'H4 work w0', 'H4 work w1', 'H3 Projects', 'H4 project p0'])
+  })
+
+  it('shows each entry\'s flavor text in its showcase (SPEC-v6 P-06)', () => {
+    const d = makeDex(1, 0)
+    d.work[0].dexText = 'It studies hard.'
+    render(d)
+    click($('#pokedex-open'))
+    click($('#pokedex-pick-experience'))
+    click(tiles()[0])
+    expect($('[class*="flavor"]').textContent).toBe('It studies hard.')
+  })
+
+  it('tracks seen and caught on the start screen, and keeps them across visits (SPEC-v6 P-07)', () => {
+    render(makeDex(2, 1))
+    const tallyText = () => $('[class*="tally"]').textContent.replace(/\s+/g, ' ').trim()
+    click($('#pokedex-open'))
+    expect(tallyText()).toBe('Seen 0 of 3 · Caught 0 of 3')
+    click($('#pokedex-pick-experience'))
+    click(tiles()[1])
+    click(button('Experience'))
+    click(button('Menu'))
+    expect(tallyText()).toBe('Seen 2 of 3 · Caught 1 of 3')
+    act(() => root.unmount())
+    container.remove()
+    render(makeDex(2, 1))
+    click($('#pokedex-open'))
+    expect(tallyText()).toBe('Seen 2 of 3 · Caught 1 of 3')
+  })
+
+  it('announces completion once, when the last entry is caught (SPEC-v6 P-07)', () => {
+    render(makeDex(1, 1))
+    const status = () => $('[role="status"]').textContent
+    click($('#pokedex-open'))
+    click($('#pokedex-pick-experience'))
+    click(tiles()[0])
+    expect(status()).toBe('')
+    click(button('Experience'))
+    click(button('Menu'))
+    click($('#pokedex-pick-projects'))
+    click(tiles()[0])
+    expect(status()).toBe('Pokédex complete! You caught all 2.')
+    expect($('[class*="complete"]').textContent).toContain('Pokédex complete!')
+    click(button('Projects'))
+    click(button('Menu'))
+    click($('#pokedex-pick-experience'))
+    click(tiles()[0])
+    expect($('[class*="complete"]')).toBeNull() // the banner belongs to the entry that completed the dex
+    click(button('Experience'))
+    click(button('Menu'))
+    expect($('[class*="tally"]').textContent).toContain('★ Complete')
+    act(() => root.unmount())
+    container.remove()
+    render(makeDex(1, 1))
+    click($('#pokedex-open'))
+    click($('#pokedex-pick-projects'))
+    click(tiles()[0])
+    expect(status()).toBe('') // never announced again
+  })
+
+  it('still counts progress when storage is blocked', () => {
+    const original = window.localStorage.setItem
+    window.localStorage.setItem = () => { throw new Error('blocked') }
+    try {
+      render(makeDex(1, 0))
+      click($('#pokedex-open'))
+      click($('#pokedex-pick-experience'))
+      click(tiles()[0])
+      click(button('Experience'))
+      click(button('Menu'))
+      expect($('[class*="tally"]').textContent).toContain('Caught 1 of 1')
+    } finally {
+      window.localStorage.setItem = original
+    }
   })
 })

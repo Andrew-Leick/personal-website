@@ -184,8 +184,9 @@ With this top-level field in `src/data/site.json`, the `experience` section show
 "pokedex": true
 ```
 
-- The Pokédex starts closed. A visitor presses **Open Pokédex**, the lid swings open, and the start screen asks for **Experience** or **Projects**. Each shows a grid of Pokémon, one per entry; picking a Pokémon shows that entry in full. Back keys go up a level, the entry view has **Previous** and **Next**, and **Close** shuts the device again.
+- The Pokédex starts closed. A visitor presses **View experience and projects**, the lid swings open, and the start screen asks for **Experience** or **Projects**. Each shows a grid of Pokémon, one per entry; picking a Pokémon shows that entry in full. Back keys go up a level, the entry view has **Previous** and **Next**, and **Close** shuts the device again.
 - Each entry picks its Pokémon with an optional `"pokemon"` field in `experience.json` or `projects.json`, for example `"pokemon": "pikachu"`. The allowed values are the ids in `DEX_POKEMON` (`src/lib/content/normalize.js`): `porygon`, `porygon2`, `magnemite`, `pikachu` and `noctowl`. Anything else is a validation error. An entry without one (or every entry, with fan art off) shows the egg.
+- Each entry can also have an optional `"dexText"` (up to 160 characters): one flavor line shown in a box in the entry view, like a Pokédex description in the games, e.g. `"dexText": "It studies game film all night, reading jersey numbers."`. The start screen also counts the entries a visitor has seen and caught (opened), remembered in their browser.
 - To use another Pokémon, save its 96×96 sprite from the PokeAPI sprites repository (`sprites/pokemon/{number}.png`) as `public/sprites/{id}.png`, then add the id to `DEX_POKEMON`. A test checks that every listed id has its file.
 - Numbering follows the usual sort order. Experience is numbered #001, #002, ... newest first (see [Experience](#experience)). Projects are numbered #001, ... featured first, then by `order` (see [Projects](#projects)).
 - You add experience in `experience.json` and projects in `projects.json` exactly as before. Hidden entries (`"visible": false`) are left out and the numbers close up. If one of the two has no entries, the start screen only offers the other.
@@ -300,6 +301,7 @@ Edit `src/data/profile.json`:
 | `contactBlurb` | 200 | One line above the email in Contact |
 | `resumeUrl` | | Path to the PDF, see below |
 | `photo` | | `null` or `{ "src": "...", "alt": "..." }` |
+| `avatar` | | Optional pixel avatar shown beside the About text when there is no photo: `"trainer"` (your trainer sprite) or `null`. A photo wins when both are set. |
 
 The search-engine description for Home is `description` in `src/data/site.json`, 50 to 160 characters. Each page has its own `description` (see "Pages and navigation").
 
@@ -319,6 +321,9 @@ Files live under `public/content/`. Data paths are written **relative to `public
 If you use a different file name, update `resumeUrl` to match. To hide the Resume button, set `"resumeUrl": null`.
 
 **Privacy:** anything in the PDF is public once deployed. Use a version without your phone number or city if you don't want those online.
+
+### Customize the trainer sprite
+The pixel trainer in About (`"avatar": "trainer"`) is drawn from a grid in `src/components/PixelSprite/sprites.js` (the `trainer` entry: 65 rows of 36 characters, one character per pixel, `.` is empty; it starts from the Gen 4 Ethan sprite, in Stanford colors with a block "S" on the cap; rows 0–14 are the hand-drawn cap and face). Its colors are the `--sprite-trainer-*` tokens in `src/styles/tokens.css` (hair, skin, jacket, charcoal for the cap and shorts, and a few grays). Edit either freely; keep every row 36 characters. It is fan art, so it shows only with `fanArt` on. Then run `npm run og-image` to redraw the link preview image (`public/og-image.png`), which shows the trainer too.
 
 ### Add or replace the headshot
 1. Make it square, at least 320x320, and save it as WebP at **60 KB or less**, e.g. `public/content/images/headshot.webp`.
