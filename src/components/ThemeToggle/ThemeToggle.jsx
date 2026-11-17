@@ -20,7 +20,16 @@ export default function ThemeToggle({ theme, onToggle }) {
       title={label}
       data-print="hide"
     >
-      <Icon name={isDark ? 'sun' : 'moon'} />
+      {/* Both icons stay mounted and cross-fade; data-theme-icon exempts them from the
+          transition suppression in useTheme's applyTheme. */}
+      <span className={styles.icons} aria-hidden="true">
+        <span className={styles.icon} data-theme-icon="" data-shown={isDark ? undefined : ''}>
+          <Icon name="moon" />
+        </span>
+        <span className={styles.icon} data-theme-icon="" data-shown={isDark ? '' : undefined}>
+          <Icon name="sun" />
+        </span>
+      </span>
     </button>
   )
 }

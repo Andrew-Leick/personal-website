@@ -17,3 +17,36 @@
     background-color: var(--color-bg-subtle);
   }
 }
+
+/* The moon and sun share one cell and cross-fade: the incoming icon grows in from a quarter
+   size out of a slight blur, the outgoing one shrinks away into it. */
+.icons {
+  display: grid;
+}
+
+.icon {
+  display: grid;
+  grid-area: 1 / 1;
+  place-items: center;
+  opacity: 0;
+  scale: 0.25;
+  filter: blur(4px);
+  transition:
+    opacity 300ms var(--ease-standard),
+    scale 300ms var(--ease-standard),
+    filter 300ms var(--ease-standard);
+}
+
+.icon[data-shown] {
+  opacity: 1;
+  scale: 1;
+  filter: blur(0);
+}
+
+/* Reduced motion: no scale or blur; only the opacity changes. */
+@media (prefers-reduced-motion: reduce) {
+  .icon {
+    scale: 1;
+    filter: none;
+  }
+}

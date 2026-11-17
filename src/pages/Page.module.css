@@ -37,6 +37,21 @@
   height: calc(16 * var(--sprite-px-title) * 2);
 }
 
+/* 404: the egg wobbles once on its base, a wild encounter (the rail wiggle's values, 1 time). */
+@media (prefers-reduced-motion: no-preference) {
+  .noticeSprite {
+    transform-origin: 50% 85%;
+    animation: wild-wobble 600ms steps(6, end) 200ms 1;
+  }
+}
+
+@keyframes wild-wobble {
+  0%,
+  100% { rotate: 0deg; }
+  25% { rotate: -10deg; }
+  75% { rotate: 10deg; }
+}
+
 .lead {
   min-width: 0;
 }

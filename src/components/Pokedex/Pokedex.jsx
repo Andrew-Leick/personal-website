@@ -193,7 +193,10 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
             tabIndex={0}
             inert={lid === 'closing' || undefined}
           >
-            {body}
+            {/* A new page per step, so each screen change gets the refresh (Pokedex.module.css .page). */}
+            <div key={`${screen}:${entry ?? ''}`} className={styles.page}>
+              {body}
+            </div>
           </div>
         </div>
       )}

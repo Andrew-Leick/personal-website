@@ -50,9 +50,10 @@ function syncThemeColorMeta() {
 
 function applyTheme(theme) {
   // Suppress transitions during the swap so controls do not cross-fade while
-  // the rest of the page snaps to the new colors.
+  // the rest of the page snaps to the new colors. The theme toggle's icons
+  // (data-theme-icon) are exempt so they can cross-fade.
   const style = document.createElement('style')
-  style.textContent = '*, *::before, *::after { transition: none !important; }'
+  style.textContent = '*:not([data-theme-icon]), *::before, *::after { transition: none !important; }'
   document.head.appendChild(style)
   document.documentElement.dataset.theme = theme
   // Force a style flush so the new colors apply with transitions disabled.

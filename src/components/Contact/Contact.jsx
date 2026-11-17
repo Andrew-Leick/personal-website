@@ -48,7 +48,15 @@ export default function Contact({ profile, links }) {
             {profile.email}
           </a>
           <button type="button" className={`pixel-button ${styles.copy}`} onClick={handleCopy} data-print="hide">
-            <Icon name="copy" />
+            {/* Copy and check share one cell and cross-fade (Contact.module.css .copyIcon). */}
+            <span className={styles.copyIcons} aria-hidden="true">
+              <span className={styles.copyIcon} data-shown={status === 'copied' ? undefined : ''}>
+                <Icon name="copy" />
+              </span>
+              <span className={styles.copyIcon} data-shown={status === 'copied' ? '' : undefined}>
+                <Icon name="check" />
+              </span>
+            </span>
             <span>{buttonText}</span>
           </button>
           {status === 'failed' && (

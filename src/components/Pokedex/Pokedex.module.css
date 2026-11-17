@@ -211,6 +211,25 @@
     radial-gradient(farthest-side at 50% 100%, color-mix(in srgb, var(--color-text) 30%, transparent), transparent) center bottom / 100% var(--space-3) no-repeat scroll;
 }
 
+/*
+ * One screen's content. A new page mounts on every step, and enters with a quick screen refresh:
+ * opacity only, in 3 pixel steps over 150ms (nothing moves; the reader is about to read it).
+ */
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+  transition: opacity 150ms steps(3, end);
+}
+
+@starting-style {
+  .page {
+    opacity: 0;
+  }
+}
+
 /* Blue device keys: outlined, a hard drop shadow, pressed in while held. */
 .key {
   min-height: var(--target-min);
