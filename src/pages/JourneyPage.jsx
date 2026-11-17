@@ -16,8 +16,9 @@ import pageStyles from './Page.module.css'
 import styles from './JourneyPage.module.css'
 
 /**
- * Section title with its intro (useSectionReveal): an empty dashed slot that the rail throws
- * a Poké Ball into; it opens to reveal the page's Pokémon while the underline draws across.
+ * Section title with its intro (useSectionReveal): a dashed slot that the rail throws a Poké
+ * Ball into as soon as it comes on screen (the ring shows with that throw, never while the ball
+ * rests in the rail); the ball opens to reveal the page's Pokémon while the underline draws across.
  * At rest, and without JS, the Pokémon and the full underline are simply shown.
  */
 function JourneySection({ page, content }) {

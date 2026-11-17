@@ -230,10 +230,10 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
           else b.link.removeAttribute('aria-current')
           if (on && !first && docked) hop(b.railSlot, 6)
         }
-        // Entering a section: the previous section's ball comes home (src/lib/journey/intros.js).
+        // Recorded for the intros; their balls follow which heading slots are on screen (intros.js).
         setCurrentIntro(next === 'home' ? null : next)
       }
-      // Throws the current section's ball once its header slot is fully on screen.
+      // Throws the ball of every waiting heading whose slot is on screen; recalls the rest.
       tickIntros()
       if (!gliding) replaceFromScroll(hrefOf.get(active))
       if (!ready) {

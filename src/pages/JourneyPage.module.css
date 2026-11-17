@@ -63,9 +63,11 @@
 }
 
 /*
- * Empty slot waiting for the throw: dashed ring in the page's type color. It frames the
- * trimmed footprint (--intro-trim), the space the Pokémon's visible pixels take, so it starts
- * on the content edge and keeps the title gap, just as the Pokémon that replaces it does.
+ * The waiting slot's dashed ring, in the page's type color (the "on" rule below). It frames the
+ * trimmed footprint (--intro-trim), the space the Pokémon's visible pixels take, so it starts on
+ * the content edge and keeps the title gap, just as the Pokémon that replaces it does. Hidden it
+ * sits a size up, so it can lock on. No transition here: it cuts out the instant the ball is back
+ * in the rail, so no fade can outlive the ball's time away from the rail.
  */
 .slotRing {
   position: absolute;
@@ -73,7 +75,7 @@
   border: var(--border-width-pixel) dashed var(--page-accent, var(--color-border-strong));
   border-radius: var(--radius-full);
   opacity: 0;
-  transition: opacity var(--duration-base) var(--ease-standard);
+  scale: 1.25;
 }
 
 /*
@@ -216,16 +218,32 @@
 
 
 /*
- * Waiting for the reader (data-pending on the h2, set by useSectionReveal only): empty
- * dashed slot, no Pokémon, underline not drawn, title a step back. data-landed: the thrown
- * ball has arrived and is about to open.
+ * Waiting for the reader (data-pending on the h2, set by useSectionReveal only): empty slot
+ * (kept for layout), no Pokémon, underline not drawn, title a step back. data-landed: the
+ * thrown ball has arrived and is about to open.
  */
-.title[data-pending] .slotRing {
+
+/*
+ * The ring shows on a waiting heading whose ball is out of the rail ([data-out] on the slot, set by
+ * rail.js markOut together with the rail link's). intros.js throws the ball in the very frame the
+ * slot comes on screen, so a visible ring always comes with its throw and never sits beside a ball
+ * resting in the rail. It locks on in step with the rail ball shrinking to its dot (160ms, 3
+ * steps), stays as the target while the ball flies, and goes as the ball lands (it covers it).
+ * The transition lives only here, so leaving this state is an instant cut.
+ */
+.title[data-pending]:not([data-landed]) .intro[data-out] .slotRing {
   opacity: 0.7;
+  scale: 1;
+  transition:
+    opacity 160ms steps(3, end),
+    scale 160ms steps(3, end);
 }
 
-.title[data-pending][data-landed] .slotRing {
-  opacity: 0;
+/* No intros in reduced motion (finished headings), and no ring on paper. */
+@media (prefers-reduced-motion: reduce), print {
+  .slotRing {
+    display: none;
+  }
 }
 
 .title[data-pending] .introBall {
@@ -247,7 +265,7 @@
 }
 
 /*
- * Offset away from the slot, so the waiting title never closes the gap to the dashed ring;
+ * Offset away from the slot, so the waiting title never closes the gap to the ring;
  * it slides in beside the Pokémon as it appears. Mirrored in RTL, and in
  * src/lib/journey/intros.js.
  */

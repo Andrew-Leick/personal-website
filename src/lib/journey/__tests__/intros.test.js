@@ -1,10 +1,14 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, test, vi } from 'vitest'
-import { setCurrentIntro, startIntros, stopIntros, tickIntros } from '../intros.js'
+import { startIntros, stopIntros, tickIntros } from '../intros.js'
 import { registerBall } from '../state.js'
 
-// Every element measures as a laid-out 40px box on screen, so throws really fly.
-Element.prototype.getBoundingClientRect = () => ({ x: 10, y: 10, left: 10, top: 10, right: 50, bottom: 50, width: 40, height: 40 })
+// Every element measures as a laid-out 40px box on screen, so throws really fly; a heading
+// marked data-away (and what is inside it) measures far above the window, scrolled away.
+Element.prototype.getBoundingClientRect = function () {
+  const top = this.closest?.('[data-away]') ? -5000 : 10
+  return { x: 10, y: top, left: 10, top, right: 50, bottom: top + 40, width: 40, height: 40 }
+}
 
 function section(id) {
   const h2 = document.createElement('h2')
@@ -21,20 +25,18 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-test('leaving a section mid-opening sends a clean (not whitened) ball home', async () => {
+test('scrolling a heading away mid-opening leaves a clean (not whitened) ball and a waiting slot', async () => {
   const heading = section('a')
-  section('b')
-  startIntros(['a', 'b'])
-  setCurrentIntro('a')
+  startIntros(['a'])
   tickIntros()
   const ball = heading.querySelector('[data-part="ball"]')
   // The throw lands and the opening starts washing the ball out to white.
   await vi.waitFor(() => expect(ball.style.filter).not.toBe(''), { timeout: 2000 })
 
-  setCurrentIntro('b')
+  heading.setAttribute('data-away', '')
+  tickIntros()
 
-  const copy = document.querySelector('[data-flight]')
-  expect(copy).not.toBeNull()
-  expect(copy.style.filter).toBe('')
+  expect(ball.style.filter).toBe('')
   expect(heading.hasAttribute('data-pending')).toBe(true)
+  expect(document.querySelector('[data-flight]')).toBeNull() // off screen: home at once
 })
