@@ -15,6 +15,7 @@ import { boost, createKart, step } from './physics.js'
 import { createInput } from './input.js'
 import { createGame } from './game.js'
 import { checkpointDists, createSplits, formatDelta, parsePr } from './splits.js'
+import { createLeaderboard } from './leaderboard.js'
 
 const STEP = 1 / 60
 const BANNER_S = 1.5
@@ -51,6 +52,10 @@ const coarse = media('(pointer: coarse)')
 const savedGas = load('kart.autoGas')
 let autoGas = savedGas == null ? coarse : savedGas === '1'
 let pr = parsePr(load('kart.pr'), cps.length)
+const board = createLeaderboard({
+  getItem: load,
+  setItem: save,
+})
 /** @type {'story'|'race'} */
 let mode = 'story' // V5-20: Story is the default on every visit
 /** @type {1|2} */
@@ -261,7 +266,7 @@ function boot() {
     const racersList = players === 2 ? active().map((r) => ({ label: `P${r.p + 1}`, timeMs: r.finishMs })).sort((a, b) => a.timeMs - b.timeMs) : []
     captureFor()
     syncHud()
-    bottom.showResults({ ...result, ranked, racers: racersList }, { onRestart: restart })
+    bottom.showResults({ ...result, ranked, racers: racersList }, { onRestart: restart, board })
     bottom.announce(players === 2 ? `${racersList[0].label} wins in ${formatTime(fastest)}` : `Finished in ${formatTime(fastest)}`)
   }
 

@@ -127,6 +127,17 @@ a:hover { color: var(--color-link-hover); }
 .kart-time { font-family: var(--font-display); font-size: 0.67em; }
 .kart-best { margin-left: 1em; color: var(--color-accent); }
 .kart-racers { list-style: none; }
+.kart-lb-form { display: grid; gap: 0.25em; max-width: 24em; }
+.kart-lb-form input { min-height: 2em; padding: 0 0.5em; border: 2px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font: inherit; }
+.kart-lb-form [aria-invalid="true"] { border-color: var(--color-accent); }
+.kart-lb-form .kart-btn { justify-self: start; margin-top: 0.25em; }
+.kart-lb-err { color: var(--color-accent); }
+.kart-lb-err:empty { display: none; }
+.kart-lb > * + * { margin-top: 0.5em; }
+.kart-lb .kart-label { font-size: 0.67em; }
+.kart-lb-list { list-style: none; max-width: 24em; font-family: var(--font-display); font-size: 0.67em; line-height: 2; }
+.kart-lb-list li { display: flex; justify-content: space-between; gap: 1em; padding-inline: 0.5em; }
+.kart-lb-list .is-mine { background: var(--color-tag-bg); }
 .kart-stops { display: grid; gap: 0.75em; list-style: none; }
 .kart-stops .kart-label { font-size: 0.67em; }
 

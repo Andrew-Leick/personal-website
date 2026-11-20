@@ -1,6 +1,7 @@
 // The DS bottom screen: HUD strip, fact card or minimap, NEXT strip, touch area, pause and
 // results panels, aria-live region (SPEC-v5 V5-06, V5-11, V5-16, 5.3). Plus the course notes (section 9).
 import { h } from './header.js'
+import { MAX_ENTRIES, SHOWN } from './leaderboard.js'
 
 const MAP_W = 128
 const MAP_H = 96
@@ -29,6 +30,74 @@ function stopList(stops) {
         s.href && h('a', { href: s.href }, 'More', h('span', { class: 'kart-vh' }, ` about ${s.label}`)),
       ),
     ),
+  )
+}
+
+/**
+ * Leaderboard block for the results (V5-28): a join form per finisher, then the top 10 by name and time.
+ * @param {{ entries: () => object[], add: (sub: object) => object }} board
+ * @param {{ label: string|null, timeMs: number }[]} finishers
+ * @param {(text: string) => void} announce
+ */
+function leaderboard(board, finishers, announce) {
+  const list = h('ol', { class: 'kart-lb-list' })
+  const renderList = (mine = []) => {
+    const top = board.entries().slice(0, SHOWN)
+    list.replaceChildren(
+      ...(top.length
+        ? top.map((e, i) => h('li', mine.includes(e.at) ? { class: 'is-mine', 'aria-current': 'true' } : null, h('span', null, `${i + 1}. ${e.name}`), h('span', null, formatTime(e.timeMs))))
+        : [h('li', null, 'No times yet. Be the first.')]),
+    )
+  }
+  const mine = []
+  let uid = 0
+  const form = ({ label, timeMs }) => {
+    const id = `kart-lb-${++uid}`
+    const field = (name, text, type, autocomplete, max) => {
+      const input = h('input', { id: `${id}-${name}`, name, type, autocomplete, maxlength: String(max), required: true, 'aria-describedby': `${id}-err` })
+      return [input, h('label', { for: input.id }, text), input]
+    }
+    const [nameIn, ...nameField] = field('name', 'Name', 'text', 'name', 20)
+    const [emailIn, ...emailField] = field('email', 'Email', 'email', 'email', 254)
+    const err = h('p', { id: `${id}-err`, class: 'kart-lb-err', role: 'alert' })
+    const f = h(
+      'form',
+      { class: 'kart-lb-form', novalidate: true },
+      h('p', { class: 'kart-time' }, `${label ? `${label} · ` : ''}${formatTime(timeMs)}`),
+      ...nameField,
+      ...emailField,
+      err,
+      h('button', { type: 'submit', class: 'kart-btn kart-btn-primary' }, 'Join leaderboard'),
+    )
+    f.addEventListener('submit', (e) => {
+      e.preventDefault()
+      const res = board.add({ name: nameIn.value, email: emailIn.value, timeMs })
+      for (const input of [nameIn, emailIn]) input.removeAttribute('aria-invalid')
+      if (!res.ok) {
+        const bad = res.field === 'name' ? nameIn : emailIn
+        err.textContent = res.error
+        bad.setAttribute('aria-invalid', 'true')
+        bad.focus()
+        return
+      }
+      mine.push(res.entry.at)
+      renderList(mine)
+      const msg = res.rank && res.rank <= SHOWN ? `${res.entry.name} placed #${res.rank}!` : res.rank ? `${res.entry.name} is #${res.rank}.` : `${res.entry.name} joined, outside the top ${MAX_ENTRIES}.`
+      const done = h('p', { class: 'kart-time', tabindex: '-1' }, msg)
+      f.replaceWith(done)
+      done.focus()
+      announce(msg)
+    })
+    return f
+  }
+  renderList()
+  return h(
+    'section',
+    { class: 'kart-lb', 'aria-label': 'Leaderboard' },
+    h('h3', { class: 'kart-label' }, 'LEADERBOARD'),
+    ...finishers.map(form),
+    h('p', { class: 'kart-fine' }, 'Saved on this device only. Emails are never shown.'),
+    list,
   )
 }
 
@@ -82,6 +151,12 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
   const hidePanel = () => {
     panel.hidden = true
     el.classList.remove('is-full')
+  }
+  /** @param {string} text */
+  const announce = (text) => {
+    live.textContent = ''
+    // A fresh text node in the next frame, so a repeated message is read again.
+    requestAnimationFrame(() => (live.textContent = text))
   }
   const btn = (text, onclick, primary) => h('button', { type: 'button', class: primary ? 'kart-btn kart-btn-primary' : 'kart-btn', onclick }, text)
 
@@ -164,9 +239,10 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
     /**
      * @param {{ timeMs: number, bestMs: number|null, isBest: boolean, ranked?: boolean,
      *   racers?: { label: string, timeMs: number }[] }} result racers: 2 players, fastest first
-     * @param {{ onRestart: () => void }} actions
+     * @param {{ onRestart: () => void, board?: { entries: () => object[], add: (sub: object) => object } }} actions
+     *   board: Race runs only; each finisher may join once
      */
-    showResults({ timeMs, bestMs, isBest, ranked = true, racers = [] }, { onRestart }) {
+    showResults({ timeMs, bestMs, isBest, ranked = true, racers = [] }, { onRestart, board }) {
       const heading = h('h2', { class: 'kart-label', tabindex: '-1' }, 'FINISH!')
       const order = ['email', 'github', 'linkedin']
       const sorted = [...links].sort((a, b) => (order.indexOf(a.kind ?? a.id) + 1 || 9) - (order.indexOf(b.kind ?? b.id) + 1 || 9))
@@ -179,7 +255,8 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
           : h('p', { class: 'kart-time' }, `TIME ${formatTime(timeMs)}`),
         isBest && h('p', { class: 'kart-time' }, h('strong', { class: 'kart-best' }, 'NEW RECORD')),
         ranked && bestMs != null && h('p', null, `Record: ${formatTime(bestMs)}`),
-        !ranked && h('p', null, 'Story run. Switch to Race mode to chase a record.'),
+        !ranked && h('p', null, 'Story run. Switch to Race mode to chase a record and join the leaderboard.'),
+        ranked && board && leaderboard(board, racers.length > 1 ? racers : [{ label: null, timeMs }], announce),
         stopList(stops),
         h('ul', { class: 'kart-links', 'aria-label': 'Contact links' }, resumeUrl && ext(resumeUrl, 'Resume (PDF)'), ...sorted.map((l) => ext(l.url, l.label))),
         h('div', { class: 'kart-actions' }, btn('Drive again', onRestart, true), h('a', { class: 'kart-btn', href: homeHref }, 'Back to site')),
@@ -188,12 +265,7 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
     },
     hideResults: hidePanel,
 
-    /** @param {string} text */
-    announce(text) {
-      live.textContent = ''
-      // A fresh text node in the next frame, so a repeated message is read again.
-      requestAnimationFrame(() => (live.textContent = text))
-    },
+    announce,
   }
 }
 
