@@ -63,7 +63,10 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
   const oz = (MAP_H - (Math.max(...zs) - minZ) * k) / 2
   const px = (x) => Math.round(ox + (x - minX) * k)
   const pz = (z) => Math.round(oz + (z - minZ) * k)
-  const gatePts = course.gateSlots.map((d) => course.samples.find((s) => s.dist >= d) ?? course.samples[0])
+  const at = (d) => course.samples.find((s) => s.dist >= d) ?? course.samples[0]
+  const gatePts = course.gateSlots.map(at)
+  // Checkpoints (V5-23): 25/50/75% of the lap and the start/finish line.
+  const cpPts = [0, 0.25, 0.5, 0.75].map((f) => at(f * course.length))
   const ctx = map.getContext('2d')
   let mapKey = ''
 
@@ -72,7 +75,7 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
     if (node.textContent !== text) node.textContent = text
   }
   const showPanel = (full, ...kids) => {
-    panel.replaceChildren(...kids)
+    panel.replaceChildren(...kids.filter((kid) => kid != null && kid !== false))
     panel.hidden = false
     el.classList.toggle('is-full', full)
   }
@@ -110,11 +113,14 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
       set(next, i == null || !stops[i] ? '' : `NEXT: ${stops[i].label}`)
     },
 
-    /** @param {{ x: number, z: number }} pos @param {number|null} nextStop */
-    setMinimap(pos, nextStop) {
+    /**
+     * @param {{ x: number, z: number }} pos @param {number|null} nextStop
+     * @param {{ x: number, z: number }|null} [pos2] racer 2 (2 players), drawn green
+     */
+    setMinimap(pos, nextStop, pos2 = null) {
       if (map.hidden) return
       const theme = document.documentElement.dataset.theme
-      const key = `${px(pos.x)},${pz(pos.z)},${nextStop},${theme}`
+      const key = `${px(pos.x)},${pz(pos.z)},${nextStop},${theme},${pos2 ? `${px(pos2.x)},${pz(pos2.z)}` : ''}`
       if (key === mapKey) return
       mapKey = key
       const cs = getComputedStyle(el)
@@ -131,10 +137,16 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
         ctx.fillStyle = nextStop != null && nextStop % gatePts.length === slot ? color('--color-focus-ring') : color('--color-dialog-border-inner')
         ctx.fillRect(px(g.x) - 2, pz(g.z) - 2, 5, 5)
       })
-      ctx.fillStyle = color('--color-border-strong')
-      ctx.fillRect(px(pos.x) - 3, pz(pos.z) - 3, 7, 7)
-      ctx.fillStyle = color('--color-accent')
-      ctx.fillRect(px(pos.x) - 2, pz(pos.z) - 2, 5, 5)
+      ctx.fillStyle = color('--color-text')
+      for (const c of cpPts) ctx.fillRect(px(c.x) - 1, pz(c.z) - 1, 3, 3)
+      const dot = (p, fill) => {
+        ctx.fillStyle = color('--color-border-strong')
+        ctx.fillRect(px(p.x) - 3, pz(p.z) - 3, 7, 7)
+        ctx.fillStyle = fill
+        ctx.fillRect(px(p.x) - 2, pz(p.z) - 2, 5, 5)
+      }
+      if (pos2) dot(pos2, '#3cb043')
+      dot(pos, color('--color-accent'))
     },
 
     /** @param {{ onResume: () => void, onRestart: () => void, onNotes: () => void, homeHref?: string }} opts */
@@ -149,8 +161,12 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
     },
     hidePause: hidePanel,
 
-    /** @param {{ timeMs: number, bestMs: number|null, isBest: boolean }} result @param {{ onRestart: () => void }} actions */
-    showResults({ timeMs, bestMs, isBest }, { onRestart }) {
+    /**
+     * @param {{ timeMs: number, bestMs: number|null, isBest: boolean, ranked?: boolean,
+     *   racers?: { label: string, timeMs: number }[] }} result racers: 2 players, fastest first
+     * @param {{ onRestart: () => void }} actions
+     */
+    showResults({ timeMs, bestMs, isBest, ranked = true, racers = [] }, { onRestart }) {
       const heading = h('h2', { class: 'kart-label', tabindex: '-1' }, 'FINISH!')
       const order = ['email', 'github', 'linkedin']
       const sorted = [...links].sort((a, b) => (order.indexOf(a.kind ?? a.id) + 1 || 9) - (order.indexOf(b.kind ?? b.id) + 1 || 9))
@@ -158,8 +174,12 @@ export function createBottom(el, { stops, course, links, resumeUrl, homeHref, re
       showPanel(
         true,
         heading,
-        h('p', { class: 'kart-time' }, `TIME ${formatTime(timeMs)}`, isBest && h('strong', { class: 'kart-best' }, 'NEW BEST')),
-        bestMs != null && h('p', null, `Best: ${formatTime(bestMs)}`),
+        racers.length > 1
+          ? h('ol', { class: 'kart-racers' }, ...racers.map((r, i) => h('li', { class: 'kart-time' }, `${r.label} ${formatTime(r.timeMs)}`, i === 0 && h('strong', { class: 'kart-best' }, 'WINS'))))
+          : h('p', { class: 'kart-time' }, `TIME ${formatTime(timeMs)}`),
+        isBest && h('p', { class: 'kart-time' }, h('strong', { class: 'kart-best' }, 'NEW RECORD')),
+        ranked && bestMs != null && h('p', null, `Record: ${formatTime(bestMs)}`),
+        !ranked && h('p', null, 'Story run. Switch to Race mode to chase a record.'),
         stopList(stops),
         h('ul', { class: 'kart-links', 'aria-label': 'Contact links' }, resumeUrl && ext(resumeUrl, 'Resume (PDF)'), ...sorted.map((l) => ext(l.url, l.label))),
         h('div', { class: 'kart-actions' }, btn('Drive again', onRestart, true), h('a', { class: 'kart-btn', href: homeHref }, 'Back to site')),

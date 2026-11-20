@@ -1,18 +1,10 @@
 // PURE (no DOM, no three): the race state machine, timer and best time (SPEC-v5 V5-03, V5-04, V5-11, V5-12).
 // loading -> title -> countdown -> racing <-> paused -> finished; restart goes back to countdown.
+// v5.1: racing <-> frozen (Story freeze frame: the clock stops, V5-21).
 
 /** Seconds per countdown step: 3, 2, 1, then GO! (shown for the first step of racing). */
 export const COUNT_STEP = 0.6
 const LABELS = ['3', '2', '1']
-
-/**
- * @param {string|null} raw localStorage `kart.best` value
- * @returns {number|null} best time in ms, or null if missing or invalid
- */
-export function parseBest(raw) {
-  const ms = Number(raw)
-  return raw != null && raw !== '' && Number.isFinite(ms) && ms > 0 ? ms : null
-}
 
 /**
  * @param {{ best?: number|null }} [opts]
@@ -21,7 +13,7 @@ export function createGame({ best = null } = {}) {
   let t = 0 // seconds in the current countdown, or since GO while racing
   let resumeTo = null
   const game = {
-    /** @type {'loading'|'title'|'countdown'|'racing'|'paused'|'finished'} */
+    /** @type {'loading'|'title'|'countdown'|'racing'|'frozen'|'paused'|'finished'} */
     state: 'loading',
     best,
     /** @type {{ timeMs: number, bestMs: number, isBest: boolean }|null} */
@@ -61,17 +53,30 @@ export function createGame({ best = null } = {}) {
       game.state = 'paused'
       return true
     },
+    /** Story freeze frame: stop the clock and the karts until unfreeze() (V5-21). */
+    freeze() {
+      if (game.state !== 'racing') return false
+      game.state = 'frozen'
+      return true
+    },
+    unfreeze() {
+      if (game.state !== 'frozen') return false
+      game.state = 'racing'
+      return true
+    },
     resume() {
       if (game.state !== 'paused') return false
       game.state = resumeTo
       resumeTo = null
       return true
     },
-    /** Called on the progress 'finish' event. Updates `best` and returns the result. */
-    finish() {
+    /**
+     * Called when the race is over. Updates `best` (ranked runs only) and returns the result.
+     * @param {{ timeMs?: number, ranked?: boolean }} [opts] timeMs: the time to rank (2 players: the faster one)
+     */
+    finish({ timeMs = game.timeMs, ranked = true } = {}) {
       if (game.state !== 'racing') return null
-      const timeMs = game.timeMs
-      const isBest = game.best == null || timeMs < game.best
+      const isBest = ranked && (game.best == null || timeMs < game.best)
       if (isBest) game.best = timeMs
       game.state = 'finished'
       game.result = { timeMs, bestMs: game.best, isBest }

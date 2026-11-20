@@ -26,13 +26,13 @@ describe('input', () => {
     const input = createInput()
     key('keydown', 'ArrowUp')
     key('keydown', 'a')
-    expect(input.poll()).toMatchObject({ throttle: 1, brake: 0, steer: -1 })
+    expect(input.poll()[0]).toMatchObject({ throttle: 1, brake: 0, steer: -1 })
     key('keyup', 'ArrowUp')
     key('keydown', 'Z')
     key('keydown', 'ArrowRight')
-    expect(input.poll()).toMatchObject({ throttle: 0, brake: 1, steer: 0 })
+    expect(input.poll()[0]).toMatchObject({ throttle: 0, brake: 1, steer: 0 })
     input.clear()
-    expect(input.poll()).toMatchObject({ throttle: 0, brake: 0, steer: 0 })
+    expect(input.poll()[0]).toMatchObject({ throttle: 0, brake: 0, steer: 0 })
   })
 
   test('start, pause and restart fire once per press and ignore key repeat', () => {
@@ -40,10 +40,10 @@ describe('input', () => {
     key('keydown', 'Enter')
     key('keydown', 'Escape')
     key('keydown', 'r')
-    expect(input.poll()).toMatchObject({ start: true, pause: true, restart: true })
-    expect(input.poll()).toMatchObject({ start: false, pause: false, restart: false })
+    expect(input.poll()[0]).toMatchObject({ start: true, pause: true, restart: true })
+    expect(input.poll()[0]).toMatchObject({ start: false, pause: false, restart: false })
     key('keydown', 'p', { repeat: true })
-    expect(input.poll().pause).toBe(false)
+    expect(input.poll()[0].pause).toBe(false)
   })
 
   test('arrows and Space are captured only when capture is on', () => {
@@ -57,23 +57,43 @@ describe('input', () => {
 
   test('auto gas holds throttle unless braking', () => {
     const input = createInput({ autoGas: true })
-    expect(input.poll().throttle).toBe(1)
+    expect(input.poll()[0].throttle).toBe(1)
     key('keydown', 's')
-    expect(input.poll()).toMatchObject({ throttle: 0, brake: 1 })
+    expect(input.poll()[0]).toMatchObject({ throttle: 0, brake: 1 })
     input.setAutoGas(false)
     key('keyup', 's')
-    expect(input.poll().throttle).toBe(0)
+    expect(input.poll()[0].throttle).toBe(0)
   })
 
   test('gamepad: buttons, stick dead zone, edge-triggered Start and Select', () => {
     const input = createInput()
     pad([7, 9], [0.1, 0])
-    expect(input.poll()).toMatchObject({ throttle: 1, steer: 0, start: true, pause: true })
-    expect(input.poll()).toMatchObject({ start: false, pause: false })
+    expect(input.poll()[0]).toMatchObject({ throttle: 1, steer: 0, start: true, pause: true })
+    expect(input.poll()[0]).toMatchObject({ start: false, pause: false })
     pad([6, 14, 8])
-    expect(input.poll()).toMatchObject({ brake: 1, steer: -1, restart: true })
+    expect(input.poll()[0]).toMatchObject({ brake: 1, steer: -1, restart: true })
     pad([], [0.6, 0])
-    expect(input.poll().steer).toBeCloseTo(0.5)
+    expect(input.poll()[0].steer).toBeCloseTo(0.5)
+  })
+
+  test('2 players: W A S D drive P1, the arrows drive P2, gamepads map in order', () => {
+    const input = createInput({ autoGas: true })
+    key('keydown', 'w')
+    key('keydown', 'ArrowLeft')
+    let [p1, p2] = input.poll(2)
+    expect(p1).toMatchObject({ throttle: 1, steer: 0 }) // auto gas is 1-player only
+    expect(p2).toMatchObject({ throttle: 0, steer: -1 })
+    key('keyup', 'w')
+    key('keydown', 'ArrowUp')
+    key('keydown', 'd')
+    ;[p1, p2] = input.poll(2)
+    expect(p1).toMatchObject({ throttle: 0, steer: 1 })
+    expect(p2).toMatchObject({ throttle: 1, steer: -1 })
+    input.clear()
+    pads = [{ connected: true, buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })), axes: [0, 0] }, null, { connected: true, buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: i === 7, value: i === 7 ? 1 : 0 })), axes: [0, 0] }]
+    ;[p1, p2] = input.poll(2)
+    expect(p1.throttle).toBe(0)
+    expect(p2.throttle).toBe(1)
   })
 
   test('stickValue rescales past the dead zone', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { COUNT_STEP, createGame, parseBest } from '../game.js'
+import { COUNT_STEP, createGame } from '../game.js'
 
 const DT = 1 / 60
 function run(game, seconds) {
@@ -95,8 +95,26 @@ describe('game state machine', () => {
     expect(g.best).toBe(r.timeMs)
   })
 
-  test('parseBest accepts positive numbers only', () => {
-    expect(parseBest('31234')).toBe(31234)
-    for (const bad of [null, '', 'abc', '-5', '0', 'Infinity']) expect(parseBest(bad)).toBe(null)
+  test('story freeze stops the clock until unfreeze; unranked finishes never set a best', () => {
+    const g = createGame({ best: 99999 })
+    g.loaded()
+    g.start()
+    run(g, 3 * COUNT_STEP + 30)
+    const t = g.timeMs
+    expect(g.freeze()).toBe(true)
+    run(g, 60)
+    expect(g.timeMs).toBe(t)
+    expect(g.pause()).toBe(false)
+    expect(g.unfreeze()).toBe(true)
+    expect(g.state).toBe('racing')
+    expect(g.finish({ ranked: false })).toMatchObject({ isBest: false, bestMs: 99999 })
+  })
+
+  test('finish ranks the given time (2 players: the faster racer)', () => {
+    const g = createGame()
+    g.loaded()
+    g.start()
+    run(g, 3 * COUNT_STEP + 30)
+    expect(g.finish({ timeMs: 1234 })).toEqual({ timeMs: 1234, bestMs: 1234, isBest: true })
   })
 })

@@ -1,8 +1,11 @@
 /**
  * Kart top screen: three.js at DS resolution (SPEC-v5-kart 6.1, contracts W2).
  * 256×192, no AA, nearest-filtered textures, Lambert materials, chase camera.
+ * v5.1 (V5-25): up to two racers and two views (one renderer and camera per top screen, one shared
+ * scene). Racer 2 is a green-recolored Mario in a green kart. Per-racer methods take `p` (default 0).
  */
 import {
+  CanvasTexture,
   CircleGeometry,
   Color,
   DirectionalLight,
@@ -26,6 +29,7 @@ import {
 import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js'
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js'
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 
 const BASE = `${import.meta.env.BASE_URL}kart/models/`
 const W = 256
@@ -84,6 +88,41 @@ const THEMES = {
     sun: [0xffb088, 0.7],
     boxGlow: 0x707070,
   },
+}
+
+/**
+ * Racer 2's colors: every clearly red pixel becomes green (red and green channels swap), so
+ * Mario's cap and shirt and the kart body turn Luigi green while skin, blue and white stay.
+ * @param {import('three').Texture} t a loaded texture
+ */
+function greenCopy(t) {
+  const img = t.image
+  const c = document.createElement('canvas')
+  c.width = img.width
+  c.height = img.height
+  const g = c.getContext('2d')
+  g.drawImage(img, 0, 0)
+  const data = g.getImageData(0, 0, c.width, c.height)
+  const d = data.data
+  for (let i = 0; i < d.length; i += 4) {
+    const [r, gr, b] = [d[i], d[i + 1], d[i + 2]]
+    if (r > 60 && r > gr * 1.6 && r > b * 1.6) [d[i], d[i + 1]] = [gr, r]
+  }
+  g.putImageData(data, 0, 0)
+  return pixelate(new CanvasTexture(c))
+}
+
+/** Replace every material under root (except those named in keep) with a green-recolored copy. */
+function greenify(root, keep = []) {
+  const swap = (m) => {
+    if (keep.includes(m.name) || !m.map) return m
+    const out = m.clone()
+    out.map = greenCopy(m.map)
+    return out
+  }
+  root.traverse((o) => {
+    if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(swap) : swap(o.material)
+  })
 }
 
 /** @param {import('three').Texture | null} t */
@@ -164,18 +203,23 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
   if (pending) await new Promise((resolve) => (wake = resolve))
   if (failed) throw new Error(`Could not load ${failed}`)
 
-  const renderer = new WebGLRenderer({ antialias: false, powerPreference: 'low-power' })
-  renderer.setPixelRatio(1)
-  renderer.setSize(W, H, false)
-  const canvas = renderer.domElement
-  canvas.setAttribute('role', 'img')
-  canvas.setAttribute('aria-label', 'Race view: Mario on Figure-8 Circuit')
-  canvas.style.imageRendering = 'pixelated'
-  hostEl.appendChild(canvas)
+  /** One top screen: its own renderer (WebGL context) and chase camera over the shared scene. */
+  const makeView = (host, label) => {
+    const renderer = new WebGLRenderer({ antialias: false, powerPreference: 'low-power' })
+    renderer.setPixelRatio(1)
+    renderer.setSize(W, H, false)
+    const canvas = renderer.domElement
+    canvas.setAttribute('role', 'img')
+    canvas.setAttribute('aria-label', label)
+    canvas.style.imageRendering = 'pixelated'
+    host.appendChild(canvas)
+    return { renderer, canvas, camera: new PerspectiveCamera(FOV, W / H, 0.5, 900), camHeading: null, fovTarget: FOV }
+  }
+  const views = [makeView(hostEl, 'Race view: Mario on Figure-8 Circuit')]
+  const canvas = views[0].canvas
 
   const scene = new Scene()
   scene.fog = new Fog(0xffffff, 1, 2)
-  const camera = new PerspectiveCamera(FOV, W / H, 0.5, 900)
   const hemi = new HemisphereLight()
   const sun = new DirectionalLight()
   sun.position.set(-0.4, 1, 0.3)
@@ -225,6 +269,28 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
   shadow.scale.set(SHADOW_SIZE[0], SHADOW_SIZE[1], 1)
   kartGroup.add(shadow)
   scene.add(kartGroup)
+  const racers = [{ kartGroup, body, head, headRest }]
+
+  // Racer 2 (V5-25): a copy of the posed Mario and his kart, recolored green. Hidden in 1 player.
+  {
+    const group2 = new Group()
+    const body2 = new Group()
+    body2.scale.setScalar(KART_SCALE)
+    group2.add(body2)
+    const kart2 = kartObj.clone()
+    greenify(kart2)
+    const mario2 = cloneSkinned(marioRoot)
+    greenify(mario2, ['P_face']) // the face keeps sharing the blink material
+    body2.add(kart2, mario2)
+    group2.add(shadow.clone())
+    let head2 = null
+    mario2.traverse((o) => {
+      if (o.isBone && o.name === HEAD) head2 = o
+    })
+    group2.visible = false
+    scene.add(group2)
+    racers.push({ kartGroup: group2, body: body2, head: head2, headRest })
+  }
   const headTurn = new Quaternion()
   const headAxis = new Vector3(1, 0, 0) // Mario's up, in the head's parent (body joint) frame
 
@@ -262,9 +328,6 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
   }
   setTheme(theme)
 
-  // Camera state.
-  let camHeading = null
-  let fovTarget = FOV
   const target = new Vector3()
 
   // Blink + clock.
@@ -275,28 +338,41 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
     canvas,
     courseRoot,
 
-    setKart({ x, y, z, heading, steer = 0, bumpT = 0 }) {
-      kartGroup.position.set(x, y, z)
-      kartGroup.rotation.y = Math.PI / 2 - heading
-      // Roll into the turn; the model's forward is local +Z.
-      body.rotation.z = steer * LEAN_MAX
-      // Mario looks into the turn (steer +1 = right = his -X).
-      if (head) head.quaternion.copy(headRest).premultiply(headTurn.setFromAxisAngle(headAxis, -steer * HEAD_TURN))
-      // 2-frame stepped bounce while bumping.
-      body.position.y = bumpT > 0 && Math.floor(bumpT * 30) % 2 === 0 ? BOUNCE : 0
+    /** Add the second top screen (2 players). Idempotent. @param {HTMLElement} host */
+    addView(host) {
+      if (!views[1]) views.push(makeView(host, 'Race view: player 2, green Mario'))
+      return views[1].canvas
     },
 
-    follow(kart, dt) {
-      if (camHeading === null || reducedMotion) camHeading = kart.heading
+    /** Show racer 2 or not. @param {1|2} n */
+    setPlayers(n) {
+      racers[1].kartGroup.visible = n === 2
+    },
+
+    setKart({ x, y, z, heading, steer = 0, bumpT = 0 }, p = 0) {
+      const r = racers[p]
+      r.kartGroup.position.set(x, y, z)
+      r.kartGroup.rotation.y = Math.PI / 2 - heading
+      // Roll into the turn; the model's forward is local +Z.
+      r.body.rotation.z = steer * LEAN_MAX
+      // Mario looks into the turn (steer +1 = right = his -X).
+      if (r.head) r.head.quaternion.copy(r.headRest).premultiply(headTurn.setFromAxisAngle(headAxis, -steer * HEAD_TURN))
+      // 2-frame stepped bounce while bumping.
+      r.body.position.y = bumpT > 0 && Math.floor(bumpT * 30) % 2 === 0 ? BOUNCE : 0
+    },
+
+    follow(kart, dt, p = 0) {
+      const v = views[p]
+      if (v.camHeading === null || reducedMotion) v.camHeading = kart.heading
       else {
-        let d = kart.heading - camHeading
+        let d = kart.heading - v.camHeading
         d = Math.atan2(Math.sin(d), Math.cos(d))
-        camHeading += d * (1 - Math.pow(1 - CAM_LERP, dt * 60))
+        v.camHeading += d * (1 - Math.pow(1 - CAM_LERP, dt * 60))
       }
-      const cx = Math.cos(camHeading)
-      const cz = Math.sin(camHeading)
-      camera.position.set(kart.x - cx * CAM_BACK, kart.y + CAM_UP, kart.z - cz * CAM_BACK)
-      camera.lookAt(target.set(kart.x + cx * LOOK_AHEAD, kart.y + LOOK_UP, kart.z + cz * LOOK_AHEAD))
+      const cx = Math.cos(v.camHeading)
+      const cz = Math.sin(v.camHeading)
+      v.camera.position.set(kart.x - cx * CAM_BACK, kart.y + CAM_UP, kart.z - cz * CAM_BACK)
+      v.camera.lookAt(target.set(kart.x + cx * LOOK_AHEAD, kart.y + LOOK_UP, kart.z + cz * LOOK_AHEAD))
     },
 
     setGates(list) {
@@ -345,8 +421,8 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
       else r.burstT = 0
     },
 
-    setBoost(on) {
-      fovTarget = on && !reducedMotion ? FOV + BOOST_FOV : FOV
+    setBoost(on, p = 0) {
+      views[p].fovTarget = on && !reducedMotion ? FOV + BOOST_FOV : FOV
     },
 
     setTheme,
@@ -374,7 +450,8 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
         for (const b of r.boxes) b.scale.setScalar(BOX_SCALE * (1 + step * 0.2))
       }
       // FOV kick eases toward its target.
-      if (camera.fov !== fovTarget) {
+      for (const { camera, fovTarget } of views) {
+        if (camera.fov === fovTarget) continue
         const d = fovTarget - camera.fov
         camera.fov = Math.abs(d) < 0.05 ? fovTarget : camera.fov + d * Math.min(1, dt * 10)
         camera.updateProjectionMatrix()
@@ -389,8 +466,9 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
       }
     },
 
-    render() {
-      renderer.render(scene, camera)
+    /** @param {number} [p] one view; all views when omitted */
+    render(p) {
+      for (let i = 0; i < views.length; i++) if (p == null || p === i) views[i].renderer.render(scene, views[i].camera)
     },
 
     dispose() {
@@ -405,8 +483,10 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
       })
       boxGeo.dispose()
       for (const t of textures) t?.dispose()
-      renderer.dispose()
-      canvas.remove()
+      for (const v of views) {
+        v.renderer.dispose()
+        v.canvas.remove()
+      }
     },
   }
 }

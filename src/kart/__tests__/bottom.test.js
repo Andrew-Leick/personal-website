@@ -30,4 +30,8 @@ describe('computeFit', () => {
   it('stacks when the window is tall enough for two screens at the same scale', () => {
     expect(computeFit(1376, 806)).toEqual({ scale: 2, layout: 'stacked' })
   })
+  it('2 players: two top screens side by side with the bottom screen below', () => {
+    expect(computeFit(1216, 806, 2)).toEqual({ scale: 2, layout: 'duo' })
+    expect(computeFit(1216, 706, 2).scale).toBeCloseTo((706 - 16 - 8) / 384)
+  })
 })
