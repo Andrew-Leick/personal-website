@@ -9,6 +9,7 @@ import experience from '../../data/experience.json'
 import education from '../../data/education.json'
 import projects from '../../data/projects.json'
 import skills from '../../data/skills.json'
+import kart from '../../data/kart.json'
 import { normalizeContent } from './normalize.js'
 import { BASE_URL } from './paths.js'
 import { resolveRouteWithBase, sectionHrefOf } from './routes.js'
@@ -20,7 +21,7 @@ const githubModules = import.meta.glob('../../data/generated/github.json', { eag
 const github = Object.values(githubModules)[0] ?? { repos: {} }
 
 const content = normalizeContent(
-  { site, profile, links, experience, education, projects, skills, github },
+  { site, profile, links, experience, education, projects, skills, github, kart },
   { baseUrl: BASE_URL },
 )
 
@@ -75,6 +76,16 @@ export function getPages() {
  */
 export function getPage(id) {
   return content.pages.find((p) => p.id === id) ?? null
+}
+
+/** @returns {import('./types.js').Kart|null} v5 kart minigame copy */
+export function getKart() {
+  return content.kart
+}
+
+/** @returns {string} the kart page href: BASE_URL + "kart/" */
+export function getKartHref() {
+  return `${BASE_URL}kart/`
 }
 
 /** @returns {string} the Home href: BASE_URL, e.g. "/" or "/personal-website/" */

@@ -2,7 +2,7 @@
 // to BASE_URL) and the build plugin / scripts (which pass the base explicitly).
 
 /** Ids a page may not use: they collide with build output or Vite folders (spec v2 10.2). */
-export const RESERVED_PAGE_IDS = ['assets', 'content', 'index', '404']
+export const RESERVED_PAGE_IDS = ['assets', 'content', 'index', '404', 'kart']
 
 const withSlash = (base) => (base.endsWith('/') ? base : `${base}/`)
 

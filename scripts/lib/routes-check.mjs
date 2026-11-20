@@ -69,10 +69,24 @@ export function checkRoutes(distDir, content, base) {
   if (!existsSync(nfPath)) problems.push('404.html: missing')
   else expectHead('404.html', readFileSync(nfPath, 'utf8'), headFor(NOT_FOUND_ROUTE, content))
 
+  // v5: the kart page (its own Vite entry, so it is not a copy of index.html).
+  if (content.kart) {
+    const kartPath = join(distDir, 'kart', 'index.html')
+    if (!existsSync(kartPath)) problems.push('kart/index.html: missing')
+    else {
+      const html = readFileSync(kartPath, 'utf8')
+      const head = headFor({ kind: 'kart', page: null, canonicalPath: null }, content)
+      if (titleOf(html) !== escapeHtml(head.title)) problems.push(`kart/index.html: <title> is ${JSON.stringify(titleOf(html))}, expected ${JSON.stringify(escapeHtml(head.title))}`)
+      if (canonicalOf(html) !== escapeHtml(head.canonical)) problems.push(`kart/index.html: canonical is ${JSON.stringify(canonicalOf(html))}, expected ${JSON.stringify(escapeHtml(head.canonical))}`)
+      if (hasNoindex(html) || hasJsonLd(html)) problems.push('kart/index.html: must be indexable and have no JSON-LD')
+      checked.push('kart/index.html')
+    }
+  }
+
   // Route folders for pages that are not shown (hidden or empty) must not exist.
   const shown = new Set(content.pages.map((p) => p.id))
   for (const name of readdirSync(distDir)) {
-    if (name !== 'assets' && !shown.has(name) && existsSync(join(distDir, name, 'index.html'))) {
+    if (name !== 'assets' && name !== 'kart' && !shown.has(name) && existsSync(join(distDir, name, 'index.html'))) {
       problems.push(`${name}/index.html: emitted, but "${name}" is not a shown page`)
     }
   }

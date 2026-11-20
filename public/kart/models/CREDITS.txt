@@ -1,0 +1,7 @@
+Mario Kart DS models (Nintendo), ripped and shared on The Models Resource.
+Used for a personal, non-commercial minigame. Downloaded 2026-11-19 via the Wayback Machine.
+
+mario/    Mario (P_MR.dae)            https://www.models-resource.com/ds_dsi/mariokartds/model/6237/
+kart/     Standard MR                 https://www.models-resource.com/ds_dsi/mariokartds/model/6315/
+itembox/  Item Box                    https://www.models-resource.com/ds_dsi/mariokartds/model/8596/
+course/   Figure-8 Circuit            https://www.models-resource.com/ds_dsi/mariokartds/model/17105/

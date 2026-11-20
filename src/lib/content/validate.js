@@ -20,6 +20,7 @@ export const FILES = {
   projects: `${DATA_DIR}/projects.json`,
   skills: `${DATA_DIR}/skills.json`,
   github: `${DATA_DIR}/generated/github.json`,
+  kart: `${DATA_DIR}/kart.json`,
 }
 
 const ID_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -598,6 +599,40 @@ function checkPages(ctx, pages, profile) {
   }
 }
 
+// v5 kart minigame (SPEC-v5-kart 7.2)
+const KART_LABEL_RE = /^[A-Z0-9 '&+./-]+$/
+export const KART_MAX_STOPS = 12
+
+function checkKart(ctx, kart, placedSections) {
+  const file = FILES.kart
+  if (!kart || typeof kart !== 'object' || Array.isArray(kart)) {
+    ctx.error(file, '', `expected an object, got ${typeName(kart)}`)
+    return
+  }
+  const text = (path, v, min, max, hint) => {
+    if (typeof v !== 'string') return ctx.error(file, path, `expected text, got ${typeName(v)}`, hint)
+    if (isPlaceholder(v)) return ctx.placeholder(file, path, v)
+    if (v.trim().length < min || v.length > max) ctx.error(file, path, `must be ${min}–${max} characters (is ${v.length})`, hint)
+  }
+  text('title', kart.title, 1, 24)
+  text('description', kart.description, 50, 160)
+  const stops = kart.stops
+  if (!Array.isArray(stops)) return ctx.error(file, 'stops', `expected a list, got ${typeName(stops)}`)
+  if (stops.length < 3 || stops.length > KART_MAX_STOPS) ctx.error(file, 'stops', `needs 3–${KART_MAX_STOPS} stops (has ${stops.length})`, 'four stops fill one lap')
+  const seen = new Set()
+  stops.forEach((st, i) => {
+    const path = `stops[${i}]`
+    if (!st || typeof st !== 'object') return ctx.error(file, path, `expected an object, got ${typeName(st)}`)
+    if (typeof st.id !== 'string' || !ID_RE.test(st.id)) ctx.error(file, `${path}.id`, 'expected a lowercase id like "amazon-2026"')
+    else if (seen.has(st.id)) ctx.error(file, `${path}.id`, `id ${q(st.id)} is used twice`)
+    else seen.add(st.id)
+    text(`${path}.label`, st.label, 1, 12, 'shown in the race HUD, e.g. "AMAZON \'26"')
+    if (typeof st.label === 'string' && !isPlaceholder(st.label) && !KART_LABEL_RE.test(st.label)) ctx.error(file, `${path}.label`, "use uppercase A–Z, 0–9, spaces and ' & + . / - only")
+    text(`${path}.text`, st.text, 20, 110, 'keep it readable in about 5 seconds')
+    if (typeof st.ref !== 'string' || !placedSections.has(st.ref)) ctx.error(file, `${path}.ref`, `${q(String(st.ref))} is not a section on any shown page`, `use one of: ${[...placedSections].join(', ')}`)
+  })
+}
+
 /**
  * Validate all content.
  * @param {{ site?: any, profile?: any, links?: any, experience?: any, education?: any,
@@ -691,6 +726,16 @@ export function validateContent(raw, options = {}) {
         }
       }
     }
+  }
+
+  if (has('kart')) {
+    const placed = new Set()
+    const pages = has('site') && raw.site && Array.isArray(raw.site.pages) ? raw.site.pages : []
+    for (const page of pages) {
+      if (!page || page.visible === false || !Array.isArray(page.sections)) continue
+      for (const sec of page.sections) if (sec && typeof sec.id === 'string' && sec.visible !== false) placed.add(sec.id)
+    }
+    checkKart(ctx, raw.kart, placed)
   }
 
   return { errors: ctx.errors, warnings: ctx.warnings }

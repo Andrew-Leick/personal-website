@@ -258,7 +258,7 @@ No drift or mini-turbo in v5 (the most "MK" upgrade for later).
 - `description`: 50–160 chars.
 - `stops`: 3–12 items (laps = `ceil(n/4)`, so at most 3 laps).
 - `id`: matches `ID_RE` and is unique.
-- `label`: 1–12 chars, uppercase A–Z, 0–9, space, `'` and `&`.
+- `label`: 1–12 chars, uppercase A–Z, 0–9, space and `' & + . / -`.
 - `text`: 20–110 chars.
 - `ref`: resolves to a placed section.
 - `TODO:` placeholders follow the existing warning/strict rules.

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="%BASE_URL%fonts/press-start-2p-latin-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="%BASE_URL%fonts/vt323-latin-400.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      @font-face { font-family: "Press Start 2P"; src: url("%BASE_URL%fonts/press-start-2p-latin-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: optional; }
+      @font-face { font-family: "VT323"; src: url("%BASE_URL%fonts/vt323-latin-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: optional; }
+    </style>
+    <!-- Theme bootstrap: keep in sync with /index.html (SPEC-v5-kart V5-15). -->
+    <script>
+      /* Theme bootstrap (runs before first paint to avoid a flash of the wrong theme).
+         1. a saved choice in localStorage wins;
+         3. otherwise follow prefers-color-scheme.
+         Step 2 (site.json defaultTheme) is applied by the app on mount when nothing is saved.
+         The app re-checks saved values against its THEMES list. */
+      (function () {
+        var theme = null;
+        try {
+          var saved = window.localStorage.getItem('theme');
+          if (saved && /^[a-z][a-z0-9-]*$/.test(saved)) theme = saved;
+        } catch (e) {
+          /* storage blocked: fall through */
+        }
+        if (!theme) {
+          var dark = false;
+          try {
+            dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          } catch (e) {
+            /* matchMedia unavailable */
+          }
+          theme = dark ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+    <!-- content:head -->
+  </head>
+  <body class="kart-page">
+    <noscript>
+      <div class="noscript">
+        <!-- content:noscript -->
+      </div>
+    </noscript>
+    <a class="kart-skip" href="#kart-notes">Skip the race: read the course notes</a>
+    <header id="top" class="kart-header" data-kart="header"></header>
+    <main id="main" class="kart-main" tabindex="-1">
+      <h1 class="kart-visually-hidden">Grand Prix</h1>
+      <div class="kart-ds" data-kart="frame">
+        <div class="kart-screen kart-top" data-kart="top"></div>
+        <div class="kart-screen kart-bottom" data-kart="bottom"></div>
+      </div>
+      <section id="kart-notes" class="kart-notes" aria-labelledby="kart-notes-heading" data-kart="notes"></section>
+    </main>
+    <footer class="kart-footer" data-kart="footer"></footer>
+    <script type="module" src="/src/kart/main.js"></script>
+  </body>
+</html>

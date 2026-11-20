@@ -18,7 +18,7 @@
  *   teaser: string|null, index: string,          // "01", "02", ... among shown pages
  *   sections: Section[], hasLead: boolean }} Page */
 
-/** @typedef {{ kind: 'home'|'page'|'not-found', page: Page|null,
+/** @typedef {{ kind: 'home'|'page'|'kart'|'not-found', page: Page|null,
  *   canonicalPath: string|null }} Route
  *   // canonicalPath: the normalized full pathname (with base) the router should show,
  *   //   e.g. "/experience/" for input "/experience" or "/experience/index.html"; null for not-found */
@@ -66,6 +66,9 @@
 /** @typedef {{ id: string, name: string, items: string[] }} SkillGroup */
 
 /** @typedef {{ site: Site, profile: Profile, links: Link[], experience: Experience[],
- *   education: Education[], projects: Project[], skills: SkillGroup[], pages: Page[], sections: Section[] }} SiteContent */
+ *   education: Education[], projects: Project[], skills: SkillGroup[], pages: Page[], sections: Section[], kart: Kart|null }} SiteContent */
 
 export {}
+
+/** @typedef {{ id: string, label: string, text: string, ref: string }} KartStop */
+/** @typedef {{ title: string, description: string, stops: KartStop[] }} Kart */

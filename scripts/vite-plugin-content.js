@@ -22,6 +22,7 @@ export const HEAD_START = '<!-- content:head:start -->'
 export const HEAD_END = '<!-- content:head:end -->'
 const HEAD_BLOCK_RE = /<!-- content:head:start -->[\s\S]*?<!-- content:head:end -->/
 const HOME_ROUTE = { kind: 'home', page: null, canonicalPath: null }
+const KART_ROUTE = { kind: 'kart', page: null, canonicalPath: null }
 
 /** Escape text for HTML text and double-quoted attribute contexts. */
 export function escapeHtml(value) {
@@ -142,7 +143,9 @@ export function renderRobots(siteUrl) {
 
 /** Absolute URLs of Home and every shown page (REQ-882). */
 export function sitemapUrls(c) {
-  return [c.site.siteUrl, ...c.pages.map((p) => `${c.site.siteUrl}${p.path}`)]
+  const urls = [c.site.siteUrl, ...c.pages.map((p) => `${c.site.siteUrl}${p.path}`)]
+  if (c.kart) urls.push(`${c.site.siteUrl}kart/`)
+  return urls
 }
 
 export function renderSitemap(c) {
@@ -256,7 +259,11 @@ export function contentPlugin() {
         }
         // Build: index.html is Home (other routes are written in writeBundle).
         // Dev: Vite's SPA fallback serves index.html for every path, so use the request URL (REQ-946).
-        const route = command === 'serve' ? resolveRouteWithBase(requestPath(ctx && ctx.originalUrl), base, content) : HOME_ROUTE
+        // v5: the kart page is its own Vite entry (kart/index.html) with its own head.
+        const isKart = ctx && ctx.path === '/kart/index.html'
+        const route = isKart
+          ? KART_ROUTE
+          : command === 'serve' ? resolveRouteWithBase(requestPath(ctx && ctx.originalUrl), base, content) : HOME_ROUTE
         const head = renderHead(content, route)
         const noscript = renderNoscript(content)
         return html.replace(HEAD_MARKER, () => head).replace(NOSCRIPT_MARKER, () => noscript)

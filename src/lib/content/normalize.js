@@ -410,6 +410,16 @@ export function deepFreeze(value) {
  * @param {{ baseUrl?: string }} [options]
  * @returns {SiteContent}
  */
+/** v5 kart minigame copy (SPEC-v5-kart 7). Validated upstream; null when the file is absent. */
+function normalizeKart(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  return {
+    title: str(raw.title) ?? 'Grand Prix',
+    description: str(raw.description) ?? '',
+    stops: (Array.isArray(raw.stops) ? raw.stops : []).map((st) => ({ id: st.id, label: st.label, text: st.text, ref: st.ref })),
+  }
+}
+
 export function normalizeContent(raw, { baseUrl = '/' } = {}) {
   const site = normalizeSite(raw.site)
   site.ogImage = site.ogImage ? resolveAsset(site.ogImage, baseUrl) : null
@@ -420,5 +430,6 @@ export function normalizeContent(raw, { baseUrl = '/' } = {}) {
   const projects = normalizeProjects(raw.projects, raw.github, baseUrl)
   const skills = normalizeSkills(raw.skills)
   const { pages, sections } = derivePages(raw.site && raw.site.pages, { profile, links, experience, education, projects, skills }, baseUrl)
-  return deepFreeze({ site, profile, links, experience, education, projects, skills, pages, sections })
+  const kart = normalizeKart(raw.kart)
+  return deepFreeze({ site, profile, links, experience, education, projects, skills, pages, sections, kart })
 }

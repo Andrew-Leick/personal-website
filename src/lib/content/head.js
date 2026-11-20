@@ -58,5 +58,8 @@ export function headFor(route, content) {
       jsonLd: null,
     }
   }
+  if (route && route.kind === 'kart' && content.kart) {
+    return { title: `${content.kart.title} | ${profile.name}`, description: content.kart.description, canonical: `${site.siteUrl}kart/`, robots: 'index', jsonLd: null }
+  }
   return { title: `Page not found | ${profile.name}`, description: site.description, canonical: null, robots: 'noindex', jsonLd: null }
 }
