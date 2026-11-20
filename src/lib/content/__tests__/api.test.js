@@ -5,7 +5,7 @@ import * as api from '../index.js'
 describe('public API (7.2)', () => {
   test('exports exactly the specified functions', () => {
     expect(Object.keys(api).sort()).toEqual(
-      ['GUIDE_IDS', 'formatDateRange', 'formatMonth', 'getEducation', 'getExperience', 'getHead', 'getHomeHref', 'getLinks', 'getPage', 'getPages', 'getProfile', 'getProjects', 'getSectionHref', 'getSections', 'getSite', 'getSiteContent', 'getSkills', 'isPlaceholder', 'resolveRoute'].sort(),
+      ['GUIDE_IDS', 'formatDateRange', 'formatMonth', 'getEducation', 'getExperience', 'getHead', 'getHomeHref', 'getKart', 'getKartHref', 'getLinks', 'getPage', 'getPages', 'getProfile', 'getProjects', 'getSectionHref', 'getSections', 'getSite', 'getSiteContent', 'getSkills', 'isPlaceholder', 'resolveRoute'].sort(),
     )
     for (const [name, v] of Object.entries(api)) expect(typeof v).toBe(name === 'GUIDE_IDS' ? 'object' : 'function')
   })
@@ -14,7 +14,7 @@ describe('public API (7.2)', () => {
     const c = api.getSiteContent()
     expect(c).toEqual({
       site: api.getSite(), profile: api.getProfile(), links: api.getLinks(), experience: api.getExperience(),
-      education: api.getEducation(), projects: api.getProjects(), skills: api.getSkills(), pages: api.getPages(), sections: api.getSections(),
+      education: api.getEducation(), projects: api.getProjects(), skills: api.getSkills(), pages: api.getPages(), sections: api.getSections(), kart: api.getKart(),
     })
     expect(Object.isFrozen(c)).toBe(true)
   })
@@ -59,6 +59,9 @@ describe('public API (7.2)', () => {
     expect(api.getPage('about').sections.map((s) => s.id)).toEqual(['about', 'education', 'skills', 'contact'])
     expect(api.getPage('nope')).toBeNull()
     expect(api.getHomeHref()).toBe('/')
+    expect(api.getKartHref()).toBe('/kart/')
+    expect(api.getKart().stops).toHaveLength(8)
+    expect(api.getHead({ kind: 'kart', page: null, canonicalPath: null })).toMatchObject({ title: 'Grand Prix | Andrew Leick', robots: 'index', jsonLd: null })
     expect(api.getSectionHref('contact')).toBe('/about/#contact')
     expect(api.resolveRoute('/projects')).toMatchObject({ kind: 'page', canonicalPath: '/projects/' })
     const head = api.getHead(api.resolveRoute('/experience/'))

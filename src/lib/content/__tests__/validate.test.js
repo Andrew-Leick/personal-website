@@ -371,3 +371,21 @@ describe('validator: fanArt and guides (v3 8.2)', () => {
     expect(errors.map((e) => e.message)).toEqual(['page id "fonts" clashes with public/fonts'])
   })
 })
+
+describe('validator: kart (v5 7.2)', () => {
+  const stop = (i, extra = {}) => ({ id: `stop-${i}`, label: `STOP ${i}+`, text: 'A fact that is long enough to show.', ref: 'experience', ...extra })
+  const kart = (n = 4, extra = {}) => ({ title: 'Grand Prix', description: 'Drive one lap of a kart course and pick up facts about Jane along the way.', stops: Array.from({ length: n }, (_, i) => stop(i)), ...extra })
+  const withKart = (k) => run((r) => { r.kart = k })
+
+  test('a valid kart passes', () => {
+    expect(withKart(kart()).errors).toEqual([])
+  })
+  test('stop count, label charset, text length and refs are checked', () => {
+    expect(withKart(kart(2)).errors.map((e) => e.path)).toEqual(['stops'])
+    expect(withKart(kart(13)).errors.map((e) => e.path)).toEqual(['stops'])
+    expect(withKart(kart(3, { stops: [stop(0, { label: 'lower' }), stop(1), stop(2)] })).errors.map((e) => e.path)).toEqual(['stops[0].label'])
+    expect(withKart(kart(3, { stops: [stop(0, { text: 'short' }), stop(1), stop(2)] })).errors.map((e) => e.path)).toEqual(['stops[0].text'])
+    expect(withKart(kart(3, { stops: [stop(0, { ref: 'nowhere' }), stop(1), stop(2)] })).errors.map((e) => e.path)).toEqual(['stops[0].ref'])
+    expect(withKart(kart(3, { stops: [stop(0), stop(0), stop(2)] })).errors.map((e) => e.path)).toEqual(['stops[1].id'])
+  })
+})
