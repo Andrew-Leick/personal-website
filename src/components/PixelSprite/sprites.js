@@ -1,6 +1,6 @@
-// Original pixel-art sprites (egg, menu cursor, "more" arrow, the owner's trainer). Drawn for this
-// project. The three guide Pokémon are PNG files in public/sprites/. The grids are the source
-// of truth: do not edit them without a spec change (except the trainer, which is the owner's to customize).
+// Original pixel-art UI sprites (egg, menu cursor, "more" arrow). Drawn for this project. The
+// three guide Pokémon are PNG files in public/sprites/. The grids are the source of truth: do not
+// edit them without a spec change. The owner's trainer lives in trainer.js (loaded only by About).
 
 import { DEX_POKEMON } from '../../lib/content/index.js'
 
@@ -39,97 +39,6 @@ const DEFS = {
   more: {
     grid: ['ooooooo', '.ooooo.', '..ooo..', '...o...'],
     palette: { o: 'currentColor' },
-  },
-  // The owner's trainer (SPEC-v6 P-05): based on the Gen 4 (HeartGold/SoulSilver) trainer sprite of
-  // Ethan, in Stanford colors (cardinal cap with a white block "S", cardinal jacket, Stanford black and
-  // cool grey), with brown hair and a hand-drawn face (rows 0-14) as a starting point to customize. It
-  // is fan art like the Pokémon, so it only shows with site.fanArt on. Edit the grid and the
-  // --sprite-trainer-* colors in tokens.css freely (36x65; keep every row 36 characters).
-  trainer: {
-    grid: [
-      '.............aaaaaaaa...............',
-      '...........aaddnnndddaa.............',
-      '..........addddnddddddda............',
-      '.........adddddnnndddddda...........',
-      '.........adddddddndddddda...........',
-      '.........adddddnnndddddda...........',
-      '........abbbbbbbbbbbbbbbba..........',
-      '........aBEEEmmmmmmmmEEEBa..........',
-      '........aBEmmEEmmmmEEmmEBa..........',
-      '........aBEmmanmmmmanmmEBa..........',
-      '........aBEmmaammmmaammEBa..........',
-      '........aBEmmmmmjmmmmmmEBa..........',
-      '..........ammmmmmmmmmmma............',
-      '...........ajmmmggmmmja.............',
-      '............aajmmmmjaa..............',
-      '.....aaaa..ajjmmmmmma...............',
-      '....agjmha..ajhnhmja................',
-      '...ahfhmjmaaaccmjgca................',
-      '..ahjjjjjjaabegjjcbba...............',
-      '..ajhjmhma.agnihchiia...............',
-      '.aechhjaaa.annnijcilnaa.............',
-      'afeacca.....ainnbbbgnnia............',
-      'afa.abbaaaaaaadinbilniaca...........',
-      '.acadddcdddca.adacaaea.adaa.........',
-      '.aaaaacaaddda.aacdccba.accca........',
-      '.....aa..aaccaaacdddcaadccca........',
-      '...........acdceecffffdcddda........',
-      '.........aaigdfciiccffdcaddda.......',
-      '.........aiigdffciigdfaa.addda......',
-      '..........aggcdddbeeaa.aaaaadda.....',
-      '...........acdccddba.aaa....affaa...',
-      '...........acdddccccaaaa....adfdca..',
-      '...........acdddcccccaa.....adfdca..',
-      '...........agdddddccdda......afdea..',
-      '...........alnidddccddda.....adbegaa',
-      '...........aeinnnaaaaaa.......abjjja',
-      '...........aeebea......a......ajjjja',
-      '..........aeeebeeaaaaaaa.......ammja',
-      '..........aeebeeeebbebebaaa....amjca',
-      '..........aeebeeeebbbbebbaa....ajga.',
-      '..........abbeeeeaeebbbba.......aaa.',
-      '..........aeeeeea.aebeeea...........',
-      '.........aeeeeeea..aeeeebaa.........',
-      '........aeeeeeea...aeeeebba.........',
-      '........aeeeeea....aeeeebba.........',
-      '.......aeeeeeea.....aeeeebba........',
-      '.......aeeeeeea......aeeebba........',
-      '.......abaeeeea......aeeebba........',
-      '.......aa.aaea.......aeaaaaa........',
-      '.......aea..aa........a.............',
-      '.....aajbaaaa..........aaaaaa.......',
-      '....agmja.aa............abga........',
-      '....ajmmma..............ajjma.......',
-      '...ajmmmja..............ajmma.......',
-      '...ajmmma...............ammma.......',
-      '...ajmma................ammma.......',
-      '...amma..................ajmma......',
-      '..ammja..................agjma......',
-      '..addda...................andda.....',
-      '..addca...................ailddaaa..',
-      '..ajjga...................ailjjjjga.',
-      '...alla...................aiinndfja.',
-      '...adda...................aaaaiddja.',
-      '...ajfda......................aaaaa.',
-      '..aaaaaa............................',
-    ],
-    palette: {
-      a: OUTLINE,
-      b: 'var(--sprite-trainer-charcoal-dark)',
-      e: 'var(--sprite-trainer-charcoal)',
-      c: 'var(--sprite-trainer-jacket-shade)',
-      d: 'var(--sprite-trainer-jacket)',
-      f: 'var(--sprite-trainer-jacket-light)',
-      g: 'var(--sprite-trainer-skin-shadow)',
-      j: 'var(--sprite-trainer-skin-shade)',
-      m: 'var(--sprite-trainer-skin)',
-      h: 'var(--sprite-trainer-tan)',
-      i: 'var(--sprite-trainer-gray)',
-      l: 'var(--sprite-trainer-gray-light)',
-      n: 'var(--sprite-trainer-white)',
-      B: 'var(--sprite-trainer-hair-shade)',
-      E: 'var(--sprite-trainer-hair)',
-    },
   },
 }
 

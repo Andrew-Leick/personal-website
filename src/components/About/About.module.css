@@ -19,13 +19,104 @@
 }
 
 /*
- * The pixel trainer (SPEC-v6 P-05): 36x65 cells at 3px a cell (108x195), whole pixels only, so it
+ * The pixel trainer (SPEC-v6 P-05): 108x195 cells at 1px a cell, whole pixels only, so it
  * stays crisp. It sits beside the text from 480px and above it on
  * the narrowest phones.
  */
 .avatar {
-  width: calc(36 * 3px);
-  height: calc(65 * 3px);
+  display: block;
+  width: 108px;
+  height: 195px;
+}
+
+/* The trainer is a button (the Konami tip); the bubble pops out beside its head. */
+.trainer {
+  position: relative;
+  inline-size: fit-content;
+}
+
+.trainerButton {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+}
+
+/* Above the trainer's head, its tail coming down to it. */
+.bubble {
+  position: absolute;
+  inset-block-end: calc(100% - var(--space-8));
+  inset-inline-start: 60%;
+  z-index: 1;
+  inline-size: max-content;
+  max-inline-size: min(15rem, 70vw);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  transform-origin: 0 100%;
+}
+
+.bubble[hidden] {
+  display: none;
+}
+
+/* The tail, pointing down-left at the trainer's head. */
+.bubble::after {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: var(--space-3);
+  border: var(--space-2) solid transparent;
+  border-block-start-color: var(--color-dialog-border);
+  border-inline-start-color: var(--color-dialog-border);
+  content: "";
+}
+
+/* The code on its own line, in the body font (the display font draws ↑ ↓ twice as wide as ← →). */
+.code {
+  display: block;
+  margin-block: var(--space-1);
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+/*
+ * From 80rem (1280px) the page margin left of the column has room for it: the bubble sits to the
+ * trainer's left, level with his head, its tail pointing right at him. Narrower, it stays above.
+ */
+@media (min-width: 80rem) {
+  .bubble {
+    inset-block: 0 auto;
+    inset-inline: auto calc(100% + var(--space-3));
+    max-inline-size: 13rem;
+    transform-origin: 100% 0;
+  }
+
+  .bubble::after {
+    inset-block-start: var(--space-4);
+    inset-inline-start: 100%;
+    border-block-start-color: transparent;
+    border-inline-start-color: var(--color-dialog-border);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bubble:not([hidden]) {
+    animation: bubble-pop 240ms steps(4, end);
+  }
+}
+
+@keyframes bubble-pop {
+  from { opacity: 0; scale: 0.5; }
+}
+
+@media print {
+  .bubble {
+    display: none;
+  }
 }
 
 @media (min-width: 480px) {

@@ -19,10 +19,10 @@
   grid-template-rows: auto minmax(0, 1fr);
   container-type: inline-size;
   gap: var(--space-4);
-  /* A tall clamshell, like the anime's Kanto Pokédex (and a phone): 2 wide by 3 tall. As wide as
-     the column allows, up to 30rem, and never taller than most of the viewport. */
-  inline-size: min(100%, 30rem, calc(85svh * 2 / 3));
-  aspect-ratio: 2 / 3;
+  /* A tall clamshell, like the anime's Kanto Pokédex (and a phone): 5 wide by 7 tall. As wide as
+     the column allows, up to 34rem, and never taller than most of the viewport. */
+  inline-size: min(100%, 34rem, calc(85svh * 5 / 7));
+  aspect-ratio: 5 / 7;
   min-width: 0;
   min-block-size: 0;
   margin-inline: auto;
@@ -92,12 +92,17 @@
     inset 0 calc(-1 * var(--border-width-thick)) 0 var(--dex-body-dark);
 }
 
-/* On the red cover the focus ring is white (the theme's blue is 1.17:1 on red). */
+/* On the red cover the focus ring is white (the theme's blue is 1.17:1 on red). The key keeps
+   clear of the hinge band on the left, with the same room on the right so it stays centered. */
 .cover {
   --color-focus-ring: var(--dex-ink);
   display: grid;
   place-items: center;
-  padding: var(--space-4);
+  padding: var(--space-4) calc(var(--dex-hinge-width) + var(--space-4));
+}
+
+.cover .key {
+  padding-inline: var(--space-5);
 }
 
 .lid {
@@ -362,6 +367,14 @@
 .label {
   font-weight: var(--weight-bold);
   /* Long names wrap to 3 lines ("Georgia Tech Research Institute 2023"): body leading. */
+  line-height: var(--leading-normal);
+  overflow-wrap: anywhere;
+}
+
+/* The role under a work tile's label: secondary, so the organization stays the tile's name. */
+.role {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
   line-height: var(--leading-normal);
   overflow-wrap: anywhere;
 }

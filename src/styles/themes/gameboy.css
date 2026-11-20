@@ -62,6 +62,7 @@
     --sprite-egg-shell: var(--pk-gb-lightest);
     --sprite-egg-spot: var(--pk-gb-light);
     --sprite-trainer-charcoal-dark: var(--pk-gb-darkest);
+    --sprite-trainer-charcoal-mid: var(--pk-gb-darkest);
     --sprite-trainer-charcoal: var(--pk-gb-dark);
     --sprite-trainer-jacket-shade: var(--pk-gb-darkest);
     --sprite-trainer-jacket: var(--pk-gb-dark);
@@ -69,12 +70,11 @@
     --sprite-trainer-skin-shadow: var(--pk-gb-dark);
     --sprite-trainer-skin-shade: var(--pk-gb-light);
     --sprite-trainer-skin: var(--pk-gb-lightest);
-    --sprite-trainer-tan: var(--pk-gb-dark);
     --sprite-trainer-gray: var(--pk-gb-light);
-    --sprite-trainer-gray-light: var(--pk-gb-lightest);
     --sprite-trainer-white: var(--pk-gb-lightest);
     --sprite-trainer-hair-shade: var(--pk-gb-darkest);
     --sprite-trainer-hair: var(--pk-gb-dark);
+    --sprite-trainer-hair-light: var(--pk-gb-light);
     --sprite-glow-fire-soft: rgb(136 192 112 / 0.25);
     --sprite-glow-fire: rgb(136 192 112 / 0.7);
   }

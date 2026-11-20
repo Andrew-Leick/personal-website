@@ -110,7 +110,9 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
   const list = DEXES[screen] ? dex[DEXES[screen]] : []
   const shown = entry === null ? null : list[entry]
   const sprite = (e) => (fanArt && e.pokemon) || 'egg'
-  const label = (e) => (e.kind === 'work' ? `${e.subtitle} ${e.start.slice(0, 4)}` : e.name)
+  // Work tiles: organization and years ("FIRST Robotics 2020–2024"; one year when it starts and ends in it).
+  const years = (e) => [...new Set([e.start, e.end].filter(Boolean).map((d) => d.slice(0, 4)))].join('–')
+  const label = (e) => (e.kind === 'work' ? `${e.subtitle} ${years(e)}` : e.name)
   const key = (text, onClick, props) => (
     <button type="button" className={styles.key} onClick={onClick} {...props}>
       {text}
@@ -182,6 +184,7 @@ export default function Pokedex({ dex, fanArt, headingLevel = 3 }) {
                 <PixelSprite name={sprite(e)} className={styles.sprite} />
                 <span className={styles.number}>{formatDexNumber(e.number)}</span>
                 <span className={styles.label}>{label(e)}</span>
+                {e.kind === 'work' && <span className={styles.role}>{e.name}</span>}
               </button>
             </li>
           ))}

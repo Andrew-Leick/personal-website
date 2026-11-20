@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { prefersReducedMotion } from '../../lib/motion.js'
 import DialogBox from '../DialogBox/DialogBox.jsx'
 import Icon from '../Icon/Icon.jsx'
-import { LinkList } from '../LinkButton/LinkButton.jsx'
+import LinkButton from '../LinkButton/LinkButton.jsx'
 import ResumeLink from '../ResumeLink/ResumeLink.jsx'
 import styles from './Contact.module.css'
 
@@ -109,10 +109,19 @@ export default function Contact({ profile, links }) {
         {announcement}
       </p>
 
-      <div className={styles.actions}>
-        <ResumeLink href={profile.resumeUrl} />
-        <LinkList links={links} variant="outline" label="Profiles and contact links" />
-      </div>
+      {/* One list, so Resume, GitHub, LinkedIn and email share a line and wrap only when they must. */}
+      <ul className={styles.actions} aria-label="Resume, profiles and contact links">
+        {profile.resumeUrl && (
+          <li>
+            <ResumeLink href={profile.resumeUrl} />
+          </li>
+        )}
+        {links.map((link) => (
+          <li key={link.id}>
+            <LinkButton link={link} variant="outline" />
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

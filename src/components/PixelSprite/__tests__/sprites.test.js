@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { DEX_POKEMON, GUIDE_IDS } from '../../../lib/content/index.js'
 import { BALL_HINGE, BALL_SEAM, BALL_SPRITE, ballClip, GUIDE_NAMES, GUIDE_SPRITES, GUIDE_TYPES, IMAGE_SIZES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
+import { TRAINER } from '../trainer.js'
 
 // SPEC-v3 5.2 expected table.
 const EXPECTED = {
@@ -20,19 +21,19 @@ function countKeys(grid) {
 
 describe('sprites', () => {
   it('defines exactly the expected sprites', () => {
-    expect(Object.keys(SPRITE_DEFS).sort()).toEqual([...Object.keys(EXPECTED), 'trainer'].sort())
+    expect(Object.keys(SPRITE_DEFS).sort()).toEqual(Object.keys(EXPECTED).sort())
   })
 
   // The trainer is the owner's to customize (SPEC-v6 P-05), so it is checked by shape, not by exact counts.
+  // It lives in trainer.js, outside SPRITES, so only About's on-demand chunk carries it.
   describe('trainer', () => {
-    const def = SPRITE_DEFS.trainer
+    const def = TRAINER
     const filled = def.grid.join('').replace(/\./g, '').length
 
-    it('is 36x65 with uniform rows (About shows it at 3x: 108x195)', () => {
-      for (const row of def.grid) expect(row.length).toBe(36)
-      expect(def.grid.length).toBe(65)
-      expect(SPRITES.trainer.width).toBe(36)
-      expect(SPRITES.trainer.height).toBe(65)
+    it('is 108x195 with uniform rows (About shows it at 1px a cell)', () => {
+      for (const row of def.grid) expect(row.length).toBe(108)
+      expect(def.grid.length).toBe(195)
+      expect(SPRITES.trainer).toBeUndefined()
     })
 
     it('uses only palette keys, all sprite tokens', () => {

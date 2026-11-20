@@ -187,6 +187,13 @@
 }
 
 /* Hover or focus on the hero slot wiggles its ball (BallLink sets data-hover). */
+/* Hidden while its starter is out of it in the hero (useJourneyScroll sets [data-starter-out]);
+ * no fade on the way out, so the ball never shows over the starter on load. */
+.mover[data-starter-out] .ball {
+  opacity: 0;
+  transition: none;
+}
+
 .mover[data-hover] .ball {
   animation: ball-wiggle 600ms steps(6, end) infinite;
 }

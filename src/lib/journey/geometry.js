@@ -17,6 +17,9 @@ export function heroProgress(scrollY, travel) {
   return clamp(scrollY / travel)
 }
 
+/** Progress after a hold: 0 until `p` passes `hold`, then 0 to 1 over the rest. */
+export const afterHold = (p, hold) => (hold > 0 ? clamp((p - hold) / (1 - hold)) : clamp(p))
+
 /**
  * Progress of ball `index` of `count`. Later balls start a little later, so the balls
  * leave the hero one after another. Every ball still ends at 1 when `p` reaches 1.

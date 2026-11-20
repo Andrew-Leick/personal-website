@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { arcLift, arcPoint, spinAngle, ballTransform, clamp, easeInOut, heroProgress, lerp, pickActive, staggered, staggerOrder, tilt, trackProgress } from '../geometry.js'
+import { afterHold, arcLift, arcPoint, spinAngle, ballTransform, clamp, easeInOut, heroProgress, lerp, pickActive, staggered, staggerOrder, tilt, trackProgress } from '../geometry.js'
 
 describe('basics', () => {
   test('clamp and lerp', () => {
@@ -7,6 +7,13 @@ describe('basics', () => {
     expect(clamp(2)).toBe(1)
     expect(clamp(0.4)).toBe(0.4)
     expect(lerp(10, 20, 0.5)).toBe(15)
+  })
+  test('afterHold waits for the hold, then runs 0 to 1 over the rest', () => {
+    expect(afterHold(0.1, 0.12)).toBe(0)
+    expect(afterHold(0.12, 0.12)).toBe(0)
+    expect(afterHold(0.56, 0.12)).toBeCloseTo(0.5)
+    expect(afterHold(1, 0.12)).toBe(1)
+    expect(afterHold(0.3, 0)).toBe(0.3)
   })
   test('easeInOut keeps its ends and midpoint', () => {
     expect(easeInOut(0)).toBe(0)

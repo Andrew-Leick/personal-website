@@ -1,11 +1,12 @@
 .contact {
   display: grid;
   gap: var(--space-6);
-  max-width: var(--measure);
 }
 
-/* The contact line is a dialog box, like the hero's prompt (SPEC-v6 P-09). */
+/* The contact line is a dialog box, like the hero's prompt (SPEC-v6 P-09). The measure caps
+ * its line length; the link row below uses the whole column, so its buttons share a line. */
 .blurbBox {
+  max-width: var(--measure);
   padding: var(--space-4) var(--space-5);
 }
 
@@ -79,6 +80,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  list-style: none;
 }
 
 /* Copied: the copy icon cross-fades to a check mark (the incoming icon grows in from a quarter

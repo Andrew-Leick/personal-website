@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Check gzip sizes of the production build against REQ-402.
 // Usage: npm run build && node scripts/check-size.mjs
+// Budgets count what the first load downloads (REQ-402 "initial"): the assets index.html references.
+// Chunks loaded on demand (React.lazy, e.g. About's trainer sprite) are listed but not counted.
 // Budgets: JS <= 95 KB gzip total (90 until v5.1, raised for the Pokédex flow), CSS <= 15 KB gzip total, and
 // fonts <= 32 KB raw (woff2 is already compressed), initial transfer (index.html + JS + CSS + fonts, excluding images and the resume PDF) <= 150 KB gzip.
 
@@ -23,12 +25,15 @@ if (!existsSync(join(DIST, 'index.html'))) {
 
 const assetsDir = join(DIST, 'assets')
 const assets = existsSync(assetsDir) ? readdirSync(assetsDir) : []
+const html = readFileSync(join(DIST, 'index.html'), 'utf8')
 const rows = []
 for (const name of assets) {
   const ext = extname(name)
   if (ext !== '.js' && ext !== '.css') continue
   const full = join(assetsDir, name)
-  rows.push({ file: `assets/${name}`, kind: ext.slice(1), raw: readFileSync(full).length, gzip: gz(full) })
+  // Not referenced by index.html (script, modulepreload or stylesheet): loaded on demand.
+  const kind = html.includes(`assets/${name}`) ? ext.slice(1) : 'lazy'
+  rows.push({ file: `assets/${name}`, kind, raw: readFileSync(full).length, gzip: gz(full) })
 }
 const fontsDir = join(DIST, 'fonts')
 if (!existsSync(fontsDir)) {
@@ -45,13 +50,15 @@ const htmlPath = join(DIST, 'index.html')
 rows.push({ file: 'index.html', kind: 'html', raw: readFileSync(htmlPath).length, gzip: gz(htmlPath) })
 
 const sum = (kind) => rows.filter((r) => !kind || r.kind === kind).reduce((a, r) => a + r.gzip, 0)
-const totals = { js: sum('js'), css: sum('css'), font: sum('font'), total: sum() }
+const totals = { js: sum('js'), css: sum('css'), font: sum('font'), total: sum() - sum('lazy') }
 
 const pad = (s, n) => String(s).padEnd(n)
 const lpad = (s, n) => String(s).padStart(n)
 const w = Math.max(30, ...rows.map((r) => r.file.length)) + 2
 console.log(`${pad('File', w)}${lpad('Raw', 12)}${lpad('Gzip', 12)}`)
-for (const r of rows) console.log(`${pad(r.file, w)}${lpad(fmt(r.raw), 12)}${lpad(fmt(r.gzip), 12)}`)
+for (const r of rows) {
+  console.log(`${pad(r.file, w)}${lpad(fmt(r.raw), 12)}${lpad(fmt(r.gzip), 12)}${r.kind === 'lazy' ? '  (on demand, not counted)' : ''}`)
+}
 console.log('')
 console.log(`${pad('Budget', w)}${lpad('Used', 12)}${lpad('Limit', 12)}  Result`)
 let failed = false

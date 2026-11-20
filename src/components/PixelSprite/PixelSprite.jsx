@@ -25,6 +25,11 @@ export default function PixelSprite({ name, className }) {
   }
   const sprite = SPRITES[name]
   if (!sprite) return null
+  return <SvgSprite name={name} sprite={sprite} className={className} />
+}
+
+/** An inline-SVG sprite from its { width, height, paths } (sprites.js toPaths). Decorative. */
+export function SvgSprite({ name, sprite, className }) {
   return (
     <svg
       className={className}

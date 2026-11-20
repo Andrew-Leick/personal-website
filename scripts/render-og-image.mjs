@@ -19,7 +19,7 @@ const port = 9400 + Math.floor(Math.random() * 400)
 
 const profile = JSON.parse(readFileSync(join(root, 'src/data/profile.json'), 'utf8'))
 const tokens = readFileSync(join(root, 'src/styles/tokens.css'), 'utf8')
-const sprites = readFileSync(join(root, 'src/components/PixelSprite/sprites.js'), 'utf8')
+const trainer = readFileSync(join(root, 'src/components/PixelSprite/trainer.js'), 'utf8')
 
 /** A token's literal value from tokens.css (the primitives and sprite colors are plain hex). */
 const token = (name) => {
@@ -28,9 +28,9 @@ const token = (name) => {
   return m[1]
 }
 
-/** The trainer sprite as an SVG, from its grid and palette in sprites.js (SPEC-v6 P-05). */
+/** The trainer sprite as an SVG, from its grid and palette in trainer.js (SPEC-v6 P-05). */
 function trainerSvg(scale) {
-  const block = sprites.slice(sprites.indexOf('  trainer: {'))
+  const block = trainer.slice(trainer.indexOf('export const TRAINER = {'))
   const grid = [...block.slice(0, block.indexOf('],')).matchAll(/'([^']+)'/g)].map((m) => m[1])
   const palette = Object.fromEntries(
     [...block.slice(block.indexOf('palette: {'), block.indexOf('},', block.indexOf('palette: {'))).matchAll(/(\w): (OUTLINE|'var\((--[a-z-]+)\)')/g)].map(
@@ -64,7 +64,7 @@ body { width: 1200px; height: 630px; overflow: hidden; background: ${token('--pk
 .more { position: absolute; right: 26px; bottom: 18px; width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent;
   border-top: 14px solid ${token('--pk-red')}; }
 </style></head><body><div class="card">
-<div class="top">${trainerSvg(4)}<div><div class="name">${profile.name}</div><div class="headline">${profile.headline}</div></div></div>
+<div class="top">${trainerSvg(1)}<div><div class="name">${profile.name}</div><div class="headline">${profile.headline}</div></div></div>
 <div class="dialog"><div class="prompt">Choose your starter</div><div class="party">
 ${['charmander', 'bulbasaur', 'squirtle'].map((n) => `<img src="${file(`sprites/${n}.png`)}" alt="">`).join('')}
 </div><div class="more"></div></div>

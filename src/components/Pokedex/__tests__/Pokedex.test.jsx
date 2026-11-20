@@ -99,8 +99,10 @@ describe('Pokedex', () => {
     expect($('[role="region"]').getAttribute('aria-labelledby')).toBe('pokedex-entry-heading')
   })
 
-  it('a dex is a grid of Pokémon: sprite, number and a label naming the entry', () => {
-    render(makeDex(2, 1))
+  it('a dex is a grid of Pokémon: sprite, number, a label naming the entry and the role', () => {
+    const dex = makeDex(2, 1)
+    dex.work[1] = { ...dex.work[1], start: '2020-08', end: '2024-05' }
+    render(dex)
     click($('#pokedex-open'))
     click($('#pokedex-pick-experience'))
     expect(focused().id).toBe('pokedex-experience-heading')
@@ -108,9 +110,12 @@ describe('Pokedex', () => {
     const [first, second] = tiles()
     expect(first.querySelector('img').dataset.sprite).toBe('pikachu')
     expect(second.querySelector('svg').dataset.sprite).toBe('egg') // no pokemon: the egg
-    expect(first.textContent).toBe('#001Org w0 2025')
+    // Organization and years, then the role on its own line; a span of years shows as a range.
+    expect(first.textContent).toBe('#001Org w0 2025work w0')
+    expect(second.textContent).toBe('#002Org w1 2020–2024work w1')
     // The name starts with the visible text, then the role; no stray space before the comma.
     expect(first.getAttribute('aria-label')).toBe('#001 Org w0 2025, work w0')
+    expect(second.getAttribute('aria-label')).toBe('#002 Org w1 2020–2024, work w1')
     expect($('#pokedex-experience')).not.toBeNull() // the screen is the #pokedex-{view} target
   })
 

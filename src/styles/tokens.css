@@ -57,19 +57,19 @@
   /* The owner's trainer (SPEC-v6 P-05): Stanford Cardinal #8C1515, Black #2E2D29, Cool Grey #53565A,
      white, brown hair; the owner customizes them */
   --sprite-trainer-charcoal-dark: #2E2D29;
+  --sprite-trainer-charcoal-mid: #403F3B;
   --sprite-trainer-charcoal: #53565A;
   --sprite-trainer-jacket-shade: #5E0B0B;
   --sprite-trainer-jacket: #8C1515;
   --sprite-trainer-jacket-light: #B83A3A;
-  --sprite-trainer-skin-shadow: #92726B;
-  --sprite-trainer-skin-shade: #D29E7E;
+  --sprite-trainer-skin-shadow: #7A3B2E;
+  --sprite-trainer-skin-shade: #D99A74;
   --sprite-trainer-skin: #FAD0B9;
-  --sprite-trainer-tan: #A4792E;
   --sprite-trainer-gray: #A8A0B6;
-  --sprite-trainer-gray-light: #D5C7D0;
   --sprite-trainer-white: #F4F4F4;
   --sprite-trainer-hair-shade: #4A2E1A;
   --sprite-trainer-hair: #7A4A24;
+  --sprite-trainer-hair-light: #A8703C;
 
   /* Pokédex device (same in every theme: it is an object, like the sprites). Only the screens
      follow the theme. White on body 5.88:1, white on key 6.90:1, white on key hover 5.62:1. */

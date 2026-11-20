@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import {
+  afterHold,
   arcLift,
   ballTransform,
   clamp,
@@ -11,7 +12,7 @@ import {
   tilt,
   trackProgress,
 } from '../lib/journey/geometry.js'
-import { hop } from '../lib/journey/openBall.js'
+import { closeBall, hop, openBall, resetBall } from '../lib/journey/openBall.js'
 import { setCurrentIntro, tickIntros } from '../lib/journey/intros.js'
 import { autoScrollTarget, isAutoScrolling, onGlideEnd } from '../lib/journey/state.js'
 import { prefersReducedMotion } from '../lib/motion.js'
@@ -21,6 +22,43 @@ import { replaceFromScroll } from '../router/history.js'
 const ACTIVE_LINE = 0.4
 /** Keyframes sampled per ball for the compositor-driven glide. */
 const SAMPLES = 24
+/** The hero's starters are out while the hero has scrolled less than this share of its travel. */
+const STARTERS_LINE = 0.02
+/** With starters, the balls hold over their slots for this share of the travel while the
+ * starters go back in, then glide. */
+const STARTERS_HOLD = 0.12
+
+/**
+ * One hero starter goes back into its ball (`out` false) or comes out of it (`out` true).
+ * `animate` false sets the end state at once (first frame, reduced motion). A newer swap
+ * cancels an older one mid-sequence ([data-in] on the slot, [data-starter-out] on the ball).
+ */
+const starterGen = new WeakMap()
+export function swapStarter(b, out, animate) {
+  const parts = { ball: b.ballPart, lid: b.lid, flash: b.heroFlash, pokemon: b.heroPokemon }
+  const gen = (starterGen.get(b.heroSlot) ?? 0) + 1
+  starterGen.set(b.heroSlot, gen)
+  const current = () => starterGen.get(b.heroSlot) === gen
+  resetBall(parts)
+  if (out) {
+    b.heroSlot.removeAttribute('data-in')
+    if (!animate) {
+      b.mover?.setAttribute('data-starter-out', '')
+      return
+    }
+    // The ball opens over the slot and fades as the starter pops out; then it stays hidden.
+    b.mover?.removeAttribute('data-starter-out')
+    openBall(parts).then(() => {
+      if (!current()) return
+      b.mover?.setAttribute('data-starter-out', '')
+      resetBall(parts)
+    })
+    return
+  }
+  b.heroSlot.setAttribute('data-in', '')
+  b.mover?.removeAttribute('data-starter-out')
+  if (animate) closeBall(parts).then(() => current() && resetBall(parts))
+}
 
 const supportsScrollTimeline = () => typeof window !== 'undefined' && typeof window.ScrollTimeline === 'function'
 
@@ -32,6 +70,9 @@ const supportsScrollTimeline = () => typeof window !== 'undefined' && typeof win
  *   the balls never trail the page; otherwise one rAF per frame writes the transforms;
  * - fades the hero slot's ghost in and its label down as each ball leaves (--leave, written
  *   on the ghost and label elements themselves);
+ * - sends the hero's starters back into their balls once the page leaves the top (the
+ *   opening in reverse) and brings them out again at the top; the balls hold over their
+ *   slots for the first part of the scroll so the recall shows before they glide;
  * - writes --journey-p (glide progress, fades in the track and dock) on the dock and track
  *   elements, and --journey-progress (piecewise: reaches ball i as section i becomes active)
  *   on the fill element;
@@ -69,13 +110,16 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
     const fillEl = rail.querySelector('[data-rail-fill]')
     let frame = 0
     let docked = null
+    let startersOut = null
     let active = null
     let m = null // measurements, refreshed on resize / content changes
     let compositor = [] // ScrollTimeline animations, one per ball
 
     const reduced = () => prefersReducedMotion()
     const maxScroll = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
-    const ballT = (p, rank) => (reduced() ? (p < 0.5 ? 0 : 1) : easeInOut(staggered(p, rank, ids.length)))
+    // With starters in the hero, the balls wait over their slots while the starters go back in.
+    const glideP = (p) => afterHold(p, m?.starters.length ? STARTERS_HOLD : 0)
+    const ballT = (p, rank) => (reduced() ? (p < 0.5 ? 0 : 1) : easeInOut(staggered(glideP(p), rank, ids.length)))
 
     /** Transform for ball `b` when the page is scrolled `s` px and the ball is `t` of the way. */
     function transformAt(b, s, t) {
@@ -102,6 +146,11 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
           heroGhost: heroSlot?.firstElementChild ?? null,
           heroLabel: heroSlot?.closest('a')?.querySelector('[data-leave-label]') ?? null,
           heroDoc: heroRect ? { x: heroRect.left, y: heroRect.top + scrollY, width: heroRect.width } : null,
+          heroSlot,
+          heroPokemon: heroSlot?.querySelector('[data-part="pokemon"]') ?? null,
+          heroFlash: heroSlot?.querySelector('[data-part="flash"]') ?? null,
+          ballPart: query('data-rail-ball', id)?.querySelector('[data-part="ball"]') ?? null,
+          lid: query('data-rail-ball', id)?.querySelector('[data-part="top"]') ?? null,
           link: rail.querySelector(`[data-rail-link="${id}"]`),
           section: document.getElementById(id),
           lastT: -1,
@@ -133,7 +182,7 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
         rail.style.setProperty('--track-length', `${Math.abs(to - from)}px`)
       }
 
-      m = { balls, travel }
+      m = { balls, travel, starters: balls.filter((b) => b.heroPokemon && b.ballPart) }
       buildCompositor()
     }
 
@@ -193,6 +242,14 @@ export default function useJourneyScroll({ pages, homeHref, railRef }) {
         }
         writeVar(b.heroGhost, '--leave', t)
         writeVar(b.heroLabel, '--leave', t)
+      }
+
+      // The hero's starters: out at the top, back in their balls once the page scrolls.
+      const out = p <= STARTERS_LINE
+      if (m.starters.length && out !== startersOut) {
+        const animate = startersOut !== null && !reduced()
+        startersOut = out
+        m.starters.forEach((b) => swapStarter(b, out, animate))
       }
 
       const isDocked = p >= 1
