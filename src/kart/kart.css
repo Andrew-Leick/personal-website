@@ -132,3 +132,6 @@ a:hover { color: var(--color-link-hover); }
   .kart-ov *, .kart-ov span { animation: none !important; }
   .kart-lines, .kart-flash { display: none; }
 }
+
+/* Touch screens get on-screen buttons; the keyboard help does not apply there. */
+@media (pointer: coarse) { .kart-help { display: none; } }

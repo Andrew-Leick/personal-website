@@ -66,8 +66,12 @@ export function createInput({ touchRoot = null, autoGas = false } = {}) {
         b.addEventListener('click', () => (edges.pause = true))
       } else {
         b.addEventListener('pointerdown', (e) => {
-          b.setPointerCapture?.(e.pointerId)
           touch.add(action)
+          try {
+            b.setPointerCapture?.(e.pointerId)
+          } catch {
+            // Capture is a nicety (keeps the press if the finger slides off); never lose the press.
+          }
         })
         for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(type, () => touch.delete(action))
       }

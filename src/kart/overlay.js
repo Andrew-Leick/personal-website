@@ -16,7 +16,7 @@ export function createOverlay(topEl) {
   /** Re-creates the text node's wrapper so the CSS step animation replays. */
   const pop = (host, text) => host.replaceChildren(text ? h('span', null, text) : '')
   const showPanel = (...kids) => {
-    panel.replaceChildren(...kids)
+    panel.replaceChildren(...kids.filter((kid) => kid != null && kid !== false))
     panel.hidden = false
   }
   let bannerText = null

@@ -86,7 +86,10 @@ function boot() {
   let boosting = false
 
   if (import.meta.env.DEV) window.kartDebug = { kart, game, tracker, COURSE } // QA hook for headless runs; stripped from builds
-  onThemeChange((t) => scene.setTheme(t))
+  onThemeChange((t) => {
+    scene.setTheme(t)
+    scene.render() // repaint now: the loop does not render while paused or on the title
+  })
   scene.setGates(Array.from({ length: GATES_PER_LAP }, (_, slot) => ({ slot, boxes: gateBoxes(slot), heading: gatePose(slot).heading })))
 
   /** Show each slot's boxes when the current lap has a stop at it (MK-style respawn per lap). */
