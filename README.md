@@ -26,7 +26,7 @@ npm run dev        # http://localhost:5173
 | `npm run validate` | Validate `src/data/*.json`; placeholders are warnings |
 | `npm run validate:strict` | Same, but `TODO:` placeholders are errors (the deploy runs this) |
 | `npm run check:links` | Request every URL in the data, and check every page and section link resolves to a route |
-| `npm run check:size` | Size budget for `dist/` (JS ≤ 90 KB gzip, CSS ≤ 15 KB gzip, fonts ≤ 32 KB raw, initial transfer incl. fonts ≤ 150 KB) |
+| `npm run check:size` | Size budget per HTML entry in `dist/`. Main site (`index.html`): JS ≤ 90 KB gzip, CSS ≤ 15 KB gzip, fonts ≤ 32 KB raw, initial transfer incl. fonts ≤ 150 KB. Kart page (`kart/index.html`): JS ≤ 220 KB gzip (three.js), CSS ≤ 5 KB gzip; its models load at runtime and don't count. |
 | `npm run check:routes` | After a build: every page has `dist/{id}/index.html` with the right `<title>` and canonical, `404.html` is `noindex`, the sitemap lists Home and every page, and no file differs from `index.html` outside the head. Uses `BASE_PATH` like the build. |
 | `npm run sync:github` | Refresh `src/data/generated/github.json` (stars, language) for projects with `githubRepo` |
 | `npm run ci` | lint + test + validate + build + check:size + check:routes |
@@ -38,6 +38,7 @@ npm run dev        # http://localhost:5173
 - Routing: clean URLs with the History API. The build writes a real HTML file per page (`dist/experience/index.html`, ...) with that page's title, description and canonical, so every URL returns 200 on GitHub Pages; `dist/404.html` (noindex) covers unknown paths. In the browser a small router (frontend, `src/router/`) takes over.
 - `scripts/vite-plugin-content.js`: injects the per-page `<title>`, meta, Open Graph and (Home only) JSON-LD tags and the `<noscript>` fallback into `index.html`, following the request URL in dev. It validates content during build and dev, writes the per-page HTML files and `404.html`, and emits `robots.txt`, `sitemap.xml` and `CNAME`.
 - `scripts/*.mjs`: validate, check-links, check-size, check-routes, sync-github.
+- **Grand Prix (`/kart/`, v5)**: a Mario Kart DS-style minigame on its own Vite entry, `kart/index.html` → `src/kart/main.js` (plain ES modules + three.js, no React), so the main site downloads none of it. Its copy is `src/data/kart.json` (see `docs/CONTENT-GUIDE.md`), read through the same content API. The site links to it from the header and footer nav (`kartItem` in `src/App.jsx`) and the hero's "Take the scenic route". Plan: `docs/spec/SPEC-v5-kart.md`.
 - `.github/workflows/ci.yml`: runs `npm run ci` on pull requests and non-main branches.
 - `.github/workflows/deploy.yml`: runs on pushes to `main`. It does `validate:strict` and `ci`, then deploys to GitHub Pages.
 
@@ -49,7 +50,14 @@ npm run dev        # http://localhost:5173
 
 `public/sprites/` holds the guide Pokémon (96×96 pixel art) and the Poké Ball (`poke-ball.png`, the 90×90 Dream World item art), both from the PokeAPI sprites repository. They are Nintendo / Creatures / GAME FREAK artwork used as fan art; the footer carries the trademark notice and `site.fanArt: false` hides them all. Show the Pokémon pixelated (`image-rendering: pixelated`), at whole-number scales where possible (the section headers use 1.25×); the Poké Ball is smooth art and scales freely.
 
+## Kart models
+
+`public/kart/models/{mario,kart,itembox,course}/` holds the Mario Kart DS models (Mario, his Standard kart, the item box and Figure-8 Circuit), from The Models Resource. They are Nintendo assets used for a personal, non-commercial minigame; sources and the download date are in `public/kart/models/CREDITS.txt`. Keep that file in sync if you add or replace a model.
+
 ## Deploy (GitHub Pages)
+
+**Kart caveat:** the deploy workflow publishes on every push to `main`, and that includes the Nintendo models under `public/kart/`. If they should stay local, don't merge the kart branch into `main` until that's decided. The build itself is the same either way.
+
 
 One-time setup, done by Andrew (agents don't create repos or push):
 

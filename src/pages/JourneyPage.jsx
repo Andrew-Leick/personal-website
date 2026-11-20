@@ -3,6 +3,7 @@ import BallLink from '../components/BallLink/BallLink.jsx'
 import BallRail from '../components/BallRail/BallRail.jsx'
 import DialogBox from '../components/DialogBox/DialogBox.jsx'
 import { LinkList } from '../components/LinkButton/LinkButton.jsx'
+import linkStyles from '../components/LinkButton/LinkButton.module.css'
 import PageSections from '../components/PageSections/PageSections.jsx'
 import PixelSprite from '../components/PixelSprite/PixelSprite.jsx'
 import { GUIDE_TYPES } from '../components/PixelSprite/sprites.js'
@@ -10,7 +11,7 @@ import PokeBall from '../components/PokeBall/PokeBall.jsx'
 import ResumeLink from '../components/ResumeLink/ResumeLink.jsx'
 import useJourneyScroll from '../hooks/useJourneyScroll.js'
 import useSectionReveal from '../hooks/useSectionReveal.js'
-import { getHomeHref } from '../lib/content/index.js'
+import { getHomeHref, getKartHref } from '../lib/content/index.js'
 import homeStyles from './HomePage.module.css'
 import pageStyles from './Page.module.css'
 import styles from './JourneyPage.module.css'
@@ -89,6 +90,9 @@ export default function JourneyPage({ content }) {
           <div className={homeStyles.actions}>
             <ResumeLink href={profile.resumeUrl} />
             <LinkList links={heroLinks} variant="outline" compact label="Profiles" />
+            <a href={getKartHref()} className={`pixel-button ${linkStyles.link} ${linkStyles.outline}`}>
+              Take the scenic route
+            </a>
           </div>
         </div>
       </section>

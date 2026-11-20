@@ -1,4 +1,4 @@
-import { getHomeHref, getSiteContent } from './lib/content/index.js'
+import { getHomeHref, getKartHref, getSiteContent } from './lib/content/index.js'
 import SiteFooter from './components/SiteFooter/SiteFooter.jsx'
 import SiteHeader from './components/SiteHeader/SiteHeader.jsx'
 import SkipLink from './components/SkipLink/SkipLink.jsx'
@@ -20,7 +20,9 @@ export default function App() {
 
   const homeHref = getHomeHref()
   const pageItems = pages.map((page) => ({ id: page.id, href: page.href, label: page.label }))
-  const navItems = [{ id: 'home', href: homeHref, label: 'Home' }, ...pageItems]
+  // v5: a separate entry (/kart/), never a journey section; Link does a full navigation to it.
+  const kartItem = { id: 'kart', href: getKartHref(), label: 'Grand Prix' }
+  const navItems = [{ id: 'home', href: homeHref, label: 'Home' }, ...pageItems, kartItem]
   const currentId = route.kind === 'home' ? 'home' : route.kind === 'page' ? route.page.id : null
 
   // v4 journey: Home and every page are one document. It must stay mounted while the
@@ -39,7 +41,7 @@ export default function App() {
       <SiteHeader
         name={profile.name}
         homeHref={homeHref}
-        pages={pageItems}
+        pages={[...pageItems, kartItem]}
         currentId={currentId}
         showThemeToggle={site.themeToggle}
         theme={theme}

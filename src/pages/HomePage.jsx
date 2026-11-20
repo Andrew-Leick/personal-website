@@ -1,7 +1,9 @@
 import DialogBox from '../components/DialogBox/DialogBox.jsx'
 import GuideLink from '../components/GuideLink/GuideLink.jsx'
 import { LinkList } from '../components/LinkButton/LinkButton.jsx'
+import linkStyles from '../components/LinkButton/LinkButton.module.css'
 import ResumeLink from '../components/ResumeLink/ResumeLink.jsx'
+import { getKartHref } from '../lib/content/index.js'
 import styles from './HomePage.module.css'
 
 /** Home (SPEC-v3 section 4): name, role, sprite guides, actions. Nothing else. */
@@ -32,6 +34,9 @@ export default function HomePage({ content }) {
         <div className={styles.actions}>
           <ResumeLink href={profile.resumeUrl} />
           <LinkList links={heroLinks} variant="outline" compact label="Profiles" />
+          <a href={getKartHref()} className={`pixel-button ${linkStyles.link} ${linkStyles.outline}`}>
+            Take the scenic route
+          </a>
         </div>
       </div>
     </section>

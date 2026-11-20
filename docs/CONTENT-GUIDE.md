@@ -10,6 +10,7 @@ Everything on the site comes from the JSON files in `src/data/`. To change the s
 | `src/data/education.json` | Degrees (a list) |
 | `src/data/skills.json` | Skill groups (a list) |
 | `src/data/links.json` | GitHub, LinkedIn, email and other profile links (a list) |
+| `src/data/kart.json` | The Grand Prix minigame (`/kart/`): its title, description and the facts in the item boxes |
 | `src/data/site.json` | Site URL, search description, theme, and the pages: which pages exist, their order, labels and which sections each shows |
 | `src/data/generated/github.json` | Written by `npm run sync:github`. Do not edit by hand. |
 
@@ -301,6 +302,32 @@ If you use a different file name, update `resumeUrl` to match. To hide the Resum
 
 ### Images
 Project screenshots: 1200x675 (16:9), WebP or AVIF, **150 KB or less**, under `public/content/images/`. To convert on a Mac you can use `cwebp -q 80 in.png -o out.webp` (from `brew install webp`), or any image editor that exports WebP.
+
+## Grand Prix (`src/data/kart.json`)
+
+The `/kart/` minigame reads its words from `src/data/kart.json`. Each stop is one row of item boxes on the course: driving through it shows the fact on the bottom screen, and the results list every stop with a "More" link to its section on the site.
+
+```json
+{
+  "title": "Grand Prix",
+  "description": "Drive Mario around Figure-8 Circuit and pick up facts about Andrew Leick from the item boxes.",
+  "stops": [
+    { "id": "stanford", "label": "STANFORD", "text": "B.S. Electrical Engineering at Stanford. GPA 3.83/4.0, graduating June 2028.", "ref": "education" }
+  ]
+}
+```
+
+- **Order** is race order. Each lap has 4 item box rows, so the number of laps is the number of stops divided by 4, rounded up (8 stops make 2 laps).
+- `title`: 1–24 characters. It becomes the page title ("Grand Prix | Andrew Leick").
+- `description`: 50–160 characters, used for search results and link previews.
+- `stops`: 3–12 entries (at most 3 laps).
+- `id`: a lowercase id, unique within the file.
+- `label`: 1–12 characters, shown in the race HUD. Uppercase letters, digits, spaces and `' & + . / -` only.
+- `text`: 20–110 characters, so it can be read in about 5 seconds while driving.
+- `ref`: the section the "More" link goes to. It must be a section placed on a shown page: `about`, `experience`, `projects`, `education`, `skills` or `contact`. Moving a section to another page updates the link automatically.
+- Facts must come from `docs/spec/CONTENT-FACTS.md`, like everything else on the site. `TODO:` placeholders follow the usual rules below.
+
+To add a fact, add a stop to the list; to reorder, move it. The header and footer link ("Grand Prix") lives in `src/App.jsx` (`kartItem`), not in the data.
 
 ## `TODO:` placeholders
 
