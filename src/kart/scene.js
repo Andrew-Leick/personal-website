@@ -3,6 +3,7 @@
  * 256×192, no AA, nearest-filtered textures, Lambert materials, chase camera.
  */
 import {
+  CircleGeometry,
   Color,
   DirectionalLight,
   Fog,
@@ -10,9 +11,11 @@ import {
   HemisphereLight,
   LoadingManager,
   Mesh,
+  MeshBasicMaterial,
   MeshLambertMaterial,
   NearestFilter,
   PerspectiveCamera,
+  Quaternion,
   Raycaster,
   Scene,
   SRGBColorSpace,
@@ -48,6 +51,18 @@ const BOX_SCALE = 3
 const BOX_HOVER = 2.4
 const BOX_OPACITY = 0.85
 const BURST_STEP = 0.05 // s per step, 6 steps
+
+// Driving pose, bone direction per joint (COLLADA ids: joint3/4 left arm A/B, joint5/6 right arm A/B).
+const DRIVE_POSE = {
+  joint3: [0.45, -0.05, 0.75],
+  joint4: [-0.3, 0.3, 1],
+  joint5: [-0.45, -0.05, 0.75],
+  joint6: [0.3, 0.3, 1],
+}
+const HEAD = 'joint2'
+const SHADOW_SIZE = [3.8, 5] // course units, kart footprint
+const SHADOW_LIFT = 0.08
+const HEAD_TURN = 0.3 // rad at full steer
 
 const BLINK_MIN = 3
 const BLINK_MAX = 5
@@ -100,6 +115,21 @@ function convert(root, extra) {
       ? o.material.map((m) => lambert(m, extra))
       : lambert(o.material, extra)
   })
+}
+
+/**
+ * Turn a bone so its +X axis (the bone direction in this rig) points along dir,
+ * given in Mario's model frame (+X his left, +Y up, +Z forward). Call before parenting Mario.
+ */
+function aimBone(bone, dir) {
+  const world = bone.getWorldQuaternion(new Quaternion())
+  const turn = new Quaternion().setFromUnitVectors(
+    new Vector3(1, 0, 0).applyQuaternion(world),
+    new Vector3(...dir).normalize(),
+  )
+  const parent = bone.parent.getWorldQuaternion(new Quaternion())
+  bone.quaternion.premultiply(parent.clone().invert().multiply(turn).multiply(parent))
+  bone.updateMatrixWorld(true)
 }
 
 async function loadObj(manager, dir, name) {
@@ -166,21 +196,37 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
   kartGroup.add(body)
   body.add(kartObj)
 
-  // Mario: skinned COLLADA in bind pose, seated in the kart.
+  // Mario: skinned COLLADA, re-posed once from the T-pose to hands on the wheel.
   const marioRoot = mario.scene
   convert(marioRoot, { alphaTest: 0.5 })
   let faceMat = null
+  const bones = {}
   marioRoot.traverse((o) => {
+    if (o.isBone) bones[o.name] = o
     if (o.isMesh) {
       for (const m of [o.material].flat()) if (m.name === 'P_face') faceMat = m
     }
   })
+  for (const [name, dir] of Object.entries(DRIVE_POSE)) if (bones[name]) aimBone(bones[name], dir)
+  const head = bones[HEAD]
+  const headRest = head?.quaternion.clone()
   const face1 = faceMat?.map ?? null
   pixelate(face2)
   marioRoot.position.fromArray(MARIO_POS)
   marioRoot.scale.setScalar(MARIO_SCALE)
   body.add(marioRoot)
+  // Blob shadow: a dark transparent oval on the ground, not leaning with the body.
+  const shadow = new Mesh(
+    new CircleGeometry(0.5, 10),
+    new MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4, depthWrite: false }),
+  )
+  shadow.rotation.x = -Math.PI / 2
+  shadow.position.y = SHADOW_LIFT
+  shadow.scale.set(SHADOW_SIZE[0], SHADOW_SIZE[1], 1)
+  kartGroup.add(shadow)
   scene.add(kartGroup)
+  const headTurn = new Quaternion()
+  const headAxis = new Vector3(1, 0, 0) // Mario's up, in the head's parent (body joint) frame
 
   // Item boxes: one shared geometry, one material per row (so a row can fade alone).
   /** @type {import('three').Mesh} */
@@ -234,6 +280,8 @@ export async function createScene(hostEl, { theme, reducedMotion }) {
       kartGroup.rotation.y = Math.PI / 2 - heading
       // Roll into the turn; the model's forward is local +Z.
       body.rotation.z = steer * LEAN_MAX
+      // Mario looks into the turn (steer +1 = right = his -X).
+      if (head) head.quaternion.copy(headRest).premultiply(headTurn.setFromAxisAngle(headAxis, -steer * HEAD_TURN))
       // 2-frame stepped bounce while bumping.
       body.position.y = bumpT > 0 && Math.floor(bumpT * 30) % 2 === 0 ? BOUNCE : 0
     },
