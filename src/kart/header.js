@@ -1,6 +1,6 @@
 // Kart page header and footer, mirroring SiteHeader / SiteFooter without React (SPEC-v5 V5-01, V5-15).
 
-const THEMES = ['light', 'dark'] // keep in sync with src/components/ThemeToggle/themes.js
+const THEMES = ['light', 'dark', 'gameboy'] // keep in sync with src/components/ThemeToggle/themes.js
 const STORAGE_KEY = 'theme' // same key and values as src/hooks/useTheme.js
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 const SVG_NS = 'http://www.w3.org/2000/svg'
@@ -72,7 +72,8 @@ function systemTheme() {
 }
 
 function currentTheme() {
-  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  const t = document.documentElement.dataset.theme
+  return THEMES.includes(t) ? t : 'light'
 }
 
 function applyTheme(theme) {
@@ -83,8 +84,8 @@ function applyTheme(theme) {
 }
 
 /**
- * Calls `cb('light'|'dark')` whenever `<html data-theme>` changes.
- * @param {(theme: 'light'|'dark') => void} cb
+ * Calls `cb('light'|'dark'|'gameboy')` whenever `<html data-theme>` changes.
+ * @param {(theme: 'light'|'dark'|'gameboy') => void} cb
  * @returns {() => void} unsubscribe
  */
 export function onThemeChange(cb) {

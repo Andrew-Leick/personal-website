@@ -1,0 +1,527 @@
+/*
+ * Pokédex (SPEC-v5.1), drawn as the device: a red clamshell body with a dark sprite outline and
+ * light/dark shading bands (the Poké Ball art's style), a big blue lens with three status
+ * lights, and one grey-bezelled screen with two red dots. Closed, a red cover with a hinge band
+ * hides the screen; Open swings it away (the lid, motion-safe only). Blue keys navigate. The
+ * device keeps its colors in every theme; the screen follows the theme, so all text pairs are
+ * the theme's own. Badges, title, links and image in the details reuse Projects.module.css.
+ */
+.dex {
+  /* Two red dots on the screen bezel's top edge. */
+  --dex-dot: radial-gradient(circle closest-side, var(--dex-led-red) 55%, var(--sprite-outline) 62% 88%, transparent 92%);
+  --dex-dot-size: calc(var(--dex-bezel-width) * 0.6);
+
+  display: grid;
+  /* minmax(0, 1fr) on the device and the screen: a long word wraps instead of widening them. */
+  grid-template-columns: minmax(0, 1fr);
+  /* Top bar, then the cover or screen filling the rest. The device never changes height:
+     long content scrolls inside the screen (.view) instead. */
+  grid-template-rows: auto minmax(0, 1fr);
+  container-type: inline-size;
+  gap: var(--space-4);
+  /* A tall clamshell, like the anime's Kanto Pokédex (and a phone): 5 wide by 7 tall. As wide as
+     the column allows, up to 34rem, and never taller than most of the viewport. */
+  inline-size: min(100%, 34rem, calc(85svh * 5 / 7));
+  aspect-ratio: 5 / 7;
+  min-width: 0;
+  min-block-size: 0;
+  margin-inline: auto;
+  padding: var(--space-4);
+  border: var(--border-width-thick) solid var(--sprite-outline);
+  border-radius: var(--radius-dialog);
+  background-color: var(--dex-body);
+  box-shadow:
+    inset 0 var(--border-width-thick) 0 var(--dex-body-light),
+    inset 0 calc(-2 * var(--border-width-thick)) 0 var(--dex-body-dark);
+}
+
+/* Top bar: lens and lights on the left, the name on the right, a dark seam under it. Too narrow
+   for both (320px), the name wraps under the lens instead of overflowing. */
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-end: var(--space-4);
+  border-block-end: var(--border-width-thick) solid var(--dex-body-dark);
+  color: var(--dex-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-display-sm);
+  line-height: var(--leading-display);
+  text-shadow: 0 var(--border-width-pixel) 0 var(--sprite-outline);
+}
+
+/*
+ * The lens, plus the three lights as shrunken copies of it (box-shadows with a negative
+ * spread), so the decoration needs no markup. --d is how much smaller a light is than the
+ * lens; each light sits top-aligned to its right.
+ */
+.title::before {
+  --d: calc((var(--dex-led-size) - var(--dex-lens-size)) / 2);
+  --x: calc(var(--dex-lens-size) / 2 + var(--space-3) + var(--dex-led-size) / 2);
+  --step: calc(var(--dex-led-size) + var(--space-2));
+  --ring: calc(var(--d) + var(--border-width-pixel));
+  flex: none;
+  inline-size: var(--dex-lens-size);
+  block-size: var(--dex-lens-size);
+  margin-inline-end: calc(2 * var(--space-3) + 3 * var(--dex-led-size) + 2 * var(--space-2));
+  border: var(--border-width-thick) solid var(--dex-ink);
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle at 34% 30%, var(--dex-lens-light) 0 12%, var(--dex-lens) 20% 55%, var(--dex-lens-dark) 78%);
+  box-shadow:
+    var(--x) var(--d) 0 var(--d) var(--dex-led-red),
+    calc(var(--x) + var(--step)) var(--d) 0 var(--d) var(--dex-led-yellow),
+    calc(var(--x) + 2 * var(--step)) var(--d) 0 var(--d) var(--dex-led-green),
+    var(--x) var(--d) 0 var(--ring) var(--sprite-outline),
+    calc(var(--x) + var(--step)) var(--d) 0 var(--ring) var(--sprite-outline),
+    calc(var(--x) + 2 * var(--step)) var(--d) 0 var(--ring) var(--sprite-outline),
+    0 0 0 var(--border-width-pixel) var(--sprite-outline);
+  content: "";
+}
+
+/* The closed cover and the lid that swings away share one look: red, outlined, a hinge band. */
+.cover,
+.lid {
+  border: var(--border-width-pixel) solid var(--sprite-outline);
+  border-radius: var(--radius-dialog);
+  background-color: var(--dex-body);
+  box-shadow:
+    inset var(--dex-hinge-width) 0 0 var(--dex-body-dark),
+    inset calc(var(--dex-hinge-width) + var(--border-width-pixel)) 0 0 var(--sprite-outline),
+    inset 0 calc(-1 * var(--border-width-thick)) 0 var(--dex-body-dark);
+}
+
+/* On the red cover the focus ring is white (the theme's blue is 1.17:1 on red). The key keeps
+   clear of the hinge band on the left, with the same room on the right so it stays centered. */
+.cover {
+  --color-focus-ring: var(--dex-ink);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4) calc(var(--dex-hinge-width) + var(--space-4));
+}
+
+.cover .key {
+  padding-inline: var(--space-5);
+}
+
+.lid {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Resting (open) end of the swing: turned away on its left hinge and faded out. Opening
+     transitions here: the turn takes 700ms, and the fade waits until 70% of it (490ms). */
+  .lid {
+    position: absolute;
+    inset: calc(-1 * var(--dex-bezel-width));
+    z-index: 1;
+    display: block;
+    transform-origin: left center;
+    pointer-events: none;
+    transform: perspective(80rem) rotateY(-120deg);
+    opacity: 0;
+    transition:
+      transform 700ms var(--ease-standard),
+      opacity 210ms var(--ease-standard) 490ms;
+  }
+
+  /* Opening starts flat over the screen. */
+  @starting-style {
+    .lid[data-state="open"] {
+      transform: perspective(80rem) rotateY(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* Closing: swings back flat over the screen (600ms), visible within the first 180ms, and
+     blocks clicks while it covers the screen. A transition, so a Close pressed mid-opening
+     turns the lid around from wherever it is. */
+  .lid[data-state="closing"] {
+    pointer-events: auto;
+    transform: perspective(80rem) rotateY(0deg);
+    opacity: 1;
+    transition:
+      transform 600ms var(--ease-standard),
+      opacity 180ms var(--ease-standard);
+  }
+
+  /* Closing from fully open (no lid mounted yet) starts at the open end. */
+  @starting-style {
+    .lid[data-state="closing"] {
+      transform: perspective(80rem) rotateY(-120deg);
+      opacity: 0;
+    }
+  }
+}
+
+/* The screen: a grey bezel with two red dots on top, a dark outline, the theme's surface inside. */
+.screen {
+  /* Deep links glide here; keep the device's top bar in view above it. */
+  scroll-margin-block-start: calc(var(--dex-lens-size) + var(--space-12));
+  position: relative;
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* The keys stay put; the view under them takes the rest of the fixed height and scrolls. */
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-4);
+  /* The bezel is background, not border color: a border paints over the background, dots included. */
+  border: var(--dex-bezel-width) solid transparent;
+  border-radius: var(--radius-dialog);
+  background:
+    var(--dex-dot) calc(50% - var(--space-3)) calc(var(--dex-bezel-width) * 0.2) / var(--dex-dot-size) var(--dex-dot-size) no-repeat border-box,
+    var(--dex-dot) calc(50% + var(--space-3)) calc(var(--dex-bezel-width) * 0.2) / var(--dex-dot-size) var(--dex-dot-size) no-repeat border-box,
+    linear-gradient(var(--color-dialog-bg) 0 0) padding-box,
+    var(--dex-bezel);
+  box-shadow: 0 0 0 var(--border-width-pixel) var(--sprite-outline);
+}
+
+/* Navigation row: the back key on the left, previous/next on the right in the showcase. */
+.bar,
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Close, the only key on the start screen, trails the bar. */
+.close {
+  margin-inline-start: auto;
+}
+
+/*
+ * The scrolling part of the screen. Padding (cancelled by a matching negative margin) keeps
+ * focus rings inside the scroll box, where they would otherwise be clipped. Shadows at the top
+ * and bottom edges show there is more to scroll: the "local" covers scroll with the content and
+ * hide each shadow once that edge is reached.
+ */
+.view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+  min-block-size: 0;
+  margin: calc(-1 * var(--space-2));
+  padding: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    linear-gradient(var(--color-dialog-bg) 30%, transparent) center top / 100% var(--space-8) no-repeat local,
+    linear-gradient(transparent, var(--color-dialog-bg) 70%) center bottom / 100% var(--space-8) no-repeat local,
+    radial-gradient(farthest-side at 50% 0, color-mix(in srgb, var(--color-text) 30%, transparent), transparent) center top / 100% var(--space-3) no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, color-mix(in srgb, var(--color-text) 30%, transparent), transparent) center bottom / 100% var(--space-3) no-repeat scroll;
+}
+
+/*
+ * One screen's content. A new page mounts on every step, and enters with a quick screen refresh:
+ * opacity only, in 3 pixel steps over 150ms (nothing moves; the reader is about to read it).
+ */
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+  transition: opacity 150ms steps(3, end);
+}
+
+@starting-style {
+  .page {
+    opacity: 0;
+  }
+}
+
+/* Blue device keys: outlined, a hard drop shadow, pressed in while held. */
+.key {
+  min-height: var(--target-min);
+  margin-block-end: var(--border-width-thick);
+  padding-inline: var(--space-3);
+  border: var(--border-width-pixel) solid var(--sprite-outline);
+  border-radius: var(--radius-md);
+  background-color: var(--dex-key);
+  box-shadow: 0 var(--border-width-thick) 0 var(--dex-key-dark);
+  color: var(--dex-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.key:not(:disabled):active {
+  transform: translateY(var(--border-width-pixel));
+  box-shadow: 0 var(--border-width-pixel) 0 var(--dex-key-dark);
+}
+
+/* Unavailable (first or last entry): faded and flat, never pressable. */
+.key:disabled {
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.45;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: var(--text-display-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-display);
+}
+
+/* Start screen: one large key per dex, with its entry count. */
+.choices {
+  display: grid;
+  gap: var(--space-3);
+  max-inline-size: 20rem;
+  list-style: none;
+}
+
+.choices .key {
+  display: flex;
+  justify-content: space-between;
+  inline-size: 100%;
+  font-size: var(--text-base);
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Start screen progress (SPEC-v6 P-07): like the games' SEEN / OWN counter. */
+.tally {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* The one-time "Pokédex complete!" banner above the showcase that completed it. */
+.complete {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-pixel) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-tag-bg);
+  color: var(--color-tag-text);
+  font-family: var(--font-display);
+  font-size: var(--text-display-sm);
+  line-height: var(--leading-display);
+}
+
+/* A dex: one Pokémon per entry. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--space-3);
+  list-style: none;
+}
+
+.tile {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: var(--space-1);
+  inline-size: 100%;
+  block-size: 100%;
+  padding: var(--space-2);
+  border: var(--border-width-pixel) solid transparent;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-text);
+  text-align: center;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+/* Pressed: drops 2px, like the device keys (instant, as every press on the site is). */
+.tile:active {
+  transform: translateY(var(--border-width-pixel));
+}
+
+@media (hover: hover) {
+  .key:not(:disabled):hover {
+    background-color: var(--dex-key-light);
+  }
+
+  .tile:hover {
+    border-color: var(--color-border);
+    background-color: var(--color-bg-subtle);
+  }
+}
+
+/* The Pokémon are 96px pixel art: whole-number scales only. */
+.sprite,
+.bigSprite {
+  inline-size: 96px;
+  block-size: 96px;
+  image-rendering: pixelated;
+}
+
+.number {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-weight: var(--weight-bold);
+  /* Long names wrap to 3 lines ("Georgia Tech Research Institute 2023"): body leading. */
+  line-height: var(--leading-normal);
+  overflow-wrap: anywhere;
+}
+
+/* The role under a work tile's label: secondary, so the organization stays the tile's name. */
+.role {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  overflow-wrap: anywhere;
+}
+
+/* Showcase: the Pokémon on its stage, then the details (side by side when there is room). */
+.showcase {
+  display: grid;
+  /* minmax(0, 1fr), not auto: long words in the heading wrap instead of widening the column. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  justify-self: start;
+  padding: var(--space-4);
+  border: var(--border-width-pixel) solid var(--color-border);
+  border-radius: var(--radius-dialog);
+  background-color: var(--color-bg-subtle);
+}
+
+/*
+ * Grid sprites at 2x: the PokeAPI art fills only 40–60% of its 96px canvas, so 1x reads small.
+ * The negative margins trim a sixth of the (transparent) canvas off each side, so the tile lays
+ * out a 128px sprite. The overflow is transparent but still part of the image, so it takes no
+ * clicks: a click there belongs to whichever tile is underneath.
+ */
+.tile .sprite {
+  inline-size: 192px;
+  block-size: 192px;
+  max-width: none; /* base.css caps images at 100%, which would scale this to an uneven size */
+  margin: -32px;
+  pointer-events: none;
+}
+
+@container (min-width: 24rem) {
+  .bigSprite {
+    inline-size: 192px;
+    block-size: 192px;
+  }
+}
+
+@container (min-width: 40rem) {
+  .showcase {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* The Pokédex description box (SPEC-v6 P-06): the games' flavor text, on the screen's subtle
+   surface inside a pixel border, in the body font. */
+.flavor {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-pixel) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text);
+  /* It can wrap to 3 lines on phones: body leading. */
+  line-height: var(--leading-normal);
+  text-wrap: pretty;
+}
+
+.sub {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Kind badge (Work or Project): its own color on text and border, always with its label. */
+.detail .type[data-kind="work"] {
+  border-color: currentColor;
+  color: var(--color-kind-work);
+}
+
+.detail .type[data-kind="project"] {
+  border-color: currentColor;
+  color: var(--color-kind-project);
+}
+
+/* Print: no device, every entry of both dexes in full (the screen hides via data-print). */
+@media print {
+  .dex {
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+
+  .title,
+  .cover {
+    display: none;
+  }
+
+  .print {
+    display: grid;
+    gap: var(--space-8);
+  }
+}
+
+/*
+ * Phones: the device is only as wide as the column, and its fixed 2:3 shape leaves little room,
+ * so its frame tightens and Previous / Next show only their arrows (the words stay as their
+ * accessible names), keeping the keys on one row above the scrolling view.
+ */
+@media (max-width: 479px) {
+  .dex {
+    --dex-bezel-width: 0.5rem;
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .title {
+    padding-block-end: var(--space-2);
+  }
+
+  .screen {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .bar,
+  .step {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+  }
+
+  .bar .key {
+    min-width: var(--target-min);
+    padding-inline: var(--space-2);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .stepText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

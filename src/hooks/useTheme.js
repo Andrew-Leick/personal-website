@@ -49,8 +49,17 @@ function syncThemeColorMeta() {
 }
 
 function applyTheme(theme) {
+  // Suppress transitions during the swap so controls do not cross-fade while
+  // the rest of the page snaps to the new colors. The theme toggle's icons
+  // (data-theme-icon) are exempt so they can cross-fade.
+  const style = document.createElement('style')
+  style.textContent = '*:not([data-theme-icon]), *::before, *::after { transition: none !important; }'
+  document.head.appendChild(style)
   document.documentElement.dataset.theme = theme
+  // Force a style flush so the new colors apply with transitions disabled.
+  void getComputedStyle(document.body).opacity
   syncThemeColorMeta()
+  requestAnimationFrame(() => style.remove())
 }
 
 /**
@@ -93,5 +102,12 @@ export default function useTheme(defaultTheme) {
     })
   }, [])
 
-  return { theme, toggleTheme }
+  /** Switch to a named theme (one of THEMES) and save the choice, e.g. the Konami Game Boy theme. */
+  const chooseTheme = useCallback((next) => {
+    if (!THEMES.includes(next)) return
+    writeSaved(next)
+    setTheme(next)
+  }, [])
+
+  return { theme, toggleTheme, setTheme: chooseTheme }
 }

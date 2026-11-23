@@ -30,13 +30,29 @@
 }
 
 .prompt {
+  inline-size: fit-content;
   margin-block-end: var(--space-3);
+  margin-inline: auto;
   padding-inline: var(--space-3);
   font-family: var(--font-display);
   font-size: var(--text-display-sm);
   font-weight: var(--weight-regular);
   line-height: var(--leading-display);
   letter-spacing: 0;
+}
+
+/* First load: the prompt types itself out like a Pokémon text box, one step per character of
+   "Choose your starter" (19). Clip-path only, so nothing shifts and the text is always readable
+   by screen readers. The ▼ in DialogBox waits for it (600ms delay). */
+@media (prefers-reduced-motion: no-preference) {
+  .prompt {
+    animation: prompt-type 600ms steps(19, end) both;
+  }
+}
+
+@keyframes prompt-type {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
 }
 
 .partyList {

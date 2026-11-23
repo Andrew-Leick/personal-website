@@ -39,7 +39,9 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-synthesis: none;
+  /* VT323 and Press Start 2P ship 400 only: never fake a bold. (Every weight token is 400, and
+     the fallback monospace fonts have real bold and italic faces.) */
+  font-synthesis-weight: none;
   font-size: var(--text-base);
   font-weight: var(--weight-regular);
   line-height: var(--leading-normal);
@@ -92,9 +94,15 @@ h3 {
   text-wrap: balance;
 }
 
+/* Keep a lone word off the last line of paragraphs and list items. */
+p,
+li {
+  text-wrap: pretty;
+}
+
 h1 {
   font-family: var(--font-body);
-  font-size: var(--text-4xl);
+  font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
   letter-spacing: 0;
@@ -145,9 +153,11 @@ h3 a {
   padding-block: var(--space-1);
 }
 
-a:hover {
-  color: var(--color-link-hover);
-  text-decoration-thickness: calc(var(--border-width) * 2);
+@media (hover: hover) {
+  a:hover {
+    color: var(--color-link-hover);
+    text-decoration-thickness: calc(var(--border-width) * 2);
+  }
 }
 
 time {
@@ -178,10 +188,15 @@ time {
   border: 0 !important;
 }
 
-/* v4 journey: room for the bottom dock (< 768px) so it never covers the footer. */
+/* v4 journey: room for the bottom dock (< 768px) so it never covers the footer, and
+   so a focused element scrolled into view never lands under it (WCAG 2.4.11). */
 @media (max-width: 767px) {
   body:has([data-rail-slot]) {
-    padding-block-end: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
+    padding-block-end: var(--dock-height);
+  }
+
+  html:has([data-rail-slot]) {
+    scroll-padding-block-end: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
   }
 }
 

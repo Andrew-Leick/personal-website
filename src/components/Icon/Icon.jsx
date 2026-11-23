@@ -80,6 +80,11 @@ const PATHS = {
       <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
     </g>
   ),
+  check: (
+    <g {...STROKE}>
+      <path d="M5 12.5 10 17.5 19 7" />
+    </g>
+  ),
 }
 
 export default function Icon({ name, className }) {

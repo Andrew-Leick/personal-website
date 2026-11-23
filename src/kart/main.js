@@ -1,8 +1,7 @@
 // Kart page boot (SPEC-v5 4.3, V5-03 to V5-16; v5.1 V5-20 to V5-27): content -> stops, header/footer,
 // frame, scene, state machine, loop. One "racer" per player: kart, progress, checkpoint splits, view.
 import './kart.css'
-import { getHomeHref, getKart, getKartHref, getSectionHref, getSiteContent } from '../lib/content/index.js'
-import { buildStops } from './stops.js'
+import data from 'virtual:kart-data' // site content resolved at build time (vite-plugin-content kartData)
 import { onThemeChange, renderFooter, renderHeader } from './header.js'
 import { fitFrame } from './layout.js'
 import { createOverlay } from './overlay.js'
@@ -41,10 +40,8 @@ function save(key, value) {
   }
 }
 
-const content = getSiteContent()
-const { profile, links, pages } = content
-const homeHref = getHomeHref()
-const stops = buildStops(getKart(), getSectionHref)
+const { homeHref, links, pages, stops } = data
+const profile = { name: data.name, resumeUrl: data.resumeUrl }
 const n = stops.length
 const cps = checkpointDists(COURSE.length, lapCount(n))
 const reducedMotion = media('(prefers-reduced-motion: reduce)')
@@ -64,7 +61,7 @@ let players = 1
 renderHeader($('header'), {
   name: profile.name,
   homeHref,
-  items: [...pages.map((p) => ({ id: p.id, href: p.href, label: p.label })), { id: 'kart', href: getKartHref(), label: 'Grand Prix' }],
+  items: [...pages.map((p) => ({ id: p.id, href: p.href, label: p.label })), { id: 'kart', href: data.kartHref, label: 'Grand Prix' }],
   currentId: 'kart',
 })
 renderFooter($('footer'), { name: profile.name, links, resumeUrl: profile.resumeUrl })
@@ -81,7 +78,7 @@ overlays[0].loading(true)
 let scene
 let ground
 try {
-  const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  const theme = document.documentElement.dataset.theme ?? 'light'
   scene = await createScene($('top'), { theme, reducedMotion })
   ground = createGround(scene.courseRoot)
 } catch (err) {

@@ -3,9 +3,9 @@
 //   comments) and <!-- content:noscript --> in index.html. In dev the head follows the request URL.
 // - Validates content at build start (fails the build on errors) and on every data edit in dev
 //   (errors go to the Vite error overlay; the page reloads once fixed).
-// - After the build, writes dist/{pageId}/index.html per shown page and dist/404.html: copies of
-//   dist/index.html with only the head block swapped.
-// - Emits robots.txt, sitemap.xml (home + every page) and, for a custom domain, CNAME.
+// - After the build, writes dist/{pageId}/index.html per shown page (and dist/{aliasId}/index.html
+//   with the same page's head) and dist/404.html: copies of dist/index.html with only the head block swapped.
+// - Emits robots.txt, sitemap.xml (home + every page; no aliases) and, for a custom domain, CNAME.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative, sep, resolve } from 'node:path'
@@ -14,12 +14,17 @@ import { formatIssue } from '../src/lib/content/validate.js'
 import { normalizeContent } from '../src/lib/content/normalize.js'
 import { isPlaceholder } from '../src/lib/content/placeholders.js'
 import { headFor } from '../src/lib/content/head.js'
-import { resolveRouteWithBase, NOT_FOUND_ROUTE } from '../src/lib/content/routes.js'
+import { resolveRouteWithBase, NOT_FOUND_ROUTE, sectionHrefOf } from '../src/lib/content/routes.js'
+import { buildStops } from '../src/kart/stops.js'
 
 const HEAD_MARKER = '<!-- content:head -->'
 const NOSCRIPT_MARKER = '<!-- content:noscript -->'
 export const HEAD_START = '<!-- content:head:start -->'
 export const HEAD_END = '<!-- content:head:end -->'
+// v5 kart page data as a build-time module, so /kart/ shares no code with the main site's bundle
+// (a shared chunk would split and grow the main bundle past its budget). SPEC-v5-kart 4.2.
+export const KART_DATA_ID = 'virtual:kart-data'
+const KART_DATA_RESOLVED = `\0${KART_DATA_ID}`
 const HEAD_BLOCK_RE = /<!-- content:head:start -->[\s\S]*?<!-- content:head:end -->/
 const HOME_ROUTE = { kind: 'home', page: null, canonicalPath: null }
 const KART_ROUTE = { kind: 'kart', page: null, canonicalPath: null }
@@ -157,6 +162,23 @@ export function renderSitemap(c) {
   )
 }
 
+/**
+ * Everything the kart page shows from the site content, resolved with the build base.
+ * @param {import('../src/lib/content/types.js').SiteContent} c normalized with { baseUrl: base }
+ * @param {string} base
+ */
+export function kartData(c, base) {
+  return {
+    homeHref: base,
+    kartHref: `${base}kart/`,
+    name: c.profile.name,
+    resumeUrl: c.profile.resumeUrl,
+    links: c.links,
+    pages: c.pages.map((p) => ({ id: p.id, href: p.href, label: p.label })),
+    stops: buildStops(c.kart, (id) => sectionHrefOf(id, c)),
+  }
+}
+
 /** Dev request URL -> pathname (query and hash removed). */
 export function requestPath(url) {
   if (typeof url !== 'string' || !url) return '/'
@@ -172,8 +194,12 @@ class ContentError extends Error {
   }
 }
 
-/** @returns {import('vite').Plugin} */
-export function contentPlugin() {
+/**
+ * @param {{ kartOnly?: boolean }} [options] kartOnly: the second build (`vite build --mode kart`) only adds
+ *   /kart/ to dist/; robots, sitemap, CNAME and the per-page HTML come from the site build
+ * @returns {import('vite').Plugin}
+ */
+export function contentPlugin({ kartOnly = false } = {}) {
   let base = '/'
   let command = 'serve'
   let outDir = 'dist'
@@ -230,8 +256,21 @@ export function contentPlugin() {
       return null
     },
 
+    resolveId(id) {
+      return id === KART_DATA_ID ? KART_DATA_RESOLVED : null
+    },
+
+    load(id) {
+      if (id !== KART_DATA_RESOLVED) return null
+      const { content, result } = state && state.content ? state : load()
+      if (!content) this.error(new ContentError(formatReport(result)))
+      return `export default ${JSON.stringify(kartData(content, base))}`
+    },
+
     handleHotUpdate(ctx) {
       if (!isDataFile(ctx.file)) return undefined
+      const kartMod = ctx.server.moduleGraph.getModuleById(KART_DATA_RESOLVED)
+      if (kartMod) ctx.server.moduleGraph.invalidateModule(kartMod)
       const { result } = load()
       if (result.errors.length) {
         const report = formatReport(result)
@@ -271,6 +310,7 @@ export function contentPlugin() {
     },
 
     generateBundle() {
+      if (kartOnly) return
       const content = state && state.content ? state.content : load().content
       if (!content) return
       const siteUrl = content.site.siteUrl
@@ -287,6 +327,7 @@ export function contentPlugin() {
     // REQ-940 to REQ-942: one static HTML file per shown page plus 404.html, each a copy of the
     // built index.html with only the head block swapped, so asset URLs (absolute with base) match.
     writeBundle(options) {
+      if (kartOnly) return
       const content = state && state.content ? state.content : load().content
       if (!content) return
       const dir = options && options.dir ? options.dir : outDir
@@ -294,9 +335,12 @@ export function contentPlugin() {
       if (!existsSync(indexPath)) return
       const html = readFileSync(indexPath, 'utf8')
       for (const page of content.pages) {
-        const route = { kind: 'page', page, canonicalPath: null }
-        mkdirSync(join(dir, page.id), { recursive: true })
-        writeFileSync(join(dir, page.id, 'index.html'), swapHead(html, renderHead(content, route)))
+        const pageHtml = swapHead(html, renderHead(content, { kind: 'page', page, canonicalPath: null }))
+        // V5-08: aliases get the target page's HTML so the host serves them with a 200.
+        for (const id of [page.id, ...page.aliases.map((a) => a.id)]) {
+          mkdirSync(join(dir, id), { recursive: true })
+          writeFileSync(join(dir, id, 'index.html'), pageHtml)
+        }
       }
       writeFileSync(join(dir, '404.html'), swapHead(html, renderHead(content, NOT_FOUND_ROUTE)))
     },

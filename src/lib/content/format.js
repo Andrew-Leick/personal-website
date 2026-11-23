@@ -59,3 +59,8 @@ export function formatDateRange(start, end, options = {}) {
   if (start === end && !expected && isValidDate(start)) return s
   return `${s} – ${endText}`
 }
+
+/** Pokédex number: 1 -> "#001", 1000 -> "#1000". */
+export function formatDexNumber(n) {
+  return `#${String(n).padStart(3, '0')}`
+}

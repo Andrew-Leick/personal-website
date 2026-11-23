@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Check gzip sizes of the production build against REQ-402, per HTML entry (SPEC-v5-kart 4.2).
 // Usage: npm run build && node scripts/check-size.mjs
-// Main site: JS <= 90 KB gzip, CSS <= 15 KB gzip, fonts <= 32 KB raw (woff2 is already compressed),
+// Main site: JS <= 95 KB gzip (90 until v5.1, raised for the Pokédex flow), CSS <= 15 KB gzip, fonts <= 32 KB raw (woff2 is already compressed),
 // initial transfer (index.html + JS + CSS + fonts, excluding images and the resume PDF) <= 150 KB gzip.
-// Kart page (/kart/): JS <= 220 KB gzip (three.js), CSS <= 5 KB gzip. Its models load at runtime.
+// Kart page (/kart/): JS <= 220 KB gzip (three.js), CSS <= 6 KB gzip (5 until the Game Boy theme). Its models load at runtime.
 // An entry counts the scripts, modulepreloads and stylesheets its HTML references, so shared
-// chunks count toward both and the kart's chunks never count toward the main site.
+// chunks count toward both and the kart's chunks never count toward the main site. Chunks loaded on
+// demand (React.lazy, e.g. About's trainer sprite) are referenced by no HTML file, so they are not counted.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, extname } from 'node:path'
@@ -14,8 +15,8 @@ import { ROOT } from './lib/content-files.mjs'
 import { entryAssets } from './lib/entry-assets.mjs'
 
 const KB = 1024
-export const BUDGETS = { js: 90 * KB, css: 15 * KB, font: 32 * KB, total: 150 * KB }
-export const KART_BUDGETS = { js: 220 * KB, css: 5 * KB }
+export const BUDGETS = { js: 95 * KB, css: 15 * KB, font: 32 * KB, total: 150 * KB }
+export const KART_BUDGETS = { js: 220 * KB, css: 6 * KB }
 
 const DIST = join(ROOT, process.argv[2] ?? 'dist')
 const gz = (file) => gzipSync(readFileSync(file), { level: 9 }).length

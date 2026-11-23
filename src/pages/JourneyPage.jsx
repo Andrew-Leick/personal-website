@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import BallLink from '../components/BallLink/BallLink.jsx'
 import BallRail from '../components/BallRail/BallRail.jsx'
 import DialogBox from '../components/DialogBox/DialogBox.jsx'
@@ -12,18 +12,40 @@ import ResumeLink from '../components/ResumeLink/ResumeLink.jsx'
 import useJourneyScroll from '../hooks/useJourneyScroll.js'
 import useSectionReveal from '../hooks/useSectionReveal.js'
 import { getHomeHref, getKartHref } from '../lib/content/index.js'
+import { hop } from '../lib/journey/openBall.js'
 import homeStyles from './HomePage.module.css'
 import pageStyles from './Page.module.css'
 import styles from './JourneyPage.module.css'
 
+/** How long the "!" bubble shows after a Pokémon is clicked (SPEC-v6 P-10). */
+const EMOTE_MS = 900
+
 /**
- * Section title with its intro (useSectionReveal): an empty dashed slot that the rail throws
- * a Poké Ball into; it opens to reveal the page's Pokémon while the underline draws across.
+ * Section title with its intro (useSectionReveal): a dashed slot that the rail throws a Poké
+ * Ball into as soon as it comes on screen (the ring shows with that throw, never while the ball
+ * rests in the rail); the ball opens to reveal the page's Pokémon while the underline draws across.
  * At rest, and without JS, the Pokémon and the full underline are simply shown.
  */
 function JourneySection({ page, content }) {
   const guide = content.site.fanArt && page.guide ? page.guide : null
   const headingId = `${page.id}-heading`
+  const emoteTimer = useRef(0)
+  useEffect(() => () => clearTimeout(emoteTimer.current), [])
+
+  // A little delight (SPEC-v6 P-10): a hatched Pokémon hops and shows "!" when clicked. Decorative
+  // and pointer-only on purpose: it carries no information and starts nothing, and the intro
+  // stays aria-hidden. Nothing happens while the header is still waiting for its ball.
+  function cheer(event) {
+    const pokemon = event.currentTarget
+    const intro = pokemon.closest('[data-intro]')
+    if (!intro || intro.closest('h2')?.hasAttribute('data-pending')) return
+    hop(pokemon.querySelector('img'), 12)
+    intro.removeAttribute('data-emote')
+    void intro.offsetWidth // restart the bubble on a quick second click
+    intro.setAttribute('data-emote', '')
+    clearTimeout(emoteTimer.current)
+    emoteTimer.current = setTimeout(() => intro.removeAttribute('data-emote'), EMOTE_MS)
+  }
   return (
     <section
       id={page.id}
@@ -38,9 +60,10 @@ function JourneySection({ page, content }) {
             <span className={styles.slotRing} />
             <PokeBall className={styles.introBall} />
             <span className={styles.flash} data-part="flash" />
-            <span className={styles.pokemon} data-part="pokemon">
+            <span className={styles.pokemon} data-part="pokemon" onClick={cheer}>
               <PixelSprite name={guide} className={styles.pokemonImg} />
             </span>
+            <span className={styles.emote}>!</span>
           </span>
         )}
         <span className={styles.label} data-part="label">

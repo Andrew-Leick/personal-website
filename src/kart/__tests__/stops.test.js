@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { getKart, getSectionHref } from '../../lib/content/index.js'
+import { loadAndValidate } from '../../../scripts/lib/content-files.mjs'
+import { normalizeContent } from '../../lib/content/normalize.js'
+import { sectionHrefOf } from '../../lib/content/routes.js'
 import { buildStops } from '../stops.js'
 
 describe('buildStops', () => {
   it('maps the shipped kart.json in order, every stop linked', () => {
-    const kart = getKart()
-    const stops = buildStops(kart, getSectionHref)
+    const content = normalizeContent(loadAndValidate().raw)
+    const kart = content.kart
+    const stops = buildStops(kart, (id) => sectionHrefOf(id, content))
     expect(stops.map((s) => s.id)).toEqual(kart.stops.map((s) => s.id))
     for (const stop of stops) {
       expect(Object.keys(stop)).toEqual(['id', 'label', 'text', 'href'])

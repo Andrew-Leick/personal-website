@@ -3,7 +3,7 @@
 
 /** @typedef {{ siteUrl: string, title: string, description: string, locale: string,
  *   ogImage: string|null, ogImageAlt: string|null, defaultTheme: string, themeToggle: boolean,
- *   fanArt: boolean, layout: 'journey'|'pages' }} Site  // fanArt: false hides all Pokémon sprites (default true); layout default 'journey'
+ *   fanArt: boolean, pokedex: boolean }} Site  // fanArt: false hides all Pokémon sprites (default true); pokedex default false
  *   // ogImage is resolved with BASE_URL */
 
 /** @typedef {{ id: 'about'|'experience'|'projects'|'education'|'skills'|'contact',
@@ -16,10 +16,13 @@
  *   href: string,                                // BASE_URL + path, e.g. "/experience/"
  *   label: string, guide: 'charmander'|'bulbasaur'|'squirtle'|null, blurb: string, description: string,
  *   teaser: string|null, index: string,          // "01", "02", ... among shown pages
- *   sections: Section[], hasLead: boolean }} Page */
+ *   sections: Section[], hasLead: boolean,
+ *   aliases: { id: string, path: string, hash: string|null }[] }} Page
+ *   // aliases: extra URLs that open this page, e.g. { id: "projects", path: "projects/", hash: "pokedex-projects" } (hash without "#") */
 
 /** @typedef {{ kind: 'home'|'page'|'kart'|'not-found', page: Page|null,
- *   canonicalPath: string|null }} Route
+ *   canonicalPath: string|null, hash: string|null }} Route
+ *   // hash: "#pokedex-projects" when an alias with a hash resolved this route; null otherwise
  *   // canonicalPath: the normalized full pathname (with base) the router should show,
  *   //   e.g. "/experience/" for input "/experience" or "/experience/index.html"; null for not-found */
 
@@ -31,8 +34,9 @@
 
 /** @typedef {{ name: string, headline: string, summary: string, about: string[],
  *   currently: string|null, location: string|null, availability: string|null,
- *   email: string, contactBlurb: string|null, resumeUrl: string|null, photo: Image|null }} Profile
- *   // resumeUrl resolved with BASE_URL */
+ *   email: string, contactBlurb: string|null, resumeUrl: string|null, photo: Image|null,
+ *   avatar: 'trainer'|null }} Profile
+ *   // resumeUrl resolved with BASE_URL; avatar: the pixel trainer About shows when there is no photo (v6) */
 
 /** @typedef {{ id: string, kind: 'github'|'linkedin'|'email'|'website'|'scholar'|'other',
  *   label: string, url: string, showInHero: boolean, isExternal: boolean }} Link */
@@ -41,7 +45,8 @@
  *   employmentType: string|null,          // display form: "Internship", "Full-time", ...
  *   location: string|null, start: string, end: string|null,
  *   dateLabel: string,                     // formatDateRange(start, end)
- *   summary: string|null, highlights: string[], technologies: string[] }} Experience */
+ *   summary: string|null, highlights: string[], technologies: string[],
+ *   pokemon: string|null, dexText: string|null }} Experience   // pokemon: one of DEX_POKEMON (v5.1); dexText: Pokédex flavor line (v6) */
 
 /** @typedef {{ id: string, institution: string, institutionUrl: string|null,
  *   degree: string, field: string, minor: string|null,
@@ -61,12 +66,32 @@
  *   highlights: string[], technologies: string[],
  *   links: { repo: string|null, demo: string|null, writeup: string|null },
  *   primaryUrl: string|null,               // demo ?? repo ?? writeup ?? null
- *   githubStats: GithubStats|null, image: Image|null }} Project */
+ *   githubStats: GithubStats|null, image: Image|null,
+ *   pokemon: string|null, dexText: string|null }} Project      // pokemon: one of DEX_POKEMON (v5.1); dexText: Pokédex flavor line (v6) */
 
 /** @typedef {{ id: string, name: string, items: string[] }} SkillGroup */
 
+/** @typedef {{ key: string,               // "work:<id>" | "project:<id>"; DOM ids use it with ':' -> '-'
+ *   kind: 'work'|'project', id: string,
+ *   number: number,                        // 1-based within its dex (experience or projects)
+ *   name: string,                          // experience.role | project.title
+ *   subtitle: string|null,                 // experience.organization | project.contextLabel
+ *   subtitleUrl: string|null,              // experience.organizationUrl | null
+ *   dateLabel: string|null, start: string|null, end: string|null,
+ *   typeLabel: 'Work'|'Project',
+ *   tagLabel: string|null,                 // experience.employmentType | project.statusLabel
+ *   featured: boolean,                     // false for work
+ *   summary: string|null, role: string|null,           // role: project.role only
+ *   highlights: string[], technologies: string[],
+ *   links: { repo: string|null, demo: string|null, writeup: string|null }|null,  // null for work
+ *   primaryUrl: string|null, githubStats: GithubStats|null, image: Image|null,
+ *   pokemon: string|null, dexText: string|null }} DexEntry   // pokemon: the sprite (null shows the egg); dexText: flavor line (v6) */
+
+/** @typedef {{ work: DexEntry[], projects: DexEntry[] }} Dex */
+
 /** @typedef {{ site: Site, profile: Profile, links: Link[], experience: Experience[],
- *   education: Education[], projects: Project[], skills: SkillGroup[], pages: Page[], sections: Section[], kart: Kart|null }} SiteContent */
+ *   education: Education[], projects: Project[], skills: SkillGroup[], pages: Page[], sections: Section[],
+ *   dex: Dex|null, kart: Kart|null }} SiteContent   // dex: null unless site.pokedex is true */
 
 export {}
 

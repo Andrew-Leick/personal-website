@@ -9,7 +9,6 @@ import experience from '../../data/experience.json'
 import education from '../../data/education.json'
 import projects from '../../data/projects.json'
 import skills from '../../data/skills.json'
-import kart from '../../data/kart.json'
 import { normalizeContent } from './normalize.js'
 import { BASE_URL } from './paths.js'
 import { resolveRouteWithBase, sectionHrefOf } from './routes.js'
@@ -21,7 +20,7 @@ const githubModules = import.meta.glob('../../data/generated/github.json', { eag
 const github = Object.values(githubModules)[0] ?? { repos: {} }
 
 const content = normalizeContent(
-  { site, profile, links, experience, education, projects, skills, github, kart },
+  { site, profile, links, experience, education, projects, skills, github },
   { baseUrl: BASE_URL },
 )
 
@@ -78,14 +77,14 @@ export function getPage(id) {
   return content.pages.find((p) => p.id === id) ?? null
 }
 
-/** @returns {import('./types.js').Kart|null} v5 kart minigame copy */
-export function getKart() {
-  return content.kart
-}
-
-/** @returns {string} the kart page href: BASE_URL + "kart/" */
+/** @returns {string} the kart page href: BASE_URL + "kart/" (the page gets its data from virtual:kart-data) */
 export function getKartHref() {
   return `${BASE_URL}kart/`
+}
+
+/** @returns {import('./types.js').Dex|null} null unless site.pokedex is true */
+export function getDex() {
+  return content.dex
 }
 
 /** @returns {string} the Home href: BASE_URL, e.g. "/" or "/personal-website/" */
@@ -122,6 +121,6 @@ export function getSiteContent() {
   return content
 }
 
-export { GUIDE_IDS } from './normalize.js'
+export { DEX_POKEMON, GUIDE_IDS } from './normalize.js'
 export { isPlaceholder } from './placeholders.js'
-export { formatDateRange, formatMonth } from './format.js'
+export { formatDateRange, formatMonth, formatDexNumber } from './format.js'

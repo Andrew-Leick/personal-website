@@ -5,7 +5,7 @@ import { existsSync, statSync, readdirSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { isValidDate, parseDate, DATE_PLACEHOLDER } from './format.js'
 import { isPlaceholder, isPlaceholderId } from './placeholders.js'
-import { SECTION_IDS, GUIDE_IDS, LAYOUTS } from './normalize.js'
+import { SECTION_IDS, GUIDE_IDS, DEX_POKEMON, AVATARS } from './normalize.js'
 import { RESERVED_PAGE_IDS } from './routes.js'
 
 /** @typedef {{ file: string, path: string, message: string, hint: string|null }} Issue */
@@ -60,7 +60,7 @@ const SCHEMAS = {
     defaultTheme: req({ type: 'string', max: 40, pattern: THEME_RE, patternHint: 'use "system", "light", "dark" or a lowercase theme name like "navy"' }),
     themeToggle: req({ type: 'boolean' }),
     fanArt: { type: 'boolean', hint: 'use true to show the sprites or false to hide them' },
-    layout: { type: 'enum', values: LAYOUTS },
+    pokedex: { type: 'boolean', hint: 'use true to show experience and projects in the Pokédex, or false for the timeline and cards' },
     pages: req({
       type: 'array',
       minItems: 1,
@@ -75,6 +75,11 @@ const SCHEMAS = {
           description: req(s(160, { min: 50 })),
           teaser: nul(s(100)),
           visible: { type: 'boolean' },
+          aliases: {
+            type: 'array',
+            maxItems: 3,
+            item: { type: 'object', fields: { id: req({ type: 'id' }), hash: nul({ type: 'id' }) } },
+          },
           sections: req({
             type: 'array',
             minItems: 1,
@@ -103,6 +108,7 @@ const SCHEMAS = {
     contactBlurb: nul(s(200)),
     resumeUrl: nul({ type: 'localPath', exts: ['.pdf'] }),
     photo: nul(imageSpec(120, MAX_HEADSHOT_BYTES)),
+    avatar: nul({ type: 'enum', values: AVATARS }),
   },
   links: {
     id: req({ type: 'id' }),
@@ -124,6 +130,8 @@ const SCHEMAS = {
     summary: nul(s(280)),
     highlights: strArr(0, 6, 240),
     technologies: strArr(0, 12, 30, { unique: true }),
+    pokemon: nul({ type: 'enum', values: DEX_POKEMON }),
+    dexText: nul(s(160)),
     visible: { type: 'boolean' },
   },
   education: {
@@ -167,6 +175,8 @@ const SCHEMAS = {
     },
     githubRepo: nul({ type: 'string', max: 140, pattern: REPO_RE, patternHint: 'use "owner/name", e.g. "Andrew-Leick/my-repo"' }),
     image: nul(imageSpec(160, MAX_PROJECT_IMAGE_BYTES)),
+    pokemon: nul({ type: 'enum', values: DEX_POKEMON }),
+    dexText: nul(s(160)),
     visible: { type: 'boolean' },
   },
   skills: {
@@ -554,7 +564,7 @@ function checkSiteObject(ctx, site) {
  * Page rules (spec v2 10.2): unique ids, reserved ids, no clash with public/ entries, each
  * section on at most one page, unplaced sections warned, composed titles <= 70 characters.
  */
-function checkPages(ctx, pages, profile) {
+function checkPages(ctx, pages, profile, pokedex) {
   const file = FILES.site
   const pageIds = new Map()
   const guideAt = new Map()
@@ -594,9 +604,28 @@ function checkPages(ctx, pages, profile) {
       }
     })
   })
-  for (const id of SECTION_IDS) {
-    if (!placedAt.has(id)) ctx.warn(file, 'pages', `section ${q(id)} is not on any page, so it will not be shown`, `add { "id": ${q(id)}, "label": "..." } to a page's "sections" if you want it shown`)
+  // V5-04: with the Pokédex on, projects show inside the experience section instead.
+  if (pokedex && placedAt.has('projects')) {
+    ctx.error(file, placedAt.get('projects').path, 'section "projects" is placed on a page, but the projects already show in the Pokédex', 'remove this section, or set "pokedex" to false to show project cards')
   }
+  for (const id of SECTION_IDS) {
+    if (placedAt.has(id) || (pokedex && id === 'projects')) continue
+    if (pokedex && id === 'experience') ctx.warn(file, 'pages', '"pokedex" is true but section "experience" is not on any page, so the Pokédex has nowhere to show', 'add { "id": "experience", "label": "..." } to a page\'s "sections"')
+    else ctx.warn(file, 'pages', `section ${q(id)} is not on any page, so it will not be shown`, `add { "id": ${q(id)}, "label": "..." } to a page's "sections" if you want it shown`)
+  }
+  // V5-05: an alias is an extra URL for its page, so it must not collide with a page, the build or another alias.
+  const aliasAt = new Map()
+  pages.forEach((page, i) => {
+    if (!page || typeof page !== 'object' || !Array.isArray(page.aliases)) return
+    page.aliases.forEach((alias, j) => {
+      if (!alias || typeof alias.id !== 'string' || !ID_RE.test(alias.id)) return
+      const p = `pages${itemPath(i, page)}.aliases${itemPath(j, alias)}.id`
+      if (RESERVED_PAGE_IDS.includes(alias.id)) ctx.error(file, p, `alias ${q(alias.id)} is reserved`, `choose another id; ${RESERVED_PAGE_IDS.map(q).join(', ')} are used by the build`)
+      else if (pageIds.has(alias.id)) ctx.error(file, p, `alias ${q(alias.id)} is also a page id (pages[${pageIds.get(alias.id)}])`, 'remove the alias or rename it; the page already has that URL')
+      if (aliasAt.has(alias.id)) ctx.error(file, p, `duplicate alias ${q(alias.id)} (also at ${aliasAt.get(alias.id)})`, 'an alias can point to only one page; remove one of them')
+      else aliasAt.set(alias.id, p)
+    })
+  })
 }
 
 // v5 kart minigame (SPEC-v5-kart 7.2)
@@ -649,7 +678,7 @@ export function validateContent(raw, options = {}) {
   if (has('site') && checkSiteObject(ctx, raw.site)) {
     const site = raw.site
     if (site.ogImage && !site.ogImageAlt) ctx.error(FILES.site, 'ogImageAlt', 'required when ogImage is set', 'describe the image, e.g. "Andrew Leick, portfolio"')
-    if (Array.isArray(site.pages)) checkPages(ctx, site.pages, has('profile') ? raw.profile : null)
+    if (Array.isArray(site.pages)) checkPages(ctx, site.pages, has('profile') ? raw.profile : null, site.pokedex === true)
     if (ctx.publicDir && typeof site.siteUrl === 'string') {
       const cnamePath = join(ctx.publicDir, 'CNAME')
       if (ctx.fileExists(cnamePath)) {

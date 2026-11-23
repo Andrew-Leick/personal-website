@@ -17,6 +17,8 @@
       "Built an MCP server exposing the platform’s search and filtering tools to AI agents, enabling automated agent-driven investigations."
     ],
     "technologies": ["Node.js", "TypeScript", "AWS Lambda", "S3", "DynamoDB", "API Gateway", "Athena", "MCP"],
+    "pokemon": "porygon2",
+    "dexText": "An upgrade from a second summer at Amazon. It turns up to an hour of on-call log digging into one search, and answers AI agents through MCP.",
     "visible": true
   },
   {
@@ -34,6 +36,8 @@
       "Built Amazon QuickSight dashboards giving engineers and leadership a real-time view of contract status, ownership, and key metadata."
     ],
     "technologies": ["Node.js", "AWS Lambda", "Redshift", "QuickSight"],
+    "pokemon": "porygon",
+    "dexText": "Built at Amazon to gather a team’s scattered contracts in one place. Its Lambdas read each contract and file the details in Redshift.",
     "visible": true
   },
   {
@@ -51,6 +55,8 @@
       "Presented results to an audience of 200."
     ],
     "technologies": ["Python", "ROS"],
+    "pokemon": "magnemite",
+    "dexText": "Chosen as 1 of 64 from 2,200 applicants. It steers itself through unknown rooms, mapping everything it senses with Python and ROS.",
     "visible": true
   },
   {
@@ -69,6 +75,8 @@
       "Led CAD design for the team using Fusion360."
     ],
     "technologies": ["Java", "Fusion360"],
+    "pokemon": "pikachu",
+    "dexText": "The team’s Electric type. It led 25 builders, raised $20,000 to power the season, and coded the robot’s paths in Java.",
     "visible": true
   }
 ]

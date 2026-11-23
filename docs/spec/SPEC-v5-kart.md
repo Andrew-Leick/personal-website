@@ -354,3 +354,11 @@ CPU racers, other characters or courses, firing items, drift/mini-turbo, audio, 
 | V5-26 | 2 Players in Story: a fact freezes the race only the **first** time either racer reveals it. The card shows on the revealing racer's screen. |
 | V5-27 | Item-box rows respawn 1.5 s after a burst (as in Mario Kart), so the other racer still sees boxes. |
 | V5-28 | **Leaderboard** (Andrew, 2026-11-19: device-only for now). After a **Race** run, the results show a "Join leaderboard" form per finisher (2 players: one each) with a required name (≤ 20 chars) and email. Each finisher can submit once. Entries are stored in `localStorage` `kart.board` (fastest first, at most 50, ties go to the earlier entry). The results show the top 10 by **name and time only**, with the new entry highlighted and its rank announced. Emails are stored but never displayed, and the form says so. Story runs can't join. Swapping storage for a hosted API later (e.g. Supabase) only touches `src/kart/leaderboard.js`. |
+
+## 16. Merged with main (SPEC-v6 Pokédex, aliases, Game Boy theme), 2026-11-19
+
+These replace the matching rows in 4.2:
+- **Two builds.** `npm run build` = `vite build` (the site, one entry, exactly as before) then `vite build --mode kart` (adds `dist/kart/` without emptying `dist/`; `contentPlugin({ kartOnly: true })` skips robots, sitemap, CNAME and per-page HTML). One build with two entries made Rolldown split the site's shared code into extra chunks (+1.6 KB gzip, over the 95 KB budget). Separate builds share no chunks. The dev server serves both pages from one config.
+- **Kart data is a build-time module.** `virtual:kart-data` (`kartData()` in `scripts/vite-plugin-content.js`) gives the kart page its name, links, résumé, nav pages and resolved stops. The browser content API keeps only `getKartHref()`; `getKart()` is gone.
+- **NFL stop:** `ref` is now `experience`. Projects show in the Experience page's Pokédex, and `projects` is no longer a placed section.
+- **Game Boy theme on /kart/:** `kart.css` loads `gameboy.css`, the kart header accepts `gameboy`, and the race canvas gets the same green tint as the site's images. The theme toggle goes from Game Boy to dark, as on the site. The kart CSS budget is now 6 KB (5 before). The Konami code itself stays a main-site feature (the arrow keys drive the kart).

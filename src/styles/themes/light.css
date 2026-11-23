@@ -13,6 +13,7 @@
   --color-border-strong: var(--pk-ink);
   --color-accent: var(--pk-red);
   --color-accent-contrast: var(--pk-white);
+  --color-accent-hover: var(--pk-red-deep);
   --color-link: var(--pk-ink);
   --color-link-hover: var(--pk-red-deep);
   --color-focus-ring: var(--pk-blue);
@@ -28,6 +29,8 @@
   --color-type-grass: var(--pk-grass);
   --color-type-water: var(--pk-water);
   --color-type-normal: var(--pk-ink-2);
+  --color-kind-work: var(--pk-fire);
+  --color-kind-project: var(--pk-psychic);
   --color-scheme: light;
 
   color-scheme: light;
@@ -44,6 +47,7 @@
     --color-border-strong: var(--pk-ink);
     --color-accent: var(--pk-red);
     --color-accent-contrast: var(--pk-white);
+    --color-accent-hover: var(--pk-red-deep);
     --color-link: var(--pk-ink);
     --color-link-hover: var(--pk-red-deep);
     --color-focus-ring: var(--pk-blue);
@@ -59,6 +63,8 @@
     --color-type-grass: var(--pk-grass);
     --color-type-water: var(--pk-water);
     --color-type-normal: var(--pk-ink-2);
+    --color-kind-work: var(--pk-fire);
+    --color-kind-project: var(--pk-psychic);
     --color-scheme: light;
 
     color-scheme: light;

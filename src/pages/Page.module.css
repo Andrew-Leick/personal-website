@@ -1,4 +1,4 @@
-/* Shared subpage layout (ContentPage, NotFoundPage). */
+/* Shared page layout (journey sections, NotFoundPage). */
 
 .page {
   min-width: 0;
@@ -6,8 +6,9 @@
 
 .title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-2) var(--space-4);
   margin-block: var(--space-12) var(--space-8);
   padding-block-end: var(--space-3);
   border-block-end: var(--border-width-thick) solid var(--page-accent, var(--color-border-strong));
@@ -16,19 +17,6 @@
   font-weight: var(--weight-regular);
   line-height: var(--leading-display);
   letter-spacing: 0;
-}
-
-.titleSprite {
-  flex: none;
-  width: calc(16 * var(--sprite-px-title));
-  height: calc(16 * var(--sprite-px-title));
-}
-
-/* Guide PNGs are 96x96, shown 1:1 so the pixels stay crisp. */
-.titleSprite[data-kind="image"] {
-  width: 96px;
-  height: 96px;
-  image-rendering: pixelated;
 }
 
 .page[data-type="fire"] { --page-accent: var(--color-type-fire); }
@@ -50,6 +38,21 @@
   height: calc(16 * var(--sprite-px-title) * 2);
 }
 
+/* 404: the egg wobbles once on its base, a wild encounter (the rail wiggle's values, 1 time). */
+@media (prefers-reduced-motion: no-preference) {
+  .noticeSprite {
+    transform-origin: 50% 85%;
+    animation: wild-wobble 600ms steps(6, end) 200ms 1;
+  }
+}
+
+@keyframes wild-wobble {
+  0%,
+  100% { rotate: 0deg; }
+  25% { rotate: -10deg; }
+  75% { rotate: 10deg; }
+}
+
 .lead {
   min-width: 0;
 }
@@ -60,17 +63,82 @@
   font-size: var(--text-lg);
 }
 
-.links {
-  display: grid;
-  gap: var(--space-1);
-  margin-block-start: var(--space-6);
-  padding-inline-start: var(--space-5);
+/*
+ * 404 battle menu (SPEC-v6 P-08): a second dialog box with the four commands in a 2x2 grid, as in
+ * the games. Each command is a link: its game word large, the real destination small beneath it.
+ * The ▶ cursor marks the hovered or focused command.
+ */
+.battle {
+  max-width: var(--measure);
+  margin-block-start: var(--space-4);
+  padding: var(--space-4);
 }
 
-.links a {
-  display: inline-flex;
+.battleMenu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+  list-style: none;
+}
+
+.command {
+  display: flex;
   align-items: center;
+  gap: var(--space-2);
   min-height: var(--target-min);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration-line: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.commandCursor {
+  visibility: hidden;
+}
+
+.commandText {
+  display: grid;
+  min-width: 0;
+}
+
+/* Commands are written in capitals in NotFoundPage.jsx (POKéMON keeps its lowercase é). */
+.commandName {
+  font-family: var(--font-display);
+  font-size: var(--text-display-sm);
+  line-height: var(--leading-display);
+  overflow-wrap: anywhere;
+}
+
+/* Phones below 400px: a step smaller, so POKéMON fits on one line (at 16px it wraps at 360–389px). */
+@media (max-width: 399px) {
+  .commandName {
+    font-size: 0.75rem;
+  }
+}
+
+.commandPlace {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.command:focus-visible .commandCursor {
+  visibility: visible;
+}
+
+.command:focus-visible {
+  background-color: var(--color-bg-subtle);
+}
+
+@media (hover: hover) {
+  .command:hover .commandCursor {
+    visibility: visible;
+  }
+
+  .command:hover {
+    background-color: var(--color-bg-subtle);
+  }
 }
 
 @media (min-width: 768px) {

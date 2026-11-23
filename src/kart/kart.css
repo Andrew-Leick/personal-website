@@ -3,6 +3,7 @@
 @import '../styles/tokens.css';
 @import '../styles/themes/light.css';
 @import '../styles/themes/dark.css';
+@import '../styles/themes/gameboy.css';
 
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
@@ -61,11 +62,12 @@ a:hover { color: var(--color-link-hover); }
 .kart-screen { position: relative; flex: none; width: calc(256px * var(--s) + 4px); height: calc(192px * var(--s) + 4px); overflow: hidden; border: 2px solid var(--color-border-strong); font-size: calc(8px * var(--s)); line-height: 1.2; }
 .kart-ds[data-layout="duo"] { display: grid; grid-template-columns: auto auto; justify-content: center; }
 .kart-ds[data-layout="duo"] .kart-bottom { grid-column: 1 / -1; justify-self: center; }
+:root[data-theme="gameboy"] .kart-top canvas { filter: grayscale(1) sepia(1) hue-rotate(45deg) saturate(1.8) brightness(0.92); } /* the site's image tint */
 .kart-top canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 
 /* Top-screen overlay */
 .kart-ov, .kart-ov > * { position: absolute; inset: 0; }
-.kart-ov { pointer-events: none; color: var(--color-text); }
+.kart-ov { z-index: 1; pointer-events: none; color: var(--color-text); } /* above the canvas, which a filter (Game Boy tint) lifts into the same paint layer */
 .kart-ov-panel { inset: 1em; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 0.5em; padding: 0.75em; overflow: auto; font-size: 1.5em; text-align: center; pointer-events: auto; }
 .kart-ov-big { font: 2em/1.2 var(--font-display); }
 .kart-ov-panel .kart-ov-big { font-size: 0.67em; }

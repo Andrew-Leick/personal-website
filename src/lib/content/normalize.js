@@ -11,10 +11,17 @@ import { isPlaceholder } from './placeholders.js'
 /** Pokémon guide sprites a page may be led by (spec v3 8.2). */
 export const GUIDE_IDS = ['charmander', 'bulbasaur', 'squirtle']
 
-/** Site layouts (spec v4): one scrolling page with the Poké Ball rail, or the v3 separate pages. */
-export const LAYOUTS = ['journey', 'pages']
 
-export const SECTION_IDS = ['about', 'experience', 'projects', 'education', 'skills', 'contact']
+/**
+ * Pokémon an experience or project may use as its Pokédex sprite (v5.1). Each one is a 96x96
+ * PNG in public/sprites/{id}.png from the PokeAPI sprites repo; add the file, then the id here.
+ */
+export const DEX_POKEMON = ['porygon', 'porygon2', 'magnemite', 'pikachu', 'noctowl']
+
+/** Pixel avatars About can show in place of a photo (v6): the owner's trainer sprite. */
+export const AVATARS = ['trainer']
+
+export const SECTION_IDS =['about', 'experience', 'projects', 'education', 'skills', 'contact']
 
 export const EMPLOYMENT_TYPE_LABELS = {
   'full-time': 'Full-time',
@@ -77,7 +84,7 @@ export function normalizeSite(raw) {
     defaultTheme: str(site.defaultTheme) ?? 'system',
     themeToggle: site.themeToggle !== false,
     fanArt: site.fanArt !== false,
-    layout: LAYOUTS.includes(site.layout) ? site.layout : 'journey',
+    pokedex: site.pokedex === true,
   }
 }
 
@@ -95,6 +102,7 @@ export function normalizeProfile(raw, base) {
     contactBlurb: str(p.contactBlurb),
     resumeUrl: p.resumeUrl ? resolveAsset(p.resumeUrl, base) : null,
     photo: image(p.photo, base),
+    avatar: AVATARS.includes(p.avatar) ? p.avatar : null,
   }
 }
 
@@ -155,6 +163,8 @@ export function normalizeExperience(raw) {
       summary: str(e.summary),
       highlights: arr(e.highlights),
       technologies: arr(e.technologies),
+      pokemon: DEX_POKEMON.includes(e.pokemon) ? e.pokemon : null,
+      dexText: str(e.dexText),
     }
   })
   return sorted(items, compareExperience)
@@ -278,6 +288,8 @@ export function normalizeProjects(raw, github, base) {
           }
         : null,
       image: image(p.image, base),
+      pokemon: DEX_POKEMON.includes(p.pokemon) ? p.pokemon : null,
+      dexText: str(p.dexText),
     }
   })
   return sorted(items, compareProjects)
@@ -387,6 +399,9 @@ export function derivePages(rawPages, content, base = '/') {
       index: String(pages.length + 1).padStart(2, '0'),
       sections,
       hasLead: sections.some((s) => s.lead),
+      aliases: (Array.isArray(raw.aliases) ? raw.aliases : [])
+        .filter((a) => a && typeof a.id === 'string')
+        .map((a) => ({ id: a.id, path: `${a.id}/`, hash: str(a.hash) })),
     })
   }
   const sections = pages.flatMap((p) => p.sections)
@@ -394,6 +409,66 @@ export function derivePages(rawPages, content, base = '/') {
     s.index = String(i + 1).padStart(2, '0')
   })
   return { pages, sections }
+}
+
+/**
+ * The v5 Pokédex: experience then projects, reusing their normalized fields.
+ * @param {import('./types.js').Experience[]} experience
+ * @param {import('./types.js').Project[]} projects
+ * @returns {import('./types.js').Dex}
+ */
+export function buildDex(experience, projects) {
+  const work = experience.map((e, i) => ({
+    key: `work:${e.id}`,
+    kind: 'work',
+    id: e.id,
+    number: i + 1,
+    name: e.role,
+    subtitle: e.organization || null,
+    subtitleUrl: e.organizationUrl,
+    dateLabel: e.dateLabel || null,
+    start: e.start,
+    end: e.end,
+    typeLabel: 'Work',
+    tagLabel: e.employmentType,
+    featured: false,
+    summary: e.summary,
+    role: null,
+    highlights: e.highlights,
+    technologies: e.technologies,
+    links: null,
+    primaryUrl: null,
+    githubStats: null,
+    image: null,
+    pokemon: e.pokemon,
+    dexText: e.dexText,
+  }))
+  const projectEntries = projects.map((p, i) => ({
+    key: `project:${p.id}`,
+    kind: 'project',
+    id: p.id,
+    number: i + 1,
+    name: p.title,
+    subtitle: p.contextLabel,
+    subtitleUrl: null,
+    dateLabel: p.dateLabel,
+    start: p.start,
+    end: p.end,
+    typeLabel: 'Project',
+    tagLabel: p.statusLabel,
+    featured: p.featured,
+    summary: p.summary || null,
+    role: p.role,
+    highlights: p.highlights,
+    technologies: p.technologies,
+    links: p.links,
+    primaryUrl: p.primaryUrl,
+    githubStats: p.githubStats,
+    image: p.image,
+    pokemon: p.pokemon,
+    dexText: p.dexText,
+  }))
+  return { work, projects: projectEntries }
 }
 
 export function deepFreeze(value) {
@@ -430,6 +505,7 @@ export function normalizeContent(raw, { baseUrl = '/' } = {}) {
   const projects = normalizeProjects(raw.projects, raw.github, baseUrl)
   const skills = normalizeSkills(raw.skills)
   const { pages, sections } = derivePages(raw.site && raw.site.pages, { profile, links, experience, education, projects, skills }, baseUrl)
+  const dex = site.pokedex ? buildDex(experience, projects) : null
   const kart = normalizeKart(raw.kart)
-  return deepFreeze({ site, profile, links, experience, education, projects, skills, pages, sections, kart })
+  return deepFreeze({ site, profile, links, experience, education, projects, skills, pages, sections, dex, kart })
 }

@@ -72,7 +72,7 @@ const BLINK_MIN = 3
 const BLINK_MAX = 5
 const BLINK_LEN = 0.15
 
-/** Per-theme look (V5-15): light = daytime, dark = dusk. */
+/** Per-theme look (V5-15): light = daytime, dark = dusk. The Game Boy theme uses daytime; CSS tints the canvas green. */
 const THEMES = {
   light: {
     sky: 0x8ec8f8,

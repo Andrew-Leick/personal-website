@@ -1,0 +1,92 @@
+/*
+ * Game Boy theme (SPEC-v6 P-11): the hidden one, switched on with the Konami code
+ * (↑ ↑ ↓ ↓ ← → ← → B A; src/hooks/useKonami.js). Four greens from the BGB emulator palette plus a
+ * tint, so every text pair still passes AA (darkest on lightest 15.9:1, dark on lightest 5.7:1,
+ * dark on the subtle surface 4.8:1, lightest on dark 5.7:1). Defines exactly the same semantic
+ * tokens as light.css, and also turns the Pokédex device and the sprites green.
+ */
+
+:root[data-theme="gameboy"] {
+  --color-bg: var(--pk-gb-lightest);
+  --color-bg-subtle: var(--pk-gb-subtle);
+  --color-text: var(--pk-gb-darkest);
+  --color-text-muted: var(--pk-gb-dark);
+  --color-border: var(--pk-gb-light);
+  --color-border-strong: var(--pk-gb-darkest);
+  --color-accent: var(--pk-gb-dark);
+  --color-accent-contrast: var(--pk-gb-lightest);
+  --color-accent-hover: var(--pk-gb-darkest);
+  --color-link: var(--pk-gb-darkest);
+  --color-link-hover: var(--pk-gb-dark);
+  --color-focus-ring: var(--pk-gb-darkest);
+  --color-tag-bg: var(--pk-gb-tint);
+  --color-tag-text: var(--pk-gb-darkest);
+  --color-selection-bg: var(--pk-gb-dark);
+  --color-selection-text: var(--pk-gb-lightest);
+  --color-dialog-bg: var(--pk-gb-lightest);
+  --color-dialog-border: var(--pk-gb-darkest);
+  --color-dialog-border-inner: var(--pk-gb-dark);
+  --color-cursor: var(--pk-gb-dark);
+  --color-type-fire: var(--pk-gb-dark);
+  --color-type-grass: var(--pk-gb-dark);
+  --color-type-water: var(--pk-gb-dark);
+  --color-type-normal: var(--pk-gb-dark);
+  --color-kind-work: var(--pk-gb-dark);
+  --color-kind-project: var(--pk-gb-darkest);
+  --color-scheme: light;
+
+  color-scheme: light;
+}
+
+/*
+ * The Pokédex device and the sprites, normally the same in every theme, go green too: on screen
+ * only, so print keeps their normal colors (print uses the light tokens, light.css).
+ */
+@media screen {
+  :root[data-theme="gameboy"] {
+    --dex-body: var(--pk-gb-dark);
+    --dex-body-light: var(--pk-gb-light);
+    --dex-body-dark: var(--pk-gb-darkest);
+    --dex-bezel: var(--pk-gb-light);
+    --dex-ink: var(--pk-gb-lightest);
+    --dex-key: var(--pk-gb-darkest);
+    --dex-key-light: var(--pk-gb-dark);
+    --dex-key-dark: var(--pk-gb-darkest);
+    --dex-lens: var(--pk-gb-light);
+    --dex-lens-light: var(--pk-gb-lightest);
+    --dex-lens-dark: var(--pk-gb-dark);
+    --dex-led-red: var(--pk-gb-darkest);
+    --dex-led-yellow: var(--pk-gb-light);
+    --dex-led-green: var(--pk-gb-lightest);
+    --sprite-outline: var(--pk-gb-darkest);
+    --sprite-egg-shell: var(--pk-gb-lightest);
+    --sprite-egg-spot: var(--pk-gb-light);
+    --sprite-trainer-charcoal-dark: var(--pk-gb-darkest);
+    --sprite-trainer-charcoal-mid: var(--pk-gb-darkest);
+    --sprite-trainer-charcoal: var(--pk-gb-dark);
+    --sprite-trainer-jacket-shade: var(--pk-gb-darkest);
+    --sprite-trainer-jacket: var(--pk-gb-dark);
+    --sprite-trainer-jacket-light: var(--pk-gb-light);
+    --sprite-trainer-skin-shadow: var(--pk-gb-dark);
+    --sprite-trainer-skin-shade: var(--pk-gb-light);
+    --sprite-trainer-skin: var(--pk-gb-lightest);
+    --sprite-trainer-gray: var(--pk-gb-light);
+    --sprite-trainer-white: var(--pk-gb-lightest);
+    --sprite-trainer-hair-shade: var(--pk-gb-darkest);
+    --sprite-trainer-hair: var(--pk-gb-dark);
+    --sprite-trainer-hair-light: var(--pk-gb-light);
+    --sprite-glow-fire-soft: rgb(136 192 112 / 0.25);
+    --sprite-glow-fire: rgb(136 192 112 / 0.7);
+  }
+}
+
+/* Photos and raster sprites (the Pokémon, the Poké Ball art) tinted to the four greens. */
+:root[data-theme="gameboy"] img {
+  filter: grayscale(1) sepia(1) hue-rotate(45deg) saturate(1.8) brightness(0.92);
+}
+
+@media print {
+  :root[data-theme="gameboy"] img {
+    filter: none;
+  }
+}

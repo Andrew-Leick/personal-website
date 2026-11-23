@@ -8,7 +8,7 @@
     { "id": "amazon-2025", "label": "AMAZON '25", "text": "SDE Intern, 2025: centralized contract storage with Node.js Lambdas, Redshift and QuickSight.", "ref": "experience" },
     { "id": "gtri", "label": "GTRI", "text": "Georgia Tech Research Institute, 2023: 1 of 64 picked from 2,200. Robot mapping with Python and ROS.", "ref": "experience" },
     { "id": "first", "label": "FIRST", "text": "FIRST Robotics team president: led 25 students and a $20,000+ budget.", "ref": "experience" },
-    { "id": "nfl", "label": "NFL CV", "text": "NFL Play Reconstruction: built the jersey number, team and offense/defense classifiers.", "ref": "projects" },
+    { "id": "nfl", "label": "NFL CV", "text": "NFL Play Reconstruction: built the jersey number, team and offense/defense classifiers.", "ref": "experience" },
     { "id": "skills", "label": "SKILLS", "text": "Java, Python, C/C++, TypeScript, and AWS from Lambda to Athena.", "ref": "skills" }
   ]
 }

@@ -9,7 +9,8 @@
   width: calc(7 * var(--cursor-px));
   height: calc(4 * var(--cursor-px));
   color: var(--color-cursor);
-  animation: more-bob var(--sprite-bob-duration) steps(1, end) 0ms var(--sprite-bob-iterations) both;
+  /* Starts once the hero prompt has typed itself out (HomePage.module.css .prompt, 600ms). */
+  animation: more-bob var(--sprite-bob-duration) steps(1, end) 600ms var(--sprite-bob-iterations) both;
 }
 
 @keyframes more-bob {

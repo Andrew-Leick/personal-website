@@ -12,10 +12,16 @@
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.link:hover,
 .link:focus-visible {
   background-color: var(--color-bg-subtle);
   color: var(--color-text);
+}
+
+@media (hover: hover) {
+  .link:hover {
+    background-color: var(--color-bg-subtle);
+    color: var(--color-text);
+  }
 }
 
 /*
@@ -25,9 +31,60 @@
  */
 .slot {
   --ball-size: var(--hero-ball-size);
+  position: relative;
   display: block;
   width: var(--hero-ball-size);
   height: var(--hero-ball-size);
+}
+
+/*
+ * The starter, out of its ball at the top of the page (fan art on): centered on the ball's
+ * square at the section headers' size, its feet on the slot. It goes back in as the page
+ * scrolls ([data-in], src/lib/journey/openBall.js closeBall) and comes out again at the top.
+ * The slot grows by the part of the sprite that shows (on every side: below 480px the label
+ * sits beside it), so the starter never covers its label.
+ */
+.slot:has(.pokemon) {
+  margin: calc((var(--header-pokemon-size) * 0.55 - var(--hero-ball-size)) / 2);
+}
+
+.flash,
+.pokemon {
+  position: absolute;
+  inset: calc((var(--hero-ball-size) - var(--header-pokemon-size)) / 2);
+  pointer-events: none;
+}
+
+/* The white burst, as at the section headers (JourneyPage.module.css .flash). */
+.flash {
+  border-radius: var(--radius-full);
+  background: var(--ball-flash);
+  opacity: 0;
+}
+
+.flash::after {
+  position: absolute;
+  inset: 14%;
+  border: 3px solid var(--ball-flash-ring);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 10px var(--ball-flash-ring-glow);
+  content: "";
+}
+
+/* Shrinks into (and grows out of) the ball's opening: the seam, at the slot's center. */
+.pokemon {
+  transform-origin: 50% 52%;
+}
+
+.slot[data-in] .pokemon {
+  opacity: 0;
+}
+
+.pokemonImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
 }
 
 .ghost {
@@ -39,12 +96,18 @@
 }
 
 .label {
-  opacity: calc(1 - var(--leave, 0) * 0.4);
+  /* Floor of 0.7 keeps the label at 4.5:1 on the dialog (0.6 measured 4.46:1). */
+  opacity: calc(1 - var(--leave, 0) * 0.3);
 }
 
-.link:hover .label,
 .link:focus-visible .label {
   opacity: 1;
+}
+
+@media (hover: hover) {
+  .link:hover .label {
+    opacity: 1;
+  }
 }
 
 .label {
@@ -67,17 +130,28 @@
   overflow-wrap: anywhere;
 }
 
-.link:hover .cursor,
 .link:focus-visible .cursor {
   visibility: visible;
 }
 
-.link:hover .labelText,
 .link:focus-visible .labelText {
   text-decoration-line: underline;
   text-decoration-thickness: var(--border-width-pixel);
   text-decoration-color: var(--link-accent);
   text-underline-offset: 0.25em;
+}
+
+@media (hover: hover) {
+  .link:hover .cursor {
+    visibility: visible;
+  }
+
+  .link:hover .labelText {
+    text-decoration-line: underline;
+    text-decoration-thickness: var(--border-width-pixel);
+    text-decoration-color: var(--link-accent);
+    text-underline-offset: 0.25em;
+  }
 }
 
 .link[data-type="fire"] { --link-accent: var(--color-type-fire); }

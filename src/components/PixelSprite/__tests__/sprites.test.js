@@ -1,6 +1,8 @@
+import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { GUIDE_IDS } from '../../../lib/content/index.js'
+import { DEX_POKEMON, GUIDE_IDS } from '../../../lib/content/index.js'
 import { BALL_HINGE, BALL_SEAM, BALL_SPRITE, ballClip, GUIDE_NAMES, GUIDE_SPRITES, GUIDE_TYPES, IMAGE_SIZES, IMAGE_SPRITES, SPRITE_DEFS, SPRITES, toPaths } from '../sprites.js'
+import { TRAINER } from '../trainer.js'
 
 // SPEC-v3 5.2 expected table.
 const EXPECTED = {
@@ -20,6 +22,30 @@ function countKeys(grid) {
 describe('sprites', () => {
   it('defines exactly the expected sprites', () => {
     expect(Object.keys(SPRITE_DEFS).sort()).toEqual(Object.keys(EXPECTED).sort())
+  })
+
+  // The trainer is the owner's to customize (SPEC-v6 P-05), so it is checked by shape, not by exact counts.
+  // It lives in trainer.js, outside SPRITES, so only About's on-demand chunk carries it.
+  describe('trainer', () => {
+    const def = TRAINER
+    const filled = def.grid.join('').replace(/\./g, '').length
+
+    it('is 108x195 with uniform rows (About shows it at 1px a cell)', () => {
+      for (const row of def.grid) expect(row.length).toBe(108)
+      expect(def.grid.length).toBe(195)
+      expect(SPRITES.trainer).toBeUndefined()
+    })
+
+    it('uses only palette keys, all sprite tokens', () => {
+      for (const key of Object.keys(countKeys(def.grid))) expect(def.palette).toHaveProperty(key)
+      for (const value of Object.values(def.palette)) expect(/^var\(--sprite-[a-z-]+\)$/.test(value)).toBe(true)
+    })
+
+    it('toPaths covers exactly the filled cells', () => {
+      let area = 0
+      for (const { d } of toPaths(def)) for (const m of d.matchAll(/h(\d+)v1/g)) area += Number(m[1])
+      expect(area).toBe(filled)
+    })
   })
 
   for (const [name, exp] of Object.entries(EXPECTED)) {
@@ -70,9 +96,14 @@ describe('sprites', () => {
   })
 
   it('the Poké Ball is a 90px PNG and every PNG sprite has a size', () => {
-    expect(IMAGE_SPRITES).toEqual([...GUIDE_IDS, BALL_SPRITE])
+    expect(IMAGE_SPRITES).toEqual([...GUIDE_IDS, BALL_SPRITE, ...DEX_POKEMON])
+    for (const id of DEX_POKEMON) expect(IMAGE_SIZES[id]).toBe(96)
     expect(IMAGE_SIZES[BALL_SPRITE]).toBe(90)
     for (const id of IMAGE_SPRITES) expect(IMAGE_SIZES[id]).toBeGreaterThan(0)
+  })
+
+  it('every PNG sprite has its file in public/sprites', () => {
+    for (const id of IMAGE_SPRITES) expect(existsSync(new URL(`../../../../public/sprites/${id}.png`, import.meta.url))).toBe(true)
   })
 
   it('the Poké Ball seam covers every column, curves between rows 49 and 60, and rises around the button', () => {

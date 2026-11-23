@@ -4,45 +4,45 @@
   "description": "Andrew Leick is a Stanford Electrical Engineering student and two-time Amazon software development engineer intern seeking software roles.",
   "locale": "en_US",
   "ogImage": "og-image.png",
-  "ogImageAlt": "Andrew Leick, portfolio",
+  "ogImageAlt": "Andrew Leick’s pixel title card: his trainer beside his name, above Charmander, Bulbasaur and Squirtle.",
   "defaultTheme": "system",
   "themeToggle": true,
   "fanArt": true,
-  "layout": "journey",
+  "pokedex": true,
   "pages": [
     {
       "id": "experience",
       "label": "Experience",
       "guide": "charmander",
-      "blurb": "Internships, research and leadership.",
-      "description": "Andrew Leick's experience: two Software Development Engineer internships at Amazon, research at Georgia Tech Research Institute, and FIRST Robotics.",
+      "blurb": "Internships, research, leadership and projects.",
+      "description": "Andrew Leick's experience and projects: two Software Development Engineer internships at Amazon, research at Georgia Tech Research Institute, and more.",
       "visible": true,
+      "aliases": [{ "id": "projects", "hash": "pokedex-projects" }],
       "sections": [
         { "id": "experience", "label": "Experience" }
       ]
     },
     {
-      "id": "projects",
-      "label": "Projects",
+      "id": "education",
+      "label": "Education",
       "guide": "bulbasaur",
-      "blurb": "Things I have built.",
-      "description": "Projects by Andrew Leick, a Stanford Electrical Engineering student, with code links and his role on each.",
+      "blurb": "Stanford coursework and technical skills.",
+      "description": "Andrew Leick's education: Electrical Engineering at Stanford University, with his coursework and technical skills.",
       "visible": true,
       "sections": [
-        { "id": "projects", "label": "Projects" }
+        { "id": "education", "label": "Education" },
+        { "id": "skills", "label": "Skills" }
       ]
     },
     {
       "id": "about",
       "label": "About",
       "guide": "squirtle",
-      "blurb": "Background, education, skills and contact.",
-      "description": "About Andrew Leick: Stanford Electrical Engineering student, his coursework, technical skills, and how to get in touch.",
+      "blurb": "Background and how to get in touch.",
+      "description": "About Andrew Leick, a Stanford Electrical Engineering student seeking software roles, and how to get in touch.",
       "visible": true,
       "sections": [
         { "id": "about", "label": "About" },
-        { "id": "education", "label": "Education" },
-        { "id": "skills", "label": "Skills" },
         { "id": "contact", "label": "Contact" }
       ]
     }

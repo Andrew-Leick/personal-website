@@ -3,12 +3,15 @@
 // Expects, inside `root`:
 //   [data-part="ball"]     the whole ball (stays put; washes out to white, fades once the Pokémon is out)
 //   [data-part="top"]      the lid: a wrapper around the orange top piece (PokeBall.jsx clips the image inside on the seam)
-//   [data-part="flash"]    white burst
+//   [data-part="flash"]    white burst (section headers only; rail balls never open)
 //   [data-part="pokemon"]  the Pokémon (optional: section headers have one, rail balls do not)
 //
 // Order: the lid swings up and right on its hinge (the right end of the seam) while the
 // bottom stays still and the whole ball washes out to white, then the white flash, then
-// the Pokémon pops out. Every function resolves when its sequence ends. None rejects.
+// the Pokémon pops out. closeBall plays it in reverse (the hero's starters going back in).
+// Both also take the parts directly, for a ball and a Pokémon that live in different
+// places (the hero's Pokémon in its slot, the ball in the rail). Every function resolves
+// when its sequence ends. None rejects.
 
 import { prefersReducedMotion } from '../motion.js'
 import { cancelAnimations, part, settled } from './anim.js'
@@ -44,11 +47,16 @@ const drivers = new WeakMap()
 /** Whitening filter at progress `w` (0 to 1): brighter and less saturated, to near white. */
 const whiten = (w) => (w > 0 ? `brightness(${(1 + 1.6 * w).toFixed(2)}) saturate(${(1 - w).toFixed(2)})` : '')
 
-function stopDriver(root) {
-  drivers.get(root)?.()
-  drivers.delete(root)
-  const lid = part(root, 'top')
-  const ball = part(root, 'ball')
+/** The four parts of a sequence, from one root or given directly. */
+const partsOf = (root) =>
+  root instanceof Element
+    ? { ball: part(root, 'ball'), lid: part(root, 'top'), flash: part(root, 'flash'), pokemon: part(root, 'pokemon') }
+    : { ball: null, lid: null, flash: null, pokemon: null, ...root }
+
+function stopDriver({ ball, lid }) {
+  const key = ball ?? lid
+  if (key) drivers.get(key)?.()
+  if (key) drivers.delete(key)
   if (lid) lid.style.transform = ''
   if (ball) ball.style.filter = ''
 }
@@ -56,12 +64,15 @@ function stopDriver(root) {
 /**
  * 1. The lid swings up and right on its hinge in pixel steps (the bottom never moves), and
  *    from the same moment the whole ball starts washing out to white (ease-in), reaching
- *    white as the flash peaks.
+ *    white as the flash peaks. `closing` plays it backwards: the lid swings shut while the
+ *    colour comes back.
  */
-function driveOpening(root) {
-  stopDriver(root)
-  const lid = part(root, 'top')
-  const ball = part(root, 'ball')
+function driveLid(parts, closing = false) {
+  stopDriver(parts)
+  const { lid, ball } = parts
+  // Closing starts from the end of an opening (open and white), with no frame in between.
+  if (closing && lid) lid.style.transform = `rotate(${LID_ANGLE}deg)`
+  if (closing && ball) ball.style.filter = whiten(1)
   const end = Math.max(LID_SWING_MS, WHITEN_MS)
   return new Promise((resolve) => {
     const start = performance.now()
@@ -70,13 +81,15 @@ function driveOpening(root) {
     let shownWhite = ''
     const tick = (now) => {
       const ms = now - start
-      const step = Math.min(LID_STEPS, Math.floor((ms / LID_SWING_MS) * LID_STEPS))
+      const swung = Math.min(LID_STEPS, Math.floor((ms / LID_SWING_MS) * LID_STEPS))
+      const step = closing ? LID_STEPS - swung : swung
       if (lid && step !== shownStep) {
         shownStep = step
-        lid.style.transform = `rotate(${(LID_ANGLE * step) / LID_STEPS}deg)`
+        lid.style.transform = step ? `rotate(${(LID_ANGLE * step) / LID_STEPS}deg)` : ''
       }
+      // Opening washes out with an ease-in; closing is its mirror, the colour back with an ease-out.
       const w = Math.min(1, ms / WHITEN_MS)
-      const white = whiten(w * w)
+      const white = whiten(closing ? (1 - w) ** 2 : w * w)
       if (ball && white !== shownWhite) {
         shownWhite = white
         ball.style.filter = white
@@ -84,12 +97,12 @@ function driveOpening(root) {
       if (ms < end) {
         frame = requestAnimationFrame(tick)
       } else {
-        drivers.delete(root)
+        drivers.delete(ball ?? lid)
         resolve()
       }
     }
     frame = requestAnimationFrame(tick)
-    drivers.set(root, () => {
+    drivers.set(ball ?? lid, () => {
       cancelAnimationFrame(frame)
       resolve()
     })
@@ -99,18 +112,21 @@ function driveOpening(root) {
 /** Cancel every sequence so the ball shows its CSS (closed or resting) state again. */
 export function resetBall(root) {
   if (!root) return
-  PARTS.forEach((name) => cancelAnimations(part(root, name)))
-  stopDriver(root)
+  const parts = partsOf(root)
+  PARTS.forEach((name) => cancelAnimations(parts[name === 'top' ? 'lid' : name]))
+  stopDriver(parts)
 }
 
+/** `root`: an element holding the parts, or the parts themselves ({ ball, lid, flash, pokemon }). */
 export function openBall(root) {
   if (!root || prefersReducedMotion()) return Promise.resolve()
   resetBall(root)
-  const swung = driveOpening(root)
+  const parts = partsOf(root)
+  const swung = driveLid(parts)
   const rest = settled([
     // 2. White flash out of the open ball: bursts in as the lid finishes opening, holds
     // at full strength while the Pokémon emerges, then fades as its ring keeps spreading.
-    run(part(root, 'flash'), [
+    run(parts.flash, [
       { opacity: 0, transform: 'scale(0.3)', offset: 0 },
       { opacity: 0, transform: 'scale(0.3)', offset: 0.3, easing: 'ease-out' },
       { opacity: 1, transform: 'scale(1.1)', offset: 0.4 },
@@ -119,7 +135,7 @@ export function openBall(root) {
       { opacity: 0, transform: 'scale(1.7)', offset: 1 },
     ]),
     // 3. The Pokémon pops out.
-    run(part(root, 'pokemon'), [
+    run(parts.pokemon, [
       { opacity: 0, transform: 'scale(0)', offset: 0 },
       { opacity: 0, transform: 'scale(0)', offset: 0.45 },
       { opacity: 1, transform: 'scale(0.5)', offset: 0.55 },
@@ -127,13 +143,70 @@ export function openBall(root) {
       { opacity: 1, transform: 'scale(1)', offset: 0.82 },
       { opacity: 1, transform: 'scale(1)', offset: 1 },
     ], { easing: 'steps(8, end)' }),
-    // 4. Then the empty ball fades, leaving the Pokémon.
-    run(part(root, 'ball'), [
+    // 4. The whitened ball fades behind the flash while it is at full strength (0.4 to
+    // 0.55), so it is gone before the flash fades and never shows again. Steps on this one
+    // segment only: steps over the whole effect delayed the fade until after the flash.
+    run(parts.ball, [
       { opacity: 1, offset: 0 },
-      { opacity: 1, offset: 0.75 },
-      { opacity: 0, offset: 0.92 },
+      { opacity: 1, offset: 0.4, easing: 'steps(3, end)' },
+      { opacity: 0, offset: 0.52 },
       { opacity: 0, offset: 1 },
-    ], { easing: 'steps(6, end)' }),
+    ]),
+  ])
+  return Promise.all([swung, rest]).then(() => undefined)
+}
+
+/**
+ * The opening in reverse, at the same timing mirrored: the Pokémon washes out to white and
+ * shrinks into the flash, the flash's ring closes in, the white ball appears in it with its lid
+ * open, then the lid swings shut while the ball's colour comes back.
+ * `root`: an element holding the parts, or the parts themselves ({ ball, lid, flash, pokemon }).
+ */
+export function closeBall(root) {
+  if (!root || prefersReducedMotion()) return Promise.resolve()
+  resetBall(root)
+  const parts = partsOf(root)
+  const { ball, lid } = parts
+  // The ball waits open and white (the end of an opening) until the lid starts to close.
+  if (lid) lid.style.transform = `rotate(${LID_ANGLE}deg)`
+  if (ball) ball.style.filter = whiten(1)
+  // The lid shuts over the last part of the sequence. The wait is a driver too, so a newer
+  // sequence (resetBall) cancels it like a running swing.
+  const shutAt = OPEN_DURATION - Math.max(LID_SWING_MS, WHITEN_MS)
+  const key = ball ?? lid
+  const swung = new Promise((resolve) => {
+    const timer = window.setTimeout(() => driveLid(parts, true).then(resolve), shutAt)
+    if (key) drivers.set(key, () => {
+      window.clearTimeout(timer)
+      resolve()
+    })
+  })
+  const rest = settled([
+    // 1. The Pokémon washes out to white, swells a little, then shrinks to nothing.
+    run(parts.pokemon, [
+      { opacity: 1, transform: 'scale(1)', filter: 'none', offset: 0 },
+      { opacity: 1, transform: 'scale(1)', filter: 'brightness(2.6) saturate(0)', offset: 0.18 },
+      { opacity: 1, transform: 'scale(1.15)', filter: 'brightness(2.6) saturate(0)', offset: 0.28 },
+      { opacity: 1, transform: 'scale(0.5)', filter: 'brightness(2.6) saturate(0)', offset: 0.45 },
+      { opacity: 0, transform: 'scale(0)', filter: 'brightness(2.6) saturate(0)', offset: 0.55 },
+      { opacity: 0, transform: 'scale(0)', filter: 'brightness(2.6) saturate(0)', offset: 1 },
+    ], { easing: 'steps(8, end)' }),
+    // 2. The flash gathers it in: the ring closes from wide to the ball's size, then goes out.
+    run(parts.flash, [
+      { opacity: 0, transform: 'scale(1.7)', offset: 0 },
+      { opacity: 0, transform: 'scale(1.7)', offset: 0.22, easing: 'ease-out' },
+      { opacity: 1, transform: 'scale(1.3)', offset: 0.45 },
+      { opacity: 1, transform: 'scale(1.1)', offset: 0.6, easing: 'ease-in' },
+      { opacity: 0, transform: 'scale(0.3)', offset: 0.7 },
+      { opacity: 0, transform: 'scale(0.3)', offset: 1 },
+    ]),
+    // 3. The white ball appears behind the flash at its peak (the opening's fade, mirrored).
+    run(ball, [
+      { opacity: 0, offset: 0 },
+      { opacity: 0, offset: 0.48, easing: 'steps(3, end)' },
+      { opacity: 1, offset: 0.6 },
+      { opacity: 1, offset: 1 },
+    ]),
   ])
   return Promise.all([swung, rest]).then(() => undefined)
 }

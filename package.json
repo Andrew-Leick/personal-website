@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run validate && vite build",
+    "build": "npm run validate && vite build && vite build --mode kart",
     "preview": "vite preview",
     "lint": "oxlint",
     "test": "vitest run",
@@ -18,6 +18,7 @@
     "check:size": "node scripts/check-size.mjs",
     "check:routes": "node scripts/check-routes.mjs",
     "sync:github": "node scripts/sync-github.mjs",
+    "og-image": "node scripts/render-og-image.mjs",
     "ci": "npm run lint && npm run test && npm run validate && npm run build && npm run check:size && npm run check:routes"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "happy-dom": "^21.0.4",
     "oxlint": "^1.90.0",
     "vite": "^8.3.6",
     "vitest": "^5.1.0"

@@ -22,7 +22,8 @@
   --pk-blue: #2050C8;
   --pk-fire: #C2410C;
   --pk-grass: #2E7D32;
-  --pk-water: #1D63B8;
+  --pk-water: #046D98;     /* OKLCH h 235: at least 15° from --pk-blue (focus), so they never read as one color */
+  --pk-psychic: #8C42AA;   /* Project kind: a hue no page uses */
 
   /* Palette primitives: night */
   --pk-night: #12121C;
@@ -38,12 +39,54 @@
   --pk-blue-light: #7AA8FF;
   --pk-fire-light: #FF8C42;
   --pk-grass-light: #6CCB5F;
-  --pk-water-light: #5AA9FF;
+  --pk-water-light: #1BB2F4;
+  --pk-psychic-light: #CE8CEB;
+
+  /* Palette primitives: Game Boy (SPEC-v6 P-11; the BGB emulator's four greens, plus two tints) */
+  --pk-gb-darkest: #081820;
+  --pk-gb-dark: #346856;
+  --pk-gb-light: #88C070;
+  --pk-gb-lightest: #E0F8D0;
+  --pk-gb-subtle: #C8E8B0;
+  --pk-gb-tint: #C0E0A0;
 
   /* Sprite art (same in every theme) */
   --sprite-outline: #202028;
   --sprite-egg-shell: #F4F0DC;
   --sprite-egg-spot: #78C850;
+  /* The owner's trainer (SPEC-v6 P-05): Stanford Cardinal #8C1515, Black #2E2D29, Cool Grey #53565A,
+     white, brown hair; the owner customizes them */
+  --sprite-trainer-charcoal-dark: #2E2D29;
+  --sprite-trainer-charcoal-mid: #403F3B;
+  --sprite-trainer-charcoal: #53565A;
+  --sprite-trainer-jacket-shade: #5E0B0B;
+  --sprite-trainer-jacket: #8C1515;
+  --sprite-trainer-jacket-light: #B83A3A;
+  --sprite-trainer-skin-shadow: #7A3B2E;
+  --sprite-trainer-skin-shade: #D99A74;
+  --sprite-trainer-skin: #FAD0B9;
+  --sprite-trainer-gray: #A8A0B6;
+  --sprite-trainer-white: #F4F4F4;
+  --sprite-trainer-hair-shade: #4A2E1A;
+  --sprite-trainer-hair: #7A4A24;
+  --sprite-trainer-hair-light: #A8703C;
+
+  /* Pokédex device (same in every theme: it is an object, like the sprites). Only the screens
+     follow the theme. White on body 5.88:1, white on key 6.90:1, white on key hover 5.62:1. */
+  --dex-body: #C8102E;
+  --dex-body-light: #E8384E;
+  --dex-body-dark: #8C0A1F;
+  --dex-bezel: #DCDCE4;
+  --dex-ink: #FFFFFF;
+  --dex-key: #2050C8;
+  --dex-key-light: #2C5FD8;
+  --dex-key-dark: #143680;
+  --dex-lens: #3A8EF0;
+  --dex-lens-light: #BFE3FF;
+  --dex-lens-dark: #1A4FB0;
+  --dex-led-red: #FF4A4A;
+  --dex-led-yellow: #FFD23F;
+  --dex-led-green: #3DDC5A;
 }
 
 :root {
@@ -70,8 +113,8 @@
   --leading-display:  1.5;
 
   --weight-regular: 400;
-  --weight-medium:  700;  /* VT323 ships 400 only; faux bold is disabled in base.css */
-  --weight-bold:    700;
+  --weight-medium:  400;  /* VT323 ships 400 only; faux bold is disabled in base.css */
+  --weight-bold:    400;
 
   --leading-tight:  1.2;
   --leading-snug:   1.35;
@@ -106,10 +149,10 @@
   --focus-ring-width: 3px;
   --focus-ring-offset: 2px;
 
-  /* Pixel scales (integers only) */
-  --sprite-px: 0.25rem;    /* Home sprites: 64px; >=768: 6px = 96px (at a 16px root) */
-  --sprite-px-title: 0.125rem; /* subpage title sprite: 32px */
-  --cursor-px: 0.125rem;   /* ▶ 8x14px, ▼ 14x8px */
+  /* Pixel scales (integers only: rounded down to whole px, since the root size is fluid) */
+  --sprite-px: round(down, 0.25rem, 1px);    /* Home sprites: 64px; >=768: 6px = 96px (at a 16px root) */
+  --sprite-px-title: round(down, 0.125rem, 1px); /* subpage title sprite: 32px */
+  --cursor-px: round(down, 0.125rem, 1px);   /* ▶ 8x14px, ▼ 14x8px */
 
   /* Motion */
   --duration-fast: 120ms;
@@ -117,8 +160,6 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --sprite-bob-duration: 1000ms;
   --sprite-bob-iterations: 4;
-  --sprite-hop-duration: 600ms;
-  --sprite-stagger: 250ms;
 
   /* v4 journey: Poké Ball sizes (smooth 90px Dream World art, drawn edge to edge).
      In rem so they grow with the page on wide screens; px values at a 16px root. */
@@ -135,6 +176,11 @@
      `ch` resolves at the body text size where it is used. */
   --journey-column: calc(var(--date-column) + var(--space-8) + var(--measure));
   /* White burst when a section header's ball opens: solid core, strong glow */
+  /* Its ring and the ring's glow, and Charmander's idle glow (--pk-fire-light at two strengths) */
+  --ball-flash-ring: rgb(255 255 255 / 0.9);
+  --ball-flash-ring-glow: rgb(255 255 255 / 0.7);
+  --sprite-glow-fire-soft: rgb(255 140 66 / 0.25);
+  --sprite-glow-fire: rgb(255 140 66 / 0.7);
   --ball-flash: radial-gradient(circle, #fff 0 26%, rgb(255 255 255 / 0.9) 34%, rgb(255 255 255 / 0.45) 50%, rgb(255 255 255 / 0.12) 62%, transparent 70%);
 
   /* Layers */
@@ -151,6 +197,10 @@
   --photo-size: 120px;
   --photo-size-md: 160px;
   --date-column: 11rem;
+  --dex-lens-size: 3.5rem;      /* big blue lens, border included */
+  --dex-led-size: 0.875rem;     /* the three status lights */
+  --dex-bezel-width: 0.75rem;   /* grey frame around each screen */
+  --dex-hinge-width: 1.25rem;   /* the hinge band on the closed cover and the swinging lid */
 }
 
 @media (min-width: 480px) {
@@ -161,18 +211,9 @@
   :root {
     --text-display: 3rem;
     --text-page-title: 2rem;
-    --sprite-px: 0.375rem;
+    --sprite-px: round(down, 0.375rem, 1px);
     --hero-ball-size: 3.5rem;
   }
-}
-
-/* Wide screens: longer text lines, so prose and entries use the wider content column. */
-@media (min-width: 1600px) {
-  :root { --measure: 84ch; }
-}
-
-@media (min-width: 2200px) {
-  :root { --measure: 100ch; }
 }
 
 @media (prefers-reduced-motion: reduce) {

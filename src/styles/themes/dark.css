@@ -11,6 +11,7 @@
   --color-border-strong: var(--pk-moon);
   --color-accent: var(--pk-red-light);
   --color-accent-contrast: var(--pk-night);
+  --color-accent-hover: var(--pk-red-lighter);
   --color-link: var(--pk-moon);
   --color-link-hover: var(--pk-red-lighter);
   --color-focus-ring: var(--pk-blue-light);
@@ -26,6 +27,8 @@
   --color-type-grass: var(--pk-grass-light);
   --color-type-water: var(--pk-water-light);
   --color-type-normal: var(--pk-moon-2);
+  --color-kind-work: var(--pk-fire-light);
+  --color-kind-project: var(--pk-psychic-light);
   --color-scheme: dark;
 
   color-scheme: dark;
