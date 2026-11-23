@@ -412,9 +412,9 @@ npm run check:routes  # after a build: checks dist/ has one HTML file per page p
 npm run ci            # everything CI runs: lint, test, validate, build, size budget, check:routes
 ```
 
-## Custom domain (pending: no domain chosen yet)
+## Custom domain
 
-The site is configured for `https://andrew-leick.github.io/`. To move it to a domain you own:
+The site is configured for **`https://aleick.com/`** (registered at Porkbun; `siteUrl` in `src/data/site.json`, so the build writes `dist/CNAME` with `aleick.com`). These are the steps it took, for reference or for moving to another domain:
 
 1. **Buy the domain** from any registrar (for example Cloudflare, Namecheap or Porkbun).
 2. **Point DNS at GitHub Pages** in the registrar's DNS settings:

@@ -69,7 +69,7 @@ describe('public API (7.2)', () => {
     }
     expect(api.resolveRoute('/education').hash).toBeNull()
     const head = api.getHead(api.resolveRoute('/experience/'))
-    expect(head).toMatchObject({ title: 'Experience | Andrew Leick', canonical: 'https://andrew-leick.github.io/experience/', robots: 'index', jsonLd: null })
+    expect(head).toMatchObject({ title: 'Experience | Andrew Leick', canonical: 'https://aleick.com/experience/', robots: 'index', jsonLd: null })
     expect(Object.isFrozen(head)).toBe(true)
     expect(api.getHead(api.resolveRoute('/')).jsonLd['@type']).toBe('Person')
   })

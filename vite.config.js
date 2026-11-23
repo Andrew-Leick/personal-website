@@ -11,7 +11,7 @@ import { contentPlugin } from './scripts/vite-plugin-content.js'
 export default defineConfig(({ mode }) => {
   const kart = mode === 'kart'
   return {
-    // "/" for https://andrew-leick.github.io/ or a custom domain.
+    // "/" for the custom domain (https://aleick.com/) or a <user>.github.io site.
     // A project-site deploy sets BASE_PATH=/repo-name/ (see README "Deploy").
     base: process.env.BASE_PATH ?? '/',
     plugins: [react(), contentPlugin({ kartOnly: kart })],
