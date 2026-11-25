@@ -45,10 +45,12 @@ function leaderboard(board, finishers, announce) {
     const top = board.entries().slice(0, SHOWN)
     list.replaceChildren(
       ...(top.length
-        ? top.map((e, i) => h('li', mine.includes(e.at) ? { class: 'is-mine', 'aria-current': 'true' } : null, h('span', null, `${i + 1}. ${e.name}`), h('span', null, formatTime(e.timeMs))))
+        ? top.map((e, i) => h('li', mine.includes(e.id ?? e.at) ? { class: 'is-mine', 'aria-current': 'true' } : null, h('span', null, `${i + 1}. ${e.name}`), h('span', null, formatTime(e.timeMs))))
         : [h('li', null, 'No times yet. Be the first.')]),
     )
+    fine.textContent = board.online ? 'Times are shared online. Emails are never shown.' : 'Saved on this device only. Emails are never shown.'
   }
+  const fine = h('p', { class: 'kart-fine' })
   const mine = []
   let uid = 0
   const form = ({ label, timeMs }) => {
@@ -69,9 +71,13 @@ function leaderboard(board, finishers, announce) {
       err,
       h('button', { type: 'submit', class: 'kart-btn kart-btn-primary' }, 'Join leaderboard'),
     )
-    f.addEventListener('submit', (e) => {
+    const submit = f.querySelector('button[type=submit]')
+    f.addEventListener('submit', async (e) => {
       e.preventDefault()
-      const res = board.add({ name: nameIn.value, email: emailIn.value, timeMs })
+      if (submit.disabled) return
+      submit.disabled = true
+      const res = await board.add({ name: nameIn.value, email: emailIn.value, timeMs })
+      submit.disabled = false
       for (const input of [nameIn, emailIn]) input.removeAttribute('aria-invalid')
       if (!res.ok) {
         const bad = res.field === 'name' ? nameIn : emailIn
@@ -80,7 +86,7 @@ function leaderboard(board, finishers, announce) {
         bad.focus()
         return
       }
-      mine.push(res.entry.at)
+      mine.push(res.entry.id ?? res.entry.at)
       renderList(mine)
       const msg = res.rank && res.rank <= SHOWN ? `${res.entry.name} placed #${res.rank}!` : res.rank ? `${res.entry.name} is #${res.rank}.` : `${res.entry.name} joined, outside the top ${MAX_ENTRIES}.`
       const done = h('p', { class: 'kart-time', tabindex: '-1' }, msg)
@@ -91,12 +97,14 @@ function leaderboard(board, finishers, announce) {
     return f
   }
   renderList()
+  // The online board loads in the background; until then (or offline) this device's times show.
+  board.load?.().then(() => renderList(mine))
   return h(
     'section',
     { class: 'kart-lb', 'aria-label': 'Leaderboard' },
     h('h3', { class: 'kart-label' }, 'LEADERBOARD'),
     ...finishers.map(form),
-    h('p', { class: 'kart-fine' }, 'Saved on this device only. Emails are never shown.'),
+    fine,
     list,
   )
 }

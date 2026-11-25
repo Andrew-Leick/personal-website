@@ -14,7 +14,7 @@ import { boost, createKart, step } from './physics.js'
 import { createInput } from './input.js'
 import { createGame } from './game.js'
 import { checkpointDists, createSplits, formatDelta, parsePr } from './splits.js'
-import { createLeaderboard } from './leaderboard.js'
+import { createLeaderboard, createOnlineBoard } from './leaderboard.js'
 
 const STEP = 1 / 60
 const BANNER_S = 1.5
@@ -49,10 +49,8 @@ const coarse = media('(pointer: coarse)')
 const savedGas = load('kart.autoGas')
 let autoGas = savedGas == null ? coarse : savedGas === '1'
 let pr = parsePr(load('kart.pr'), cps.length)
-const board = createLeaderboard({
-  getItem: load,
-  setItem: save,
-})
+// Shared online; this device's board when the online one can't be reached.
+const board = createOnlineBoard(createLeaderboard({ getItem: load, setItem: save }))
 /** @type {'story'|'race'} */
 let mode = 'story' // V5-20: Story is the default on every visit
 /** @type {1|2} */
